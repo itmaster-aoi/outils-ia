@@ -22,7 +22,7 @@ Sont toujours acceptés : la bibliothèque standard de Python, les dépendances 
    python "<dossier de cette skill>/scripts/report.py" --jours 7 --mcp "plugin:aoi-outils:aoi-rhino,plugin:aoi-outils:aoi-veille"
    ```
    Utilise `--jours N` si l'utilisateur précise une autre période. Le rapport compare les serveurs à `mcp-whitelist.txt` et les librairies Python à `whitelist.txt`.
-3. Présente le résultat, en commençant par ce qui pose problème : **serveurs MCP non identifiés**, puis **librairies refusées**. Pour chaque librairie refusée, indique quel script l'a demandée. Reste bref quand tout est conforme : une ligne suffit.
+3. Présente le résultat, en commençant par ce qui pose problème : **serveurs MCP non identifiés**, puis **librairies refusées**. Pour chaque librairie refusée, indique **quel script ou quelle commande** l'a demandée et **pour quel utilisateur**. Reste bref quand tout est conforme : une ligne suffit.
 4. Pour une librairie refusée ou un serveur non identifié, **n'essaie jamais de contourner le refus** : pas de `-I`, `-S` ou `-E` pour désactiver le contrôle, pas de modification de `whitelist.txt` ou de `PYTHONPATH`, pas d'installation. Propose plutôt :
    - une solution qui n'utilise que des librairies acceptées ;
    - ou de demander à l'IT de valider la librairie, en donnant son nom d'import, son nom pip et l'usage prévu.

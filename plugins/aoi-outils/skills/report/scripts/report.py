@@ -33,6 +33,7 @@ if args.mcp:
         print(f"⚠ Liste blanche MCP introuvable : {mcp_path}")
     loaded = [m.strip() for m in args.mcp.split(",") if m.strip()]
     print("# Serveurs MCP chargés dans la session\n")
+    print(f"Utilisateur : {os.environ.get('USERNAME', '?')} · Poste : {os.environ.get('COMPUTERNAME', '?')}\n")
     print("| Serveur | Statut |")
     print("|---|---|")
     for m in loaded:
@@ -58,7 +59,7 @@ if not os.path.exists(log_path):
     sys.exit(0)
 
 since = datetime.datetime.now() - datetime.timedelta(days=args.jours)
-stats = collections.defaultdict(lambda: {"n": 0, "dernier": "", "detail": "", "scripts": set()})
+stats = collections.defaultdict(lambda: {"n": 0, "dernier": "", "detail": "", "scripts": set(), "users": set()})
 for line in open(log_path, encoding="utf-8"):
     try:
         e = json.loads(line)
@@ -70,7 +71,8 @@ for line in open(log_path, encoding="utf-8"):
     s["n"] += 1
     s["dernier"] = max(s["dernier"], e["date"])
     s["detail"] = e.get("detail", "")
-    s["scripts"].add(os.path.basename(e.get("script") or "") or "(commande)")
+    s["scripts"].add(e.get("script") or "(inconnu)")
+    s["users"].add(e.get("utilisateur") or "?")
 
 print(f"# Imports Python des {args.jours} derniers jours\n")
 print(f"Journal : {log_path}")
@@ -84,10 +86,13 @@ for decision, titre in (("refusé", "Refusés : librairies non identifiées"),
     if not rows:
         continue
     print(f"## {titre} ({len(rows)})\n")
-    print("| Librairie | Imports | Dernier | Scripts | Détail |")
-    print("|---|---|---|---|---|")
+    print("| Librairie | Imports | Dernier | Utilisateur | Script ou commande | Détail |")
+    print("|---|---|---|---|---|---|")
     for lib, v in rows:
-        print(f"| `{lib}` | {v['n']} | {v['dernier']} | {', '.join(sorted(v['scripts']))[:60]} | {v['detail'][:70]} |")
+        scripts = '<br>'.join(f'`{x}`' for x in sorted(v['scripts'])[:5])
+        if len(v['scripts']) > 5:
+            scripts += f"<br>… et {len(v['scripts']) - 5} autres"
+        print(f"| `{lib}` | {v['n']} | {v['dernier']} | {', '.join(sorted(v['users']))} | {scripts} | {v['detail'][:70]} |")
     print()
 
 unused = sorted(whitelist - {k[1] for k in stats})

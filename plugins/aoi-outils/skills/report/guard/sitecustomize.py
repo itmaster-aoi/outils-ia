@@ -52,6 +52,26 @@ if sys.argv and sys.argv[0] not in ("", "-c", "-m"):
 _decided = {}
 
 
+def _script():
+    """Script ou commande qui a lancé Python : chemin complet, ou le code passé avec -c."""
+    argv = getattr(sys, "orig_argv", None) or sys.argv
+    if "-c" in argv:
+        i = argv.index("-c")
+        code = argv[i + 1] if i + 1 < len(argv) else ""
+        return "python -c " + " ".join(code.split())[:120]
+    if "-m" in argv:
+        i = argv.index("-m")
+        return "python -m " + (argv[i + 1] if i + 1 < len(argv) else "")
+    return os.path.abspath(sys.argv[0]) if sys.argv and sys.argv[0] else "(interactif)"
+
+
+def _user():
+    try:
+        return os.getlogin()
+    except OSError:
+        return os.environ.get("USERNAME") or os.environ.get("USER") or "?"
+
+
 def _log(top, decision, detail=""):
     if top in _decided:
         return
@@ -62,7 +82,9 @@ def _log(top, decision, detail=""):
             f.write(json.dumps({
                 "date": datetime.datetime.now().isoformat(timespec="seconds"),
                 "pid": os.getpid(),
-                "script": sys.argv[0] if sys.argv else "",
+                "utilisateur": _user(),
+                "poste": os.environ.get("COMPUTERNAME", ""),
+                "script": _script(),
                 "cwd": os.getcwd(),
                 "librairie": top,
                 "decision": decision,
