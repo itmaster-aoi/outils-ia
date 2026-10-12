@@ -27,12 +27,12 @@ VERSIONS.md                       versions de référence validées
 
 ## Prérequis sur les postes (installés une fois par l'IT)
 
+Python 3.12 et Node.js 25 sont **fournis dans le plugin** (`mcp/*/runtime/`, `skills/report/runtime/`) : ni installation, ni variable d'environnement.
+
 | Prérequis | Pour |
 |---|---|
-| Python 3.12 64 bits, chemin dans la variable `AOI_PYTHON` | `aoi-rhino`, `/report` |
-| Git Bash (Git for Windows) | le hook de session qui active le contrôle des imports |
+| Git for Windows, installable sans élévation : `winget install --id Git.Git -e --scope user` | récupérer ce dépôt, et Git Bash pour le hook qui active le contrôle des imports |
 | Plugin Rhino : `mcp/rhino/addin/` copié dans `%APPDATA%\McNeel\Rhinoceros\packages\8.0\` | `aoi-rhino` |
-| Node.js 25, chemin dans la variable `AOI_NODE` | `aoi-revit` |
 | Jeton d'accès personnel au service de veille, dans la variable `AOI_VEILLE_TOKEN` (jamais dans ce dépôt) | `aoi-veille` |
 | Add-in Revit : `mcp/revit/addin/2025/` copié dans `%APPDATA%\Autodesk\Revit\Addins\2025\` | `aoi-revit` |
 

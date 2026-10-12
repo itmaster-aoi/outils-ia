@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "aoi-rhino": {
-      "command": "${AOI_PYTHON:-python}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/runtime/python.exe",
       "args": [
         "-I",
         "-S",
@@ -9,7 +9,7 @@
       ]
     },
     "aoi-revit": {
-      "command": "${AOI_NODE:-node}",
+      "command": "${CLAUDE_PLUGIN_ROOT}/mcp/revit/runtime/node.exe",
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/mcp/revit/server/build/index.js"
       ]

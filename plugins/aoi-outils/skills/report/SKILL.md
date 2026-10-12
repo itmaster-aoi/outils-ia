@@ -17,9 +17,9 @@ Sont toujours acceptés : la bibliothèque standard de Python, les dépendances 
 ## Ce que tu fais quand on t'appelle
 
 1. Relève les **serveurs MCP chargés** dans ta session, sous le nom qu'affiche `/mcp`. Tes outils MCP s'appellent `mcp__<serveur>__<outil>`, et pour un plugin `mcp__plugin_<plugin>_<serveur>__<outil>`, ce qui correspond à `plugin:<plugin>:<serveur>`. Les connecteurs claude.ai s'appellent `claude.ai <nom>`.
-2. Lance le rapport avec le Python du poste (`%AOI_PYTHON%` s'il est défini, sinon `python`), en passant ces serveurs :
+2. Lance le rapport avec le Python fourni dans `runtime/` (le poste n'a pas forcément de Python), en passant ces serveurs :
    ```
-   python "<dossier de cette skill>/scripts/report.py" --jours 7 --mcp "plugin:aoi-outils:aoi-rhino,plugin:aoi-outils:aoi-veille"
+   "<dossier de cette skill>/runtime/python.exe" "<dossier de cette skill>/scripts/report.py" --jours 7 --mcp "plugin:aoi-outils:aoi-rhino,plugin:aoi-outils:aoi-veille"
    ```
    Utilise `--jours N` si l'utilisateur précise une autre période. Le rapport compare les serveurs à `mcp-whitelist.txt` et les librairies Python à `whitelist.txt`.
 3. Présente le résultat, en commençant par ce qui pose problème : **serveurs MCP non identifiés**, puis **librairies refusées**. Pour chaque librairie refusée, indique **quel script ou quelle commande** l'a demandée et **pour quel utilisateur**. Reste bref quand tout est conforme : une ligne suffit.
