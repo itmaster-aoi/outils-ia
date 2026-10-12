@@ -201,11 +201,11 @@ function Installe($id) {
   }
 }
 # Lance claude, n'affiche sa sortie qu'en cas d'échec, rend $true si la commande a réussi.
-function Claude([string]$desc, [string[]]$arguments) {
+function LancerClaude([string]$desc, [string[]]$arguments) {
   if ($DryRun) { Info "(diagnostic seul) $desc"; return $false }
   Info $desc
   $ErrorActionPreference = "Continue"
-  $sortie = (& claude @arguments 2>&1 | Out-String).Trim()
+  $sortie = (& $claude.Source @arguments 2>&1 | Out-String).Trim()
   $reussi = $LASTEXITCODE -eq 0
   if (-not $reussi -and $sortie) { $sortie -split "`r?`n" | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
   $script:derniereSortie = $sortie
@@ -213,7 +213,7 @@ function Claude([string]$desc, [string[]]$arguments) {
 }
 
 # Toute commande claude télécharge les règles de l'organisation : on part des règles du jour.
-if ($claude -and -not $DryRun) { Claude "Lecture des règles de l'organisation" @("plugin", "marketplace", "list") | Out-Null }
+if ($claude -and -not $DryRun) { LancerClaude "Lecture des règles de l'organisation" @("plugin", "marketplace", "list") | Out-Null }
 
 $essai = 0
 do {
@@ -228,17 +228,17 @@ do {
   if (-not $claude) { break }
   if ($refInscrite -ne $refImposee) {
     # Une inscription à une autre étiquette est refusée par la politique : on la remplace.
-    if ($refInscrite) { Claude "Retrait du catalogue aoi à l'étiquette $refInscrite" @("plugin", "marketplace", "remove", "aoi") | Out-Null }
-    Claude "Inscription du catalogue aoi à l'étiquette $refImposee" @("plugin", "marketplace", "add", "itmaster-aoi/outils-ia#$refImposee") | Out-Null
+    if ($refInscrite) { LancerClaude "Retrait du catalogue aoi à l'étiquette $refInscrite" @("plugin", "marketplace", "remove", "aoi") | Out-Null }
+    LancerClaude "Inscription du catalogue aoi à l'étiquette $refImposee" @("plugin", "marketplace", "add", "itmaster-aoi/outils-ia#$refImposee") | Out-Null
   }
   # Ancien nom du plugin (avant le 12.10.2026) : aoi-outils, serveurs plugin:aoi-outils:aoi-*
   if (Installe "aoi-outils@aoi") {
-    Claude "Désinstallation de l'ancien plugin aoi-outils (remplacé par aoi)" @("plugin", "uninstall", "aoi-outils@aoi") | Out-Null
+    LancerClaude "Désinstallation de l'ancien plugin aoi-outils (remplacé par aoi)" @("plugin", "uninstall", "aoi-outils@aoi") | Out-Null
   }
   if (Installe "aoi@aoi") {
-    $ok = Claude "Mise à jour du plugin aoi" @("plugin", "update", "aoi@aoi")
+    $ok = LancerClaude "Mise à jour du plugin aoi" @("plugin", "update", "aoi@aoi")
   } else {
-    $ok = Claude "Installation du plugin aoi (environ 350 Mo)" @("plugin", "install", "aoi@aoi")
+    $ok = LancerClaude "Installation du plugin aoi (environ 350 Mo)" @("plugin", "install", "aoi@aoi")
   }
   # Règles reçues entre-temps (étiquette changée dans la console) : un seul nouvel essai.
   $relancer = (-not $ok) -and ($derniereSortie -match "blocked by your organization") -and ((RefImposee) -ne $refImposee)
@@ -265,13 +265,16 @@ $plugin = if ($plugin) { Get-Item $plugin.installPath }
 
 # Contrôle des imports Python : copie fixe que désigne env.PYTHONPATH dans la console
 if ($plugin -and -not $DryRun) {
-  $py = Join-Path $plugin.FullName "skillseportuntime\python.exe"
-  $ac = Join-Path $plugin.FullName "skillseport\scriptsctiver_controle.py"
+  $py = Join-Path $plugin.FullName "skills\report\runtime\python.exe"
+  $ac = Join-Path $plugin.FullName "skills\report\scripts\activer_controle.py"
   if ((Test-Path $py) -and (Test-Path $ac)) {
     $ErrorActionPreference = "Continue"
     & $py $ac | Out-Host
-    Noter "Contrôle des imports" $(if ($LASTEXITCODE -eq 0) { "ok" } else { "À TRAITER" }) "C:\ProgramDataoi\guard"
+    Noter "Contrôle des imports" $(if ($LASTEXITCODE -eq 0) { "ok" } else { "À TRAITER" }) "C:\ProgramData\aoi\guard"
     $ErrorActionPreference = "Stop"
+  } else {
+    Avert "Contrôle des imports non activé : $ac absent de aoi $($plugin.Name). Contactez l'IT."
+    Noter "Contrôle des imports" "À TRAITER" "activer_controle.py absent du plugin"
   }
 }
 

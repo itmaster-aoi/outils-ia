@@ -7,7 +7,7 @@ description: Rapport des librairies Python chargées par les scripts que Claude 
 
 La commande se tape `/report`. Si une autre commande porte déjà ce nom, utiliser `/aoi:report`.
 
-Le plugin `aoi` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`, copié dans `C:\ProgramDataoi\guard`) est actif dans toutes les commandes de la session, Bash comme PowerShell, parce que la console impose `PYTHONPATH=C:\ProgramDataoi\guard` à Claude Code :
+Le plugin `aoi` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`, copié dans `C:\ProgramData\aoi\guard`) est actif dans toutes les commandes de la session, Bash comme PowerShell, parce que la console impose `PYTHONPATH=C:\ProgramData\aoi\guard` à Claude Code :
 - il **journalise** chaque librairie chargée dans `%LOCALAPPDATA%\aoi\imports.jsonl` ;
 - il **compare** son nom à `whitelist.txt` ;
 - il **refuse l'import** d'une librairie non identifiée. Le script échoue alors avec `Import de '<nom>' refusé`.
