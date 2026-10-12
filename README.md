@@ -15,6 +15,7 @@ plugins/aoi/               le plugin de l'atelier
     revit/                          serveur compilé avec outils KG, dépendances figées, add-in Revit 2025, README
   skills/
     report/                       /report : contrôle et rapport des librairies Python
+    regen/                        /regen : met le poste à la version imposée par la console
 VERSIONS.md                       versions de référence validées
 ```
 
@@ -22,7 +23,8 @@ VERSIONS.md                       versions de référence validées
 
 - **Aucun secret** dans ce dépôt public : ni clé, ni mot de passe, ni configuration propre à un poste, ni donnée de projet.
 - **Seule l'IT écrit** dans le dépôt. Chaque validation reçoit une étiquette datée (`2026-10-12`).
-- **Pas de mise à jour automatique** : une nouvelle version d'un outil est relue, ajoutée, étiquetée, puis l'étiquette est mise à jour dans les managed settings.
+- **Pas de mise à jour automatique** : une nouvelle version d'un outil est relue, ajoutée, étiquetée, puis l'étiquette est mise à jour dans les managed settings. Augmenter aussi la version de `plugin.json`, sinon les postes ne voient pas la mise à jour.
+- **Sur les postes**, `/regen` dans Claude Code récupère la nouvelle version (catalogue, plugin, add-ins), sans relancer `installer-poste.ps1`. L'installeur reste nécessaire pour un poste neuf.
 - Les licences des projets d'origine sont conservées dans chaque dossier.
 
 ## Préparer un poste

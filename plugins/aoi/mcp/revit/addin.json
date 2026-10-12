@@ -1,0 +1,12 @@
+{
+  "add-ins": [
+    {
+      "nom": "Revit 2025",
+      "si_existe": "%APPDATA%/Autodesk/Revit",
+      "source": "addin/2025",
+      "destination": "%APPDATA%/Autodesk/Revit/Addins/2025",
+      "processus": "Revit.exe",
+      "sauvegarder": ["revit_mcp_plugin/Commands/commandRegistry.json"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "add-ins": [
+    {
+      "nom": "Rhino 8",
+      "si_existe": "%APPDATA%/McNeel/Rhinoceros",
+      "source": "addin",
+      "destination": "%APPDATA%/McNeel/Rhinoceros/packages/8.0",
+      "processus": "Rhino.exe"
+    }
+  ]
+}
