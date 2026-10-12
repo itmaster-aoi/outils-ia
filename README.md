@@ -1,4 +1,4 @@
-# outils-ia : outils Claude Code de l'atelier
+# outils-ia : outils Claude Code
 
 Ce dépôt est le **seul catalogue** de plugins autorisé dans Claude Code sur les postes de l'atelier. Il est imposé par les managed settings de l'organisation (`strictKnownMarketplaces`, figé sur une étiquette). Tout ce qui s'y trouve a été relu et validé par l'IT.
 
