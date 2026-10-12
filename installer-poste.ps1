@@ -36,6 +36,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# Affiche correctement les accents et les symboles de Claude Code dans la console
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $bilan = [System.Collections.Generic.List[object]]::new()
 
 function Etape($titre) { Write-Host ""; Write-Host "== $titre" -ForegroundColor Cyan }
