@@ -166,6 +166,7 @@ if ($vieux -and $claude) {
 
 # --- 6. Plugin aoi-outils --------------------------------------------------------------------
 Etape "6. Plugin aoi-outils"
+$env:CLAUDE_CODE_PLUGIN_PREFER_HTTPS = "1"
 $cache = Join-Path $HOME ".claude\plugins\cache\aoi\aoi-outils"
 function DossierPlugin {
   if (Test-Path $cache) {
@@ -173,23 +174,38 @@ function DossierPlugin {
       Sort-Object LastWriteTime -Descending | Select-Object -First 1
   }
 }
+function LireJson($chemin) {
+  if (Test-Path $chemin) { try { return Get-Content $chemin -Raw | ConvertFrom-Json } catch { } }
+  return $null
+}
+# Étiquette imposée par la console (managed settings reçus par Claude Code)
+$politique = LireJson (Join-Path $HOME ".claude\remote-settings.json")
+$refImposee = $null
+if ($politique -and $politique.extraKnownMarketplaces.aoi) { $refImposee = $politique.extraKnownMarketplaces.aoi.source.ref }
+# Étiquette du catalogue inscrit sur ce poste
+$inscrits = LireJson (Join-Path $HOME ".claude\plugins\known_marketplaces.json")
+$refInscrite = $null
+if ($inscrits -and $inscrits.aoi) { $refInscrite = $inscrits.aoi.source.ref }
+
+if (-not $refImposee) {
+  Avert "Les règles de l'organisation n'ont pas encore été reçues. Lancez « claude » une fois et connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
+} else {
+  Info "Étiquette imposée par la console : $refImposee ; inscrite sur ce poste : $(if ($refInscrite) { $refInscrite } else { 'aucune' })"
+  if ($claude -and $refInscrite -ne $refImposee) {
+    # Une inscription à une autre étiquette est refusée par la politique : on la remplace.
+    Faire "Inscription du catalogue aoi à l'étiquette $refImposee" {
+      if ($refInscrite) { & claude plugin marketplace remove aoi }
+      & claude plugin marketplace add "itmaster-aoi/outils-ia#$refImposee"
+    } | Out-Null
+  }
+  if ($claude) {
+    Faire "Installation ou mise à jour du plugin aoi-outils (environ 350 Mo au premier passage)" {
+      & claude plugin install aoi-outils@aoi
+      & claude plugin update aoi-outils@aoi
+    } | Out-Null
+  }
+}
 $plugin = DossierPlugin
-if ($plugin -and $claude) {
-  # se met à la version (étiquette) imposée par l'organisation
-  Faire "Mise à jour du catalogue et du plugin" {
-    $env:CLAUDE_CODE_PLUGIN_PREFER_HTTPS = "1"
-    & claude plugin marketplace update aoi
-    & claude plugin update aoi-outils@aoi
-  } | Out-Null
-  $plugin = DossierPlugin
-}
-if (-not $plugin -and $claude) {
-  Faire "Installation du plugin depuis le catalogue de l'organisation (environ 350 Mo)" {
-    $env:CLAUDE_CODE_PLUGIN_PREFER_HTTPS = "1"
-    & claude plugin install aoi-outils@aoi
-  } | Out-Null
-  $plugin = DossierPlugin
-}
 if ($plugin -and -not (Test-Path (Join-Path $plugin.FullName "mcp\rhino\runtime\python.exe"))) {
   Avert "aoi-outils $($plugin.Name) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
   Noter "Plugin aoi-outils" "À METTRE À JOUR" "$($plugin.Name) : version antérieure à 2026.10.12.3"
