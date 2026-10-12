@@ -27,7 +27,9 @@ VERSIONS.md                       versions de référence validées
 
 ## Préparer un poste
 
-Télécharger [`installer-poste.ps1`](installer-poste.ps1), puis le lancer **sans élévation**, une fois par utilisateur et par poste :
+Copier [`installer-poste.ps1`](installer-poste.ps1) et [`installer-poste.cmd`](installer-poste.cmd) dans un même dossier, puis **double-cliquer sur `installer-poste.cmd`**, sans élévation, une fois par utilisateur et par poste. Le lanceur contourne la politique d'exécution de PowerShell pour cette seule exécution. Pour un script téléchargé depuis GitHub, lever d'abord la marque « Internet » : `Unblock-File .\installer-poste.ps1`.
+
+En ligne de commande :
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1 -DryRun   # diagnostic seul, ne modifie rien
