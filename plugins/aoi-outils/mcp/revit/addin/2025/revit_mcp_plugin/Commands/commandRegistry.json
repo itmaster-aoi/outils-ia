@@ -1,0 +1,754 @@
+{
+  "Commands": [
+    {
+      "commandName": "say_hello",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Displays a greeting dialog"
+    },
+    {
+      "commandName": "get_available_family_types",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "get available family types"
+    },
+    {
+      "commandName": "get_current_view_elements",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "get current view elements"
+    },
+    {
+      "commandName": "get_current_view_info",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "get current view info"
+    },
+    {
+      "commandName": "get_selected_elements",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "get selected elements"
+    },
+    {
+      "commandName": "create_point_based_element",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create point-based elements like furniture"
+    },
+    {
+      "commandName": "create_line_based_element",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create line based element such as wall"
+    },
+    {
+      "commandName": "create_surface_based_element",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create surface-based elements like floors"
+    },
+    {
+      "commandName": "color_splash",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Color elements by parameter value"
+    },
+    {
+      "commandName": "tag_walls",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Tag all the walls in the model"
+    },
+    {
+      "commandName": "delete_element",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Deletes elements using ElementId"
+    },
+    {
+      "commandName": "ai_element_filter",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "AI element filter for querying elements by criteria"
+    },
+    {
+      "commandName": "operate_element",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Operate on elements (select, color, hide, isolate, etc)"
+    },
+    {
+      "commandName": "export_room_data",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Extract all rooms with detailed properties including area, volume, perimeter, and parameters"
+    },
+    {
+      "commandName": "get_material_quantities",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Calculate material quantities and takeoffs with area and volume calculations per material"
+    },
+    {
+      "commandName": "analyze_model_statistics",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Analyze model complexity with element counts by category, type, family, and level"
+    },
+    {
+      "commandName": "create_grid",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create grid system with smart spacing generation for project layout (alphabetic/numeric naming)"
+    },
+    {
+      "commandName": "create_structural_framing_system",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create structural beam framing system with configurable spacing and direction"
+    },
+    {
+      "commandName": "create_room",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create and place rooms at specified locations with custom names, numbers, and properties"
+    },
+    {
+      "commandName": "tag_rooms",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create tags for all rooms in the current view displaying room name and number"
+    },
+    {
+      "commandName": "create_level",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create levels at specified elevations with automatic floor plan view generation"
+    },
+    {
+      "commandName": "create_dimensions",
+      "assemblyPath": "RevitMCPCommandSet\\{VERSION}\\RevitMCPCommandSet.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "mcp-servers-for-revit",
+        "email": "",
+        "website": "",
+        "organization": "mcp-servers-for-revit"
+      },
+      "description": "Create dimension annotations between elements or points in the current view"
+    },
+    {
+      "commandName": "kg_session_info",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Return KG session metadata: project_id, current turn, node/edge counts, last action summary. Read-only."
+    },
+    {
+      "commandName": "kg_query",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Search KG nodes by type and/or attrs_filter (exact match). Supports field projection (select), server-side aggregation, and edge-aware join projection. Read-only. Returns matching nodes with their attrs and lifecycle."
+    },
+    {
+      "commandName": "kg_diff_since",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Return KG action log entries since a given turn (create/modify/delete/etc.). Read-only."
+    },
+    {
+      "commandName": "kg_get_by_revit_id",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Resolve a Revit ElementId to its KG node (or null if unbound). Read-only."
+    },
+    {
+      "commandName": "kg_traverse",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Multi-hop traversal in the KG from start_id following a path of {edge_type, direction (out|in)} steps. Returns reached node set (deduped)."
+    },
+    {
+      "commandName": "kg_detect_drift",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compare the KG projection against the active Revit document and return divergences (missing_in_kg, orphan_kg_node, tombstoned_but_live, attrs_diverged). Optional node_type filter. Read-only."
+    },
+    {
+      "commandName": "kg_assert_composition",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "ASSERT a designated composition into the KG - the counterpart of the kg_compute_* computers, for assemblies no computer can find. Required: type_name (declared catalogue) and members[] of {revit_id|llm_id, role}. Optional: attrs. EXACTLY ONE member must carry the type identity role. Every member is written through CompositionWriter.AddMember, so a role foreign to the type is REFUSED and reported in members_refused (which must be 0). A composition of the same type already carrying the same identity member is REUSED, not duplicated; members it no longer names are removed. revit_ids that resolve to no node are listed in unresolved - the normal cause is a non-primary design option, which the projection drops."
+    },
+    {
+      "commandName": "kg_annotate",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Author/replace/delete a semantic (KG-owned) edge. Built-in kinds: replaced_by | tagged | violates_rule | implements_intent | contains | belongs_to | has_program | has_envelope_regime | satisfies. Any other name = a USER-DEFINED edge type, registered on first use; Revit-owned projected types (at_level, is_type, hosts, bounded_by, connects_at, derived_from, has_material) are rejected. Required: src, dst (llm_ids, may be soft-deleted), kind. Payload object = upsert/replace; payload null/absent = delete if present. Edges survive Revit re-projection and undo/redo."
+    },
+    {
+      "commandName": "kg_create_node",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Create a USER-DEFINED semantic node not derived from Revit (e.g. Suite, Zone, Apartment, EnvelopeRegime). Required: node_type (must not collide with a built-in Revit-projected type). Optional: attrs (free-form JSON object, no schema). Returns the new llm_id. Link it to existing nodes with kg_annotate. Carries no revit_id, so it is invisible to drift detection and untouched by rescan."
+    },
+    {
+      "commandName": "kg_modify_node",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Modify attrs of a user-defined node (free-form). Required: llm_id, updates (JSON object). Refuses Revit-projected nodes — edit those in Revit, not the KG."
+    },
+    {
+      "commandName": "kg_delete_node",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Soft-delete a user-defined node (history kept). Required: llm_id. Refuses Revit-projected nodes — delete those in Revit and let the projection tombstone them."
+    },
+    {
+      "commandName": "kg_resolve_drift",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Align the KG projection to the live Revit document on a per-entry basis. missing_in_kg -> project the Revit element; attrs_diverged -> overwrite KG attrs; orphan_kg_node -> soft-delete the KG node; tombstoned_but_live -> resurrect + re-sync. P5: an orphan and a newly projected node of the same type with EXACTLY equal attrs (1:1) are declared successors (replaced_by edge, successions_written / successions_ambiguous) - composition keys resolve through that chain, so redrawing an anchor keeps its compositions and their annotations. Optional kinds[], node_type, dry_run filters. Non-dry-run requires confirm=\"align-to-revit\"."
+    },
+    {
+      "commandName": "kg_compute_adjacency",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute room-to-room adjacency from the live model and project it as Derived adjacent_to edges (Room <-> Room). GEOMETRIC pass (the SAME implementation kg_export runs) probing both sides of every boundary segment; rewrites BOTH adjacent_to and connects (one pass, single writer). Deterministic, idempotent, Revit-side read-only. Returns { rooms, pairs, connect_pairs, computed_at_turn, adjacencies }."
+    },
+    {
+      "commandName": "kg_compute_connects",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute the room access graph: Derived connects edges (Room <-> Room) between rooms one can physically move between. GEOMETRIC pass over the live model (the SAME implementation kg_export runs): probes every DOOR, WALL OPENING and ROOM-SEPARATION LINE and QUALIFIES each passage - an opening with a raised sill (imposte) or a passage filled by a fixed panel/gate is a boundary, not a passage. Rewrites BOTH connects and adjacent_to (one pass, single writer). Each edge carries via, boundary_type (door | opening | separation | mixed) and method=geometric. Returns { pairs, rooms, adjacent_pairs, passages, separations_filled, openings_rejected_sill, openings_filled, computed_at_turn, connections }."
+    },
+    {
+      "commandName": "kg_update",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Reconcile the KG projection with the live Revit document (drift detect + resolve + advance turn + flush). The on-demand core. On a cold (cset-only, degraded-mode) KG this triggers the first full scan via self-host. Returns { total_detected, total_resolved, turn, node_count, edge_count }."
+    },
+    {
+      "commandName": "kg_export",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Reconcile then write the fused sidecar JSON (attrs + live quantities + drift_status + ontology) — the export pipeline, commandable by an agent, incl. in degraded (cset-only) mode. Optional 'path'; otherwise <basename>_kg.json next to the .rvt (an unsaved document requires an explicit path). Returns { path, turn, node_count, edge_count }."
+    },
+    {
+      "commandName": "kg_compute_containment",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute spatial containment: Derived contains_element edges (Room -> ModelElement) telling which room geometrically contains each point-based element (furniture, casework, fixtures, generic models), via GetRoomAtPoint. Idempotent full-replace, Revit-side read-only. This is the per-room element INVENTORY an agent reads (with families/types, adjacency, envelope) to infer a room's program. Returns { elements, contained, rooms, computed_at_turn }. Also recomputed automatically at kg_export."
+    },
+    {
+      "commandName": "kg_compute_floor_finish",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute floor finish / zoning: Derived has_floor_finish edges (Room -> Floor) telling which FINISH floors surface each room and by how much. Type-level finish-vs-slab discrimination (thin covering vs structural slab, from the compound structure — no name lexicon), then a footprint grid probe (GetRoomAtPoint) attaching a finish floor to EVERY room it covers (one floor may span several rooms; a room carries several finishes = zoning). Each edge carries material, floor_type, floor_area_m2, coverage_ratio, covered_area_m2. Idempotent full-replace, Revit-side read-only. Feeds planFloor with real finishes/zones. Returns { finish_floors, edges, rooms, computed_at_turn }. Also recomputed automatically at kg_export."
+    },
+    {
+      "commandName": "kg_compute_cladding",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute wall cladding: Derived clads_wall edges (ModelElement -> Wall) inferring the host wall of each UNHOSTED 3D cladding element (flutings, reveals, bronze lames, LED corniches) by perpendicular proximity to a wall face, along the wall's extent. Drops 2D view-specific detail symbols (BreakLine) and already-hosted elements. Non-lexical, deterministic, idempotent full-replace, Revit-side read-only. Each edge carries face_distance_m. Gives planCladding a real per-wall assignment instead of an ordering heuristic. Returns { candidates, edges, walls, computed_at_turn }. Also recomputed automatically at kg_export."
+    },
+    {
+      "commandName": "kg_compute_support",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute the SUPPORT relation: Derived stacked edges (ModelElement -> ModelElement, DIRECTED child -> carrier, N:1) telling what each accessory RESTS ON — a desk pad and a lamp on a table, a display panel on a showcase tray, a seat module on a counter. Reads the LIVE model: an export carries no absolute altitude (family frames are measured from each family's own insertion point), so this cannot be mined offline. THE EDGE STORES THE FACT, NOT THE ALTITUDE — no instance z enters the KG; the seat is re-derived from the carrier at placement time. Contact = carrier top within 3 cm of the child's base AND >= 90% of the child's footprint covered (90%, not strict inclusion: a lamp legitimately overhangs its table). The COMPOSITION GRAMMAR is excluded upstream, and that exclusion is part of the definition: raw contact detection is dominated by cladding modules stacked in courses (measured on a fit-out: 499 raw contacts -> ~12 edges). Three KG-native or structural filters, never a copy of a family lexicon: the child or carrier carries clads_wall/has_luminaire; both ends are the same family; one carrier bears 4 or more identical children. Refreshes its own dependencies first (clads_wall, has_luminaire) because those ARE the grammar flag and neither survives a session restart. Returns raw_contacts vs edges plus each rejection count and grammar_flagged, so a new project shows immediately whether the exclusion still holds. Deterministic, idempotent full-replace, Revit-side read-only."
+    },
+    {
+      "commandName": "kg_compute_coplanar",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute the ATTITUDE of each wall-attached element towards its host: Derived coplanar_to_host edges (element -> Wall, N:1) carrying dihedral_deg (angle between the element's dominant planar face and the wall plane, folded to 0..90) and depth_from_host_face_m with datum='host_face' (volume centroid distance from the host FACE on the element's own side; positive in front of it, negative inside the thickness). THE ATTRIBUTE NAMES ITS DATUM ON PURPOSE: composition_rules carry a requirement also called coplanar_to_host whose depth is counted from the ROOM BOUNDARY BAND instead, and on the same niche visual the two read -0.127 m and -0.016..+0.033 m -- reading one for the other inverts the verdict, plus an attitude of parallel (<=12 deg, the validator's own tolerance) / perpendicular (>=78 deg) / oblique / horizontal_face. It does NOT say WHICH wall — `hosts` and `clads_wall` already do, and complementarily (measured: 502 + 1294, zero overlap); it says HOW. The dihedral is the number that separates a PANEL lying on the wall from a FIN standing off it, and it is what caught real defects where an element was posed perpendicular to its wall. Measured on the live solid, per instance: no family store is involved. ⚠ THE DEPTH DOES NOT DETECT A NICHE — an element at the back of a niche is hosted by the thin panel that is itself inside the niche, so it reads flush here; niche depth is measured from the ROOM BOUNDARY (constraint field), a different datum and a separate relation. No dihedral is reported when the dominant face is horizontal, rather than inventing a 90. Refreshes clads_wall first, since most pairs come from it and a Derived layer does not survive a session restart. Deterministic, idempotent full-replace, Revit-side read-only."
+    },
+    {
+      "commandName": "kg_compute_wall_assembly",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Group walls into WALL ASSEMBLIES — the multi-layer build-ups a fit-out is made of, which Revit models only as loose parallel walls. Creates Derived WallAssembly nodes (layer_count, total_thickness_m, length_m, direction, wall_types) and belongs_to_assembly edges (Wall -> WallAssembly, N:1). WHY: a cladding element is attached to ONE wall by clads_wall, chosen as the nearest face — but a bronze lame has 14 to 24 parallel walls within 30 cm of it, layers 2 cm apart, so 'nearest face' is a coin flip. The element does not belong to a layer, it belongs to the BUILD-UP. Grouping the layers makes 95% of clad elements see a single assembly instead. Two walls join when they are parallel (|d.d'| >= 0.95), their FACES are within max_face_gap_m (default 0.15 m), and they overlap along the axis by at least 0.10 m; transitive closure. The 0.15 m is calibrated on a PLATEAU, not tuned: resolution goes 53% at 2 cm, 77% at 10 cm, 95% at 15 cm, then flat to 40 cm — and the knee matches the physical recess depth (12-18 cm). It detects a build-up along a RUN (measured 7.5-11.7 m for 0.42-0.73 m of thickness), NOT a 'gorge': the shadow gap is a feature INSIDE an assembly. Curved walls are skipped: their chord lies. An assembly's identity is its layer set, so a re-run reuses the node when that set is unchanged and soft-deletes the ones the model no longer produces. No derived dependency to refresh (Wall nodes are Projected). Deterministic, idempotent, Revit-side read-only."
+    },
+    {
+      "commandName": "kg_compute_ceiling",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute ceilings over spaces: Derived has_ceiling edges (Room -> Ceiling) telling which ceiling covers each room, with its finish material, ceiling type and HEIGHT above level (RCP), via a footprint grid probe (GetRoomAtPoint at the room level). A ceiling may span several rooms; a room may carry several ceilings at different heights. Each edge carries material, ceiling_type, height_m, ceiling_area_m2, coverage_ratio, covered_area_m2. Idempotent full-replace, Revit-side read-only. Returns { ceilings, edges, rooms, computed_at_turn }. Also recomputed automatically at kg_export."
+    },
+    {
+      "commandName": "kg_compute_lighting",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Compute the per-room lighting inventory: Derived has_luminaire edges (Room -> ModelElement lighting fixture). Most fixtures are ceiling-hosted at a height the point-probe can't reach and carry no own level, so the room is INHERITED through the fixture's host ceiling (has_ceiling); wall/free fixtures fall back to GetRoomAtPoint. Each edge carries family_type, mount (ceiling | wall | free) and the host ceiling ref (RCP plane). Idempotent full-replace, Revit-side read-only. Feeds the ceiling/lighting planner. Requires ceilings computed first (does so at kg_export). Returns { luminaires, edges, rooms, via_ceiling, computed_at_turn }. Also recomputed automatically at kg_export."
+    },
+    {
+      "commandName": "kg_constraint_field",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Serve the layout CONSTRAINT FIELD LIVE (placeable wall bands, door-swing clearances, connects corridors, focal points, orientation field, per-room coverage gaps) in the response instead of the dev sidecar — the in-session transport the layout GENERATOR agent consumes. Mirrors the ribbon command's prep (reconcile → refresh connects/adjacency → refresh containment → compute the field). Frame = model metres; each room carries level_elevation_m so an [x,y] lifts to a placement point. Optional 'room_id' filters to one room (llm id like room_008, or revit_<id>). Revit-side read-only. Returns { field, rooms, computed_at_turn } where field is the full constraint_field document."
+    },
+    {
+      "commandName": "kg_compute_threshold",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Derive the THRESHOLDS of the document: Composition nodes of type `threshold` — a room PAIR and what separates it. No Revit element represents a threshold, which is why it must be derived: measured on CORSAGE, `Sales Area 3 | VIP Room` is THREE walls plus a 3,775 m door, `Bar | Lounge` is TWO separation lines, and two thresholds out of fourteen share NO boundary element at all — they exist only through a door hosted in a THIRD room's wall. Members carry DECLARED ROLES, one edge type each: `separates` (Composition -> Room, the identity: the pair), `separating_construction` (the WallAssembly, or a bare Wall in the residual case), `separating_limit` (a RoomSeparationLine), `threshold_passage` (a Door). THE PASSAGE PREDICATE IS EXACT AND THE FILTER IS IN THE COMPUTER: category = Doors AND FromRoom AND ToRoom — 11 on CORSAGE with no exception. Revit sets FromRoom/ToRoom on EVERY family hosted in a party wall, so a rule without the category filter once turned 38 marble cladding panels into 38 passages; `passages_rejected` keeps that trap visible. IT DECLARES `wall_assembly` AS AN INPUT and refreshes it: a room only ever sees ONE LAYER of a build-up (Welcome and Stairs do not even see the same layer), so without the assemblies a threshold would name one arbitrary layer — nothing would fail, the graph would just be wrong. Identity is the room PAIR, so a re-run REUSES the node when a door is added or a layer changes. Read `members_refused` before trusting the result: since every role edge starts at `Composition`, endpoint validation no longer discriminates and only the CompositionType refuses a foreign role — a non-zero count is a defect, not a fact. Deterministic, idempotent, Revit-side read-only. PLUS the MATERIALISATION of the bay (designated 2026-08-09): threshold_opening (embrasures), threshold_raccord (short connecting walls at bay ends), threshold_leaf (unhosted gates/sliding leaves/panels/door profiles - a closed leaf makes a threshold WITHOUT passage), threshold_floor_strip (~5 mm metal strip on the separation line), and the floor MATERIAL CHANGE across the bay (floor_finish_a/b, material_change). Returns { rooms, boundary_uses, passages, passages_rejected, thresholds, from_shared_boundary, from_passage_only, reused, created, retired, member_edges, members_refused, opening_candidates, short_wall_candidates, thin_floor_candidates, leaf_candidates, openings_adopted, raccords_adopted, leaves_adopted, floor_strips_adopted, leaves_wall_backed, leaves_row_excluded, raccords_fabric_excluded, material_changes, computed_at_turn }."
+    },
+    {
+      "commandName": "kg_compute_tableau",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "Derive TABLEAUX and their signed interruptions among the generic models whose FAMILY NAME contains `family_contains` (case-insensitive). WITHOUT THAT PARAMETER IT WRITES NOTHING, and retires the compositions of a previous pass — deliberately: measured on CORSAGE, run over ALL 1349 generic models the flush test alone accepted 564 and wrote 607 spurious compositions, because any cladding laid against a wall is flush with its face BY CONSTRUCTION. Four candidate criteria have been falsified (counting wall directions; a perpendicular wall bridging the two planes; the absence of clads_wall — the bronze trim HAS one; the flush test alone), so the code stays general and the project knowledge is supplied at the call. On CORSAGE the predicate is 'LAME-BRONZE'. Derive TABLEAUX and their signed interruptions: Composition nodes of type `wall_tableau`, `wallstep_positif` and `wallstep_negatif`. A tableau is a DRESSED WALL PLANE; each interruption of that plane is a composition whose SIGN chooses its type. The datum is the wall face the trim is FLUSH with — the room is always on that side, verified on both measured cases: the VIP step reads (+) VIP Room with nothing at 1 m on the other side, the Welcome recess reads (+) Welcome and (-) Stairs at 600 mm. From that face to the plane beyond: POSITIF when it projects (measured +115,0 mm), NEGATIF when it recedes AND HAS A BACK (measured -199,7 mm). Two types rather than one signed attribute because the role sets genuinely differ: the negative has `tableau_back` and `tableau_jamb`, the positive has `tableau_beyond` instead. IT DOES NOT EMIT `wall_step`, ON PURPOSE: the step is declared and invocable by both signs, but its automatic detection is UNSOLVED — two criteria were falsified against the user's own selections (counting wall DIRECTIONS confuses a recess, whose jambs are perpendicular, with a corner; 'a perpendicular wall bridging the two planes' classified the designated step WITHOUT a bridge and the designated recess WITH one, inverting both examples). This computer produces the general type and stays silent rather than guess a third. NOTHING KEYS ON A DIMENSION: measured tableau lengths are 1555, 1749, 1995, 2890, 3535, 3555 and 4250 mm, trim overshoots 25, 30, 35 and 50 mm — only the structure and the flush rule hold. Read `no_flush_face`: 8 of 43 trims on CORSAGE (all `Cadre-Vitrine`) escape the datum itself and are a recipe this computer does not model; they are counted, never forced into a type that does not fit. Identity of an interruption is ITS TRIM, never 'its tableau plus an end', so it survives being convoked on its own and its tableau being re-cut. Deterministic, idempotent, Revit-side read-only. A TABLEAU HAS EXACTLY TWO TERMINATIONS (user): with one it is not a tableau, and its interruption stands alone rather than being discarded. That rule did not merely reject cases — it MADE A DEFECT VISIBLE: before it, CORSAGE gave 20 tableaux for 30 interruptions, 11 of them single, and those 11 were return walls and recess jambs. A TERMINATION IS VERTICAL: the horizontal crowning trim (115 × 3535 mm for 5 mm high, at mid-length) is excluded and counted in `crowning`. A TERMINATION SITS NEAR ITS OWN END, as a FRACTION of the wall and never as a distance: the 12 real tableaux of CORSAGE place their trims at 1,4-5,9 % of their length, while the one impostor (7799 mm, bounding no room) has one at 48 % — mid-span. Without that proximity test, 'two trims' was enough and the rule REINFORCED the impostor. AN INTERRUPTION *IS* A WALLSTEP (user): `wallstep_positif` and `wallstep_negatif` are SUB-TYPES that inherit its roles, and a wallstep with NO determinable sign — nothing continues beyond — is emitted as the general type instead of being discarded, which is what happened to 2 of them on CORSAGE. Returns { trims, crowning, qualified_tableaux, datum_disambiguated, rejected_single_termination, rejected_too_many_terminations, no_flush_face, nothing_beyond, positive, negative, unsigned, tableaux, edges, reused, created, retired, member_edges, members_refused, computed_at_turn }."
+    },
+    {
+      "commandName": "kg_compute_room",
+      "assemblyPath": "RevitMCPCommandSet.KG\\{VERSION}\\RevitMCPCommandSet.KG.dll",
+      "enabled": true,
+      "supportedRevitVersions": [
+        "2025"
+      ],
+      "developer": {
+        "name": "Lauro Foletti",
+        "email": "",
+        "website": "",
+        "organization": "com.laurofoletti"
+      },
+      "description": "P4 - the ROOM AS A TREE: one Composition of type `room` per living room (anchored `composed_room`, key resolved through the P5 succession chain), whose `room_part` edges point at its THRESHOLDS (one per neighbour, SHARED with the room across - multiplicity is real), its TABLEAUX (by `datum_room_ref`, stamped by the tableau computer which alone knows the flush face; fallback: unambiguous has_wall service) and its WALL ASSEMBLIES serving the room MINUS those already reachable as separating_construction of its thresholds (one source of truth per link). Wallsteps stay children of their tableau (transitive). The six flat edges (has_wall, contains_element, ...) REMAIN as the service layer - 3 to 19 walls per room belong to no composition yet, an honest residue. Adjacency does NOT imply a threshold (user rule): two rooms can be party neighbours with no threshold at all. Deterministic, idempotent full-replace of members, pure graph. Read members_refused before trusting the result. Returns { rooms, room_compositions, reused, created, retired, part_thresholds, part_tableaux, part_assemblies, assemblies_deduped, tableaux_unresolved, member_edges, members_refused, computed_at_turn }."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+Metadata-Version: 2.4
+Name: rhinomcp
+Version: 0.3.2
+Summary: Rhino integration through the Model Context Protocol
+Author-email: Jingcheng Chen <mail@jchen.ch>
+License: MIT
+Project-URL: Homepage, https://github.com/jingcheng-chen/rhinomcp
+Project-URL: Bug Tracker, https://github.com/jingcheng-chen/rhinomcp/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: mcp[cli]>=1.16.0
+Provides-Extra: validation
+Requires-Dist: jsonschema>=4.20.0; extra == "validation"
+Provides-Extra: dev
+Requires-Dist: jsonschema>=4.20.0; extra == "dev"
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: ruff>=0.6.0; extra == "dev"
+
+# RhinoMCP - Rhino Model Context Protocol Integration
+
+RhinoMCP connects Rhino to Claude AI through the Model Context Protocol (MCP), allowing Claude to directly interact with and control Rhino. This integration enables prompt assisted 3D modeling in Rhino 3D.
+
+Please visit Github for complete information:
+
+[Github](https://github.com/jingcheng-chen/rhinomcp)

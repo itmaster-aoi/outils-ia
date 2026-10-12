@@ -1,0 +1,12 @@
+# Données locales : ne jamais publier
+*.db
+*.sqlite
+Logs/
+*.log
+.env
+*.pfx
+*.key
+
+# Fichiers générés
+__pycache__/
+*.pyc

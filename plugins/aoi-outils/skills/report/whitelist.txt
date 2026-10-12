@@ -1,0 +1,27 @@
+# Liste blanche des librairies Python de l'atelier
+#
+# Un nom par ligne : le nom utilisé dans `import`, qui peut différer du nom du paquet pip.
+# La bibliothèque standard de Python est toujours acceptée et n'a pas à figurer ici.
+# Les dépendances d'une librairie acceptée sont acceptées quand c'est elle qui les importe.
+#
+# Toute ajout passe par l'IT : relecture, puis nouvelle étiquette du dépôt.
+# Liste initiale du 12.10.2026, à compléter.
+
+# Tableurs, documents, PDF
+openpyxl        # pip : openpyxl
+docx            # pip : python-docx
+pptx            # pip : python-pptx
+pypdf           # pip : pypdf
+reportlab       # pip : reportlab
+
+# Données et calcul
+numpy           # pip : numpy
+pandas          # pip : pandas
+
+# Images et graphiques
+PIL             # pip : pillow
+matplotlib      # pip : matplotlib
+
+# Divers
+yaml            # pip : pyyaml
+requests        # pip : requests

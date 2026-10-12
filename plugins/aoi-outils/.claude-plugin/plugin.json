@@ -1,0 +1,6 @@
+{
+  "name": "aoi-outils",
+  "version": "2026.10.12",
+  "description": "Serveurs MCP validés par l'IT de l'atelier, avec leurs dépendances figées.",
+  "author": { "name": "AOI IT", "url": "https://github.com/itmaster-aoi" }
+}
