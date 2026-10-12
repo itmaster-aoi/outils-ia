@@ -285,7 +285,7 @@ $refInscrite = RefInscrite
 if (-not $plugin) {
   Avert "Plugin introuvable. Lancez « claude » une fois, connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
   Noter "Plugin aoi" "MANQUANT" "connexion à Claude Code requise"
-} elseif (-not (Test-Path (Join-Path $plugin.installPath "mcp\rhino\runtime\python.exe"))) {
+} elseif (-not (Test-Path (Join-Path $plugin.installPath "skills\report\runtime\python.exe"))) {
   Avert "aoi $($plugin.version) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
   Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version) : version antérieure à 2026.10.12.3"
 } elseif ($refImposee -and $refInscrite -ne $refImposee) {
@@ -309,6 +309,13 @@ if ($plugin -and -not $DryRun) {
   } else {
     Avert "Contrôle des imports non activé : $ac absent de aoi $($plugin.Name). Contactez l'IT."
     Noter "Contrôle des imports" "À TRAITER" "activer_controle.py absent du plugin"
+  }
+  # Python AOI (librairies de la liste blanche) : archive à part, téléchargée si sa version change
+  $pt = Join-Path $plugin.FullName "skills\regen\scripts\python_aoi.py"
+  if ((Test-Path $py) -and (Test-Path $pt)) {
+    $r = AvecRoue "Python AOI (téléchargé seulement si sa version a changé)" $py @($pt)
+    $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Write-Host "       $_" }
+    Noter "Python AOI" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "$env:LOCALAPPDATA\aoi\python"
   }
 }
 

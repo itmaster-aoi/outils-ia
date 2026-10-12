@@ -12,11 +12,15 @@ openpyxl        # pip : openpyxl
 docx            # pip : python-docx
 pptx            # pip : python-pptx
 pypdf           # pip : pypdf
+pymupdf         # pip : pymupdf (licence AGPL-3.0)
+fitz            # pip : pymupdf, ancien nom d'import
 reportlab       # pip : reportlab
 
 # Données et calcul
 numpy           # pip : numpy
 pandas          # pip : pandas
+sklearn         # pip : scikit-learn (pas dans le Python AOI)
+skimage         # pip : scikit-image (pas dans le Python AOI)
 
 # Images et graphiques
 PIL             # pip : pillow

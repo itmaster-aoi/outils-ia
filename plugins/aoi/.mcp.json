@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rhino": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/runtime/python.exe",
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
       "args": [
         "-I",
         "-S",

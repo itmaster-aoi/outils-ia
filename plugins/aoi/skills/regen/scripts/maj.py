@@ -140,6 +140,11 @@ def controle(plugin, verifier):
         r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
         print("  " + (r.stdout + r.stderr).strip().replace("\n", "\n  "))
+    # Python AOI : téléchargé à part, seulement si sa version change
+    script = plugin["chemin"] / "skills" / "regen" / "scripts" / "python_aoi.py"
+    if script.is_file():
+        sys.stdout.flush()
+        subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []))
 
 
 def main():

@@ -1,7 +1,8 @@
-"""Lanceur du serveur rhino.
+r"""Lanceur du serveur rhino.
 
-Lancé avec `python -I -S run.py` : Python ignore alors les paquets installés sur le poste
-et n'utilise que les copies figées de ce dossier (server/ et libs/).
+Lancé par le Python AOI de l'atelier (%LOCALAPPDATA%\aoi\python), avec `-I -S` :
+les copies figées de ce dossier (server/ et libs/) passent avant tout autre paquet, et le
+contrôle des imports, réservé aux scripts de Claude, n'est pas chargé.
 `python -I -S run.py --check` vérifie les imports sans démarrer le serveur.
 """
 import os

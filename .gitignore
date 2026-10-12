@@ -10,3 +10,7 @@ Logs/
 # Fichiers générés
 __pycache__/
 *.pyc
+
+# Python AOI : construction locale, archive publiée comme version GitHub
+python-aoi/build/
+python-aoi/dist/
