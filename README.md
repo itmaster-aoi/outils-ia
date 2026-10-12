@@ -25,6 +25,17 @@ VERSIONS.md                       versions de référence validées
 - **Pas de mise à jour automatique** : une nouvelle version d'un outil est relue, ajoutée, étiquetée, puis l'étiquette est mise à jour dans les managed settings.
 - Les licences des projets d'origine sont conservées dans chaque dossier.
 
+## Préparer un poste
+
+Télécharger [`installer-poste.ps1`](installer-poste.ps1), puis le lancer **sans élévation**, une fois par utilisateur et par poste :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1 -DryRun   # diagnostic seul, ne modifie rien
+powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1           # installation
+```
+
+Le script installe ou vérifie Git for Windows et Claude Code, signale une éventuelle clé `ANTHROPIC_API_KEY`, enregistre le jeton de veille, retire les anciennes déclarations MCP, installe ou met à jour le plugin `aoi-outils` et copie les add-ins Rhino et Revit (en sauvegardant le registre de commandes Revit existant). Il termine par un bilan. Il est rejouable sans risque.
+
 ## Prérequis sur les postes (installés une fois par l'IT)
 
 Python 3.12 et Node.js 25 sont **fournis dans le plugin** (`mcp/*/runtime/`, `skills/report/runtime/`) : ni installation, ni variable d'environnement.
