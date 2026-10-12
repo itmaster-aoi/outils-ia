@@ -1,0 +1,5 @@
+# Les postes ont core.autocrlf=true (Git for Windows) : sans ces règles, Claude Code
+# clone les SKILL.md en CRLF et leur en-tête YAML ne se lit plus (skills sans nom).
+*.md   text eol=lf
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf

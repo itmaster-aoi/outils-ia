@@ -45,7 +45,25 @@ def _read_whitelist(path):
 
 
 _ALLOWED = _read_whitelist(_WHITELIST)
-_STDLIB = set(sys.stdlib_module_names) | set(sys.builtin_module_names)
+_STDLIB = set(getattr(sys, "stdlib_module_names", ())) | set(sys.builtin_module_names)
+# Python antérieur à 3.10 : pas de sys.stdlib_module_names, la bibliothèque standard se
+# reconnaît à son emplacement (dossier Lib ou DLLs de l'installation, hors site-packages).
+_STDLIB_DIRS = ()
+if not hasattr(sys, "stdlib_module_names"):
+    import sysconfig
+    _STDLIB_DIRS = tuple(os.path.normcase(os.path.abspath(d)) + os.sep for d in {
+        sysconfig.get_paths()["stdlib"], sysconfig.get_paths()["platstdlib"],
+        os.path.join(sys.base_prefix, "DLLs")})
+
+
+def _is_stdlib(spec):
+    origin = spec.origin if spec.origin not in (None, "built-in", "frozen") else None
+    if origin is None and spec.submodule_search_locations:
+        origin = next(iter(spec.submodule_search_locations), None)
+    if not origin:
+        return spec.origin in ("built-in", "frozen")
+    origin = os.path.normcase(os.path.abspath(origin))
+    return "site-packages" not in origin and origin.startswith(_STDLIB_DIRS)
 _ROOTS = {os.path.normcase(os.path.abspath(os.getcwd()))}
 if sys.argv and sys.argv[0] not in ("", "-c", "-m"):
     _ROOTS.add(os.path.normcase(os.path.dirname(os.path.abspath(sys.argv[0]))))
@@ -128,6 +146,9 @@ class _AoiImportGuard:
         spec = importlib.machinery.PathFinder.find_spec(top)
         if spec is None:
             return None  # introuvable : Python lèvera lui-même l'erreur habituelle
+        if _STDLIB_DIRS and _is_stdlib(spec):
+            _STDLIB.add(top)
+            return None
         importer = _importer_top()
         if importer and importer != top and _decided.get(importer) in ("accepté", "dépendance"):
             _log(top, "dépendance", "importé par " + importer)
