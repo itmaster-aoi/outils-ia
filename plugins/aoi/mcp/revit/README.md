@@ -1,4 +1,4 @@
-# aoi-revit
+# revit
 
 Serveur MCP qui permet à Claude de piloter Revit 2025 et d'en tenir un **graphe de connaissances (KG)**.
 
@@ -18,7 +18,7 @@ Il repose sur le projet [mcp-servers-for-revit](https://github.com/mcp-servers-f
 
 1. Rien à installer pour le serveur : Node.js 25.8.2 est fourni dans `runtime/`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé.
 2. **Add-in Revit** : copier le contenu de `addin/2025/` dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, puis relancer Revit.
-3. Le serveur MCP s'installe tout seul : Claude Code récupère le plugin `aoi-outils` depuis le dépôt de l'atelier.
+3. Le serveur MCP s'installe tout seul : Claude Code récupère le plugin `aoi` depuis le dépôt de l'atelier.
 
 L'add-in autonome **BIM KG** (`BimKg.addin`) n'est pas nécessaire. Le jeu de commandes KG embarque son propre moteur et fonctionne seul. S'il trouve l'add-in BIM KG, il cohabite avec lui.
 
@@ -30,7 +30,7 @@ Le registre (`revit_mcp_plugin/Commands/commandRegistry.json`) active **50 comma
 
 ## Vérification
 
-Dans Claude Code, avec Revit ouvert : `/mcp` doit montrer `plugin:aoi-outils:aoi-revit` connecté. Demander « dis bonjour dans Revit » doit afficher la boîte de dialogue `say_hello`, et `kg_session_info` doit répondre.
+Dans Claude Code, avec Revit ouvert : `/mcp` doit montrer `plugin:aoi:revit` connecté. Demander « dis bonjour dans Revit » doit afficher la boîte de dialogue `say_hello`, et `kg_session_info` doit répondre.
 
 ## Données locales
 

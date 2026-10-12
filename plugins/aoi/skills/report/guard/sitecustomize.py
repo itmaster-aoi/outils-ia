@@ -1,7 +1,7 @@
-"""Contrôle des imports Python de l'atelier (aoi-outils / report).
+"""Contrôle des imports Python de l'atelier (aoi / report).
 
 Chargé automatiquement par Python au démarrage quand ce dossier est dans PYTHONPATH
-(le plugin aoi-outils l'y place pour les commandes que lance Claude Code).
+(le plugin aoi l'y place pour les commandes que lance Claude Code).
 
 Pour chaque librairie importée :
 - la bibliothèque standard de Python est toujours acceptée ;

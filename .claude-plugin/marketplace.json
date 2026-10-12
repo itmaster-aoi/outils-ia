@@ -1,12 +1,18 @@
 {
   "name": "aoi",
   "description": "Outils Claude Code validés par l'IT de l'atelier (serveurs MCP, plus tard skills).",
-  "owner": { "name": "AOI IT", "url": "https://github.com/itmaster-aoi" },
+  "owner": {
+    "name": "AOI IT",
+    "url": "https://github.com/itmaster-aoi"
+  },
   "plugins": [
     {
-      "name": "aoi-outils",
-      "source": "./plugins/aoi-outils",
-      "description": "Serveurs MCP de l'atelier : aoi-rhino, aoi-revit, aoi-veille."
+      "name": "aoi",
+      "source": "./plugins/aoi",
+      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:veille."
     }
-  ]
+  ],
+  "renames": {
+    "aoi-outils": "aoi"
+  }
 }

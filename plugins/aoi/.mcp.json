@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "aoi-rhino": {
+    "rhino": {
       "command": "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/runtime/python.exe",
       "args": [
         "-I",
@@ -8,13 +8,13 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/run.py"
       ]
     },
-    "aoi-revit": {
+    "revit": {
       "command": "${CLAUDE_PLUGIN_ROOT}/mcp/revit/runtime/node.exe",
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/mcp/revit/server/build/index.js"
       ]
     },
-    "aoi-veille": {
+    "veille": {
       "type": "http",
       "url": "https://veille.casual-labs.ch/mcp",
       "headers": {

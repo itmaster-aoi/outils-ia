@@ -1,4 +1,4 @@
-# aoi-rhino
+# rhino
 
 Serveur MCP qui permet à Claude de piloter Rhino 8. Ce dossier contient tout ce qu'il faut :
 
@@ -14,16 +14,16 @@ Serveur MCP qui permet à Claude de piloter Rhino 8. Ce dossier contient tout ce
 
 1. Rien à installer pour le serveur : Python 3.12 est fourni dans `runtime/`.
 2. **Plugin Rhino** : copier `addin/rhinomcp/` dans `%APPDATA%\McNeel\Rhinoceros\packages\8.0\`, puis relancer Rhino.
-3. Le serveur MCP lui-même s'installe tout seul : Claude Code récupère le plugin `aoi-outils` depuis le dépôt de l'atelier.
+3. Le serveur MCP lui-même s'installe tout seul : Claude Code récupère le plugin `aoi` depuis le dépôt de l'atelier.
 
 ## Vérification
 
 ```
 runtime\python.exe -I -S run.py --check
 ```
-La commande doit afficher `aoi-rhino : imports ok`, avec des chemins qui pointent tous dans ce dossier.
+La commande doit afficher `rhino : imports ok`, avec des chemins qui pointent tous dans ce dossier.
 
-Dans Claude Code, `/mcp` doit montrer `plugin:aoi-outils:aoi-rhino`, connecté une fois Rhino ouvert.
+Dans Claude Code, `/mcp` doit montrer `plugin:aoi:rhino`, connecté une fois Rhino ouvert.
 
 ## Licence
 

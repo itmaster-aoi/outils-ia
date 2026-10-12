@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Prépare un poste de l'atelier pour Claude Code et le plugin aoi-outils, sans élévation.
+  Prépare un poste de l'atelier pour Claude Code et le plugin aoi, sans élévation.
 
 .DESCRIPTION
   À lancer une fois par utilisateur et par poste, dans un PowerShell normal (pas en administrateur) :
@@ -13,7 +13,7 @@
     3. Absence de clé ANTHROPIC_API_KEY (sinon les règles de l'organisation ne s'appliquent pas)
     4. Jeton personnel du service de veille (AOI_VEILLE_TOKEN)
     5. Retrait des anciennes déclarations MCP rhino / revit / veille
-    6. Plugin aoi-outils (catalogue imposé par l'organisation)
+    6. Plugin aoi (catalogue imposé par l'organisation)
     7. Add-ins Rhino 8 et Revit, copiés depuis le plugin
   Puis un bilan.
 
@@ -149,7 +149,7 @@ if (VarUtilisateur "AOI_VEILLE_TOKEN") {
   $sec = Read-Host "   Collez votre jeton personnel du service de veille (Entrée pour passer)" -AsSecureString
   $jeton = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
   if ($jeton) { DefinirVar "AOI_VEILLE_TOKEN" $jeton; Ok "Jeton enregistré"; Noter "Jeton de veille" "ok" "saisi" }
-  else { Noter "Jeton de veille" "À TRAITER" "sans jeton, aoi-veille est refusé (401)" }
+  else { Noter "Jeton de veille" "À TRAITER" "sans jeton, veille est refusé (401)" }
 } else {
   Noter "Jeton de veille" "À TRAITER" "non défini"
 }
@@ -166,10 +166,10 @@ if ($vieux -and $claude) {
   Noter "Anciennes déclarations" "ok" "aucune"
 }
 
-# --- 6. Plugin aoi-outils --------------------------------------------------------------------
-Etape "6. Plugin aoi-outils"
+# --- 6. Plugin aoi --------------------------------------------------------------------
+Etape "6. Plugin aoi"
 $env:CLAUDE_CODE_PLUGIN_PREFER_HTTPS = "1"
-$cache = Join-Path $HOME ".claude\plugins\cache\aoi\aoi-outils"
+$cache = Join-Path $HOME ".claude\plugins\cache\aoi\aoi"
 function DossierPlugin {
   if (Test-Path $cache) {
     Get-ChildItem $cache -Directory | Where-Object { -not (Test-Path (Join-Path $_.FullName ".orphaned_at")) } |
@@ -200,23 +200,29 @@ if (-not $refImposee) {
       & claude plugin marketplace add "itmaster-aoi/outils-ia#$refImposee"
     } | Out-Null
   }
+  # Ancien nom du plugin (avant le 12.10.2026) : aoi-outils, serveurs plugin:aoi-outils:aoi-*
+  if ($claude -and (Test-Path (Join-Path $HOME ".claude\plugins\cache\aoi\aoi-outils"))) {
+    Faire "Désinstallation de l'ancien plugin aoi-outils (remplacé par aoi)" {
+      & claude plugin uninstall aoi-outils@aoi
+    } | Out-Null
+  }
   if ($claude) {
-    Faire "Installation ou mise à jour du plugin aoi-outils (environ 350 Mo au premier passage)" {
-      & claude plugin install aoi-outils@aoi
-      & claude plugin update aoi-outils@aoi
+    Faire "Installation ou mise à jour du plugin aoi (environ 350 Mo au premier passage)" {
+      & claude plugin install aoi@aoi
+      & claude plugin update aoi@aoi
     } | Out-Null
   }
 }
 $plugin = DossierPlugin
 if ($plugin -and -not (Test-Path (Join-Path $plugin.FullName "mcp\rhino\runtime\python.exe"))) {
-  Avert "aoi-outils $($plugin.Name) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
-  Noter "Plugin aoi-outils" "À METTRE À JOUR" "$($plugin.Name) : version antérieure à 2026.10.12.3"
+  Avert "aoi $($plugin.Name) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
+  Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.Name) : version antérieure à 2026.10.12.3"
 } elseif ($plugin) {
-  Ok "aoi-outils $($plugin.Name)"
-  Noter "Plugin aoi-outils" "ok" $plugin.Name
+  Ok "aoi $($plugin.Name)"
+  Noter "Plugin aoi" "ok" $plugin.Name
 } else {
   Avert "Plugin introuvable. Lancez « claude » une fois, connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
-  Noter "Plugin aoi-outils" "MANQUANT" "connexion à Claude Code requise"
+  Noter "Plugin aoi" "MANQUANT" "connexion à Claude Code requise"
 }
 
 # --- 7. Add-ins Rhino et Revit ---------------------------------------------------------------
@@ -260,7 +266,7 @@ Etape "Bilan"
 $bilan | Format-Table -AutoSize | Out-String | Write-Host
 Write-Host "Ensuite : fermez ce terminal, ouvrez-en un nouveau, lancez « claude » et vérifiez :"
 Write-Host "  /status   règles de l'organisation actives, connexion par compte claude.ai"
-Write-Host "  /plugin   catalogue aoi, plugin aoi-outils activé"
-Write-Host "  /mcp      plugin:aoi-outils:aoi-rhino, aoi-revit, aoi-veille (Rhino et Revit ouverts)"
+Write-Host "  /plugin   catalogue aoi, plugin aoi activé"
+Write-Host "  /mcp      plugin:aoi:rhino, revit, veille (Rhino et Revit ouverts)"
 Write-Host "  /report   rapport des serveurs et des librairies"
 Write-Host "Au premier lancement, acceptez les réglages de l'organisation si Claude Code le demande."

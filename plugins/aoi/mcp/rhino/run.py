@@ -1,4 +1,4 @@
-"""Lanceur du serveur aoi-rhino.
+"""Lanceur du serveur rhino.
 
 Lancé avec `python -I -S run.py` : Python ignore alors les paquets installés sur le poste
 et n'utilise que les copies figées de ce dossier (server/ et libs/).
@@ -26,7 +26,7 @@ from rhinomcp.server import main  # noqa: E402
 if __name__ == "__main__":
     if "--check" in sys.argv:
         import mcp
-        print("aoi-rhino : imports ok")
+        print("rhino : imports ok")
         print("  rhinomcp :", sys.modules["rhinomcp"].__file__)
         print("  mcp      :", mcp.__file__)
     else:

@@ -1,4 +1,4 @@
-"""Rapport des imports Python contrôlés par aoi-outils.
+"""Rapport des imports Python contrôlés par aoi.
 
 Usage : python report.py [--jours N]
 Lit le journal %LOCALAPPDATA%\\aoi\\imports.jsonl et le compare à la liste blanche.

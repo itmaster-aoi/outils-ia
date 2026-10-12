@@ -5,9 +5,9 @@ description: Rapport des librairies Python chargées par les scripts que Claude 
 
 # /report : imports Python contrôlés
 
-La commande se tape `/report`. Si une autre commande porte déjà ce nom, utiliser `/aoi-outils:report`.
+La commande se tape `/report`. Si une autre commande porte déjà ce nom, utiliser `/aoi:report`.
 
-Le plugin `aoi-outils` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`) est actif dans toutes les commandes de la session :
+Le plugin `aoi` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`) est actif dans toutes les commandes de la session :
 - il **journalise** chaque librairie chargée dans `%LOCALAPPDATA%\aoi\imports.jsonl` ;
 - il **compare** son nom à `whitelist.txt` ;
 - il **refuse l'import** d'une librairie non identifiée. Le script échoue alors avec `Import de '<nom>' refusé`.
@@ -19,7 +19,7 @@ Sont toujours acceptés : la bibliothèque standard de Python, les dépendances 
 1. Relève les **serveurs MCP chargés** dans ta session, sous le nom qu'affiche `/mcp`. Tes outils MCP s'appellent `mcp__<serveur>__<outil>`, et pour un plugin `mcp__plugin_<plugin>_<serveur>__<outil>`, ce qui correspond à `plugin:<plugin>:<serveur>`. Les connecteurs claude.ai s'appellent `claude.ai <nom>`.
 2. Lance le rapport avec le Python fourni dans `runtime/` (le poste n'a pas forcément de Python), en passant ces serveurs :
    ```
-   "<dossier de cette skill>/runtime/python.exe" "<dossier de cette skill>/scripts/report.py" --jours 7 --mcp "plugin:aoi-outils:aoi-rhino,plugin:aoi-outils:aoi-veille"
+   "<dossier de cette skill>/runtime/python.exe" "<dossier de cette skill>/scripts/report.py" --jours 7 --mcp "plugin:aoi:rhino,plugin:aoi:veille"
    ```
    Utilise `--jours N` si l'utilisateur précise une autre période. Le rapport compare les serveurs à `mcp-whitelist.txt` et les librairies Python à `whitelist.txt`.
 3. Présente le résultat, en commençant par ce qui pose problème : **serveurs MCP non identifiés**, puis **librairies refusées**. Pour chaque librairie refusée, indique **quel script ou quelle commande** l'a demandée et **pour quel utilisateur**. Reste bref quand tout est conforme : une ligne suffit.

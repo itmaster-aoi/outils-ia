@@ -22,9 +22,9 @@ SOFTWARE.
 
 ---
 
-Ce fichier couvre la partie KG de aoi-revit :
+Ce fichier couvre la partie KG de revit :
 - les outils serveur kg_* (server/build/kg/ et server/build/tools/kg_*.js) ;
 - le jeu de commandes Revit RevitMCPCommandSet.KG et le moteur BimKg
   (BimKg.Core, BimKg.Runtime), dans addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet.KG/.
 
-Le reste de aoi-revit relève de la licence MIT du projet d'origine (fichier LICENSE).
+Le reste de revit relève de la licence MIT du projet d'origine (fichier LICENSE).
