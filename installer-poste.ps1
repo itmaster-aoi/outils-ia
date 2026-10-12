@@ -376,7 +376,7 @@ if ($SkipAddins) {
 }
 
 # --- Bilan -----------------------------------------------------------------------------------
-Encadre @("BILAN", "$($env:USERNAME.ToLower()) @ $env:COMPUTERNAME, $((Get-Date).ToString('HH:mm'))")
+Etape "8. Bilan"
 $largeur = ($bilan | ForEach-Object { $_.Etape.Length } | Measure-Object -Maximum).Maximum
 foreach ($b in $bilan) {
   $ligne = "{0}   {1}   {2}" -f $b.Etape.PadRight($largeur), $b.Etat.PadRight(15), $b.Detail
