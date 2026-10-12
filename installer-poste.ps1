@@ -44,10 +44,22 @@ $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $bilan = [System.Collections.Generic.List[object]]::new()
 
-function Etape($titre) { Write-Host ""; Write-Host "== $titre" -ForegroundColor Cyan }
-function Ok($msg)      { Write-Host "   OK  $msg" -ForegroundColor Green }
-function Info($msg)    { Write-Host "   ..  $msg" }
-function Avert($msg)   { Write-Host "   !!  $msg" -ForegroundColor Yellow }
+# Affichage dans le style de la toolbox AOI : titres en vert, lignes « .   », ✅ réussi,
+# ██ à surveiller, ❌ échec, questions « >>> » en jaune.
+function Etape($titre) { Write-Host ""; Write-Host $titre -ForegroundColor Green }
+function Ok($msg)      { Write-Host "✅  $msg" -ForegroundColor Green }
+function Info($msg)    { Write-Host ".   $msg" }
+function Avert($msg)   { Write-Host "██  $msg" -ForegroundColor Yellow }
+function Erreur($msg)  { Write-Host "❌  $msg" -ForegroundColor Red }
+function Detail($msg)  { Write-Host ".       $msg" -ForegroundColor DarkGray }
+function Question($q)  { Write-Host -NoNewline ">>> $q " -ForegroundColor Yellow }
+function Encadre([string[]]$lignes) {
+  $l = ($lignes | Measure-Object -Property Length -Maximum).Maximum
+  Write-Host ""
+  Write-Host ("╔" + ("═" * ($l + 2)) + "╗")
+  foreach ($x in $lignes) { Write-Host ("║ " + $x.PadRight($l) + " ║") }
+  Write-Host ("╚" + ("═" * ($l + 2)) + "╝")
+}
 function Noter($etape, $etat, $detail) { $bilan.Add([pscustomobject]@{ Etape = $etape; Etat = $etat; Detail = $detail }) }
 function Faire($desc, [scriptblock]$action) {
   if ($DryRun) { Info "(diagnostic seul) $desc"; return $false }
@@ -75,7 +87,7 @@ function AvecRoue([string]$desc, [string]$exe, [string[]]$arguments) {
   while (-not $p.WaitForExit(120)) {
     if ($anime) {
       $s = [int]((Get-Date) - $debut).TotalSeconds
-      Write-Host -NoNewline ("`r   {0}   {1} ({2} s)" -f $roue[$i++ % 4], $desc, $s)
+      Write-Host -NoNewline ("`r{0}   {1} ... {2} s" -f $roue[$i++ % 4], $desc, $s) -ForegroundColor Yellow
     }
   }
   $p.WaitForExit()
@@ -95,7 +107,14 @@ function RafraichirPath {
 # --- 0. Contexte -----------------------------------------------------------------------------
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
   [Security.Principal.WindowsBuiltInRole]::Administrator)
-Write-Host "Poste $env:COMPUTERNAME, utilisateur $env:USERNAME$(if ($DryRun) { ' : diagnostic seul' })"
+$fr = [Globalization.CultureInfo]"fr-CH"
+$maintenant = Get-Date
+$jour = $fr.TextInfo.ToTitleCase($fr.DateTimeFormat.GetDayName($maintenant.DayOfWeek))
+Encadre @(
+  "INSTALLATION AOI$(if ($DryRun) { ' : diagnostic seul' })",
+  "$jour $($maintenant.ToString('dd.MM.yyyy, HH:mm'))",
+  "$($env:USERNAME.ToLower()) @ $env:COMPUTERNAME"
+)
 if ($admin) { Avert "Ce PowerShell tourne en administrateur. Relancez-le en utilisateur normal : tout s'installe dans votre profil." }
 
 # --- 1. Git for Windows ----------------------------------------------------------------------
@@ -111,7 +130,7 @@ if (-not $bash) {
       $r = AvecRoue "Installation de Git pour l'utilisateur (winget)" (Get-Command winget).Source @(
         "install", "--id", "Git.Git", "-e", "--scope", "user", "--silent",
         "--accept-package-agreements", "--accept-source-agreements")
-      if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
+      if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Detail $_ } }
       RafraichirPath
     }
     $bash = $candidats | Where-Object { Test-Path $_ } | Select-Object -First 1
@@ -139,7 +158,7 @@ if (-not $claude) {
   if ($DryRun) { Info "(diagnostic seul) Installation de Claude Code pour l'utilisateur" } else {
     $r = AvecRoue "Installation de Claude Code pour l'utilisateur" (Get-Command powershell).Source @(
       "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "irm https://claude.ai/install.ps1 | iex")
-    if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
+    if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Detail $_ } }
     RafraichirPath
     $env:Path += ";$HOME\.local\bin"
   }
@@ -156,7 +175,7 @@ if ($claude) {
 Etape "3. Clé ANTHROPIC_API_KEY"
 if (VarUtilisateur "ANTHROPIC_API_KEY") {
   Avert "Une clé API est définie : les sessions qui l'utilisent échappent aux règles de l'organisation."
-  $rep = if ($DryRun) { "n" } else { Read-Host "   Supprimer la variable ANTHROPIC_API_KEY de votre compte ? (o/n)" }
+  $rep = if ($DryRun) { "n" } else { Question "Supprimer la variable ANTHROPIC_API_KEY de votre compte ? (o/n)"; Read-Host }
   if ($rep -eq "o") {
     [Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", $null, "User")
     Remove-Item Env:ANTHROPIC_API_KEY -ErrorAction SilentlyContinue
@@ -190,7 +209,8 @@ if (VarUtilisateur "AOI_VEILLE_TOKEN") {
   Noter "Jeton de veille" "non concerné" $sansJeton
 } else {
   Info "Seules les personnes qui ont accès au service de veille ont un jeton."
-  $sec = Read-Host "   Collez votre jeton, ou appuyez sur Entrée si vous n'êtes pas concerné" -AsSecureString
+  Question "Collez votre jeton, ou appuyez sur Entrée si vous n'êtes pas concerné :"
+  $sec = Read-Host -AsSecureString
   $jeton = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
   if ($jeton) {
     DefinirVar "AOI_VEILLE_TOKEN" $jeton; Ok "Jeton enregistré"
@@ -241,7 +261,7 @@ function LancerClaude([string]$desc, [string[]]$arguments) {
   $r = AvecRoue $desc $claude.Source $arguments
   $sortie = $r.Texte
   $reussi = $r.Ok
-  if (-not $reussi -and $sortie) { $sortie -split "`r?`n" | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
+  if (-not $reussi -and $sortie) { $sortie -split "`r?`n" | ForEach-Object { Detail $_ } }
   $script:derniereSortie = $sortie
   return $reussi
 }
@@ -314,7 +334,7 @@ if ($plugin -and -not $DryRun) {
   $pt = Join-Path $plugin.FullName "skills\regen\scripts\python_aoi.py"
   if ((Test-Path $py) -and (Test-Path $pt)) {
     $r = AvecRoue "Python AOI (téléchargé seulement si sa version a changé)" $py @($pt)
-    $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Write-Host "       $_" }
+    $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Detail $_ }
     Noter "Python AOI" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "$env:LOCALAPPDATA\aoi\python"
   }
 }
@@ -356,11 +376,21 @@ if ($SkipAddins) {
 }
 
 # --- Bilan -----------------------------------------------------------------------------------
-Etape "Bilan"
-$bilan | Format-Table -AutoSize | Out-String | Write-Host
-Write-Host "Ensuite : fermez ce terminal, ouvrez-en un nouveau, lancez « claude » et vérifiez :"
-Write-Host "  /status   règles de l'organisation actives, connexion par compte claude.ai"
-Write-Host "  /plugin   catalogue aoi, plugin aoi activé"
-Write-Host "  /mcp      plugin:aoi:rhino et plugin:aoi:revit (Rhino et Revit ouverts), plugin:aoi:veille si vous avez un jeton"
-Write-Host "  /report   rapport des serveurs et des librairies"
-Write-Host "Au premier lancement, acceptez les réglages de l'organisation si Claude Code le demande."
+Encadre @("BILAN", "$($env:USERNAME.ToLower()) @ $env:COMPUTERNAME, $((Get-Date).ToString('HH:mm'))")
+$largeur = ($bilan | ForEach-Object { $_.Etape.Length } | Measure-Object -Maximum).Maximum
+foreach ($b in $bilan) {
+  $ligne = "{0}   {1}   {2}" -f $b.Etape.PadRight($largeur), $b.Etat.PadRight(15), $b.Detail
+  switch -Regex ($b.Etat) {
+    '^ok$'                  { Ok $ligne }
+    '^(non concerné|ignoré)$' { Info $ligne }
+    'MANQUANT'              { Erreur $ligne }
+    default                 { Avert $ligne }
+  }
+}
+Etape "Ensuite"
+Info "Fermez ce terminal, ouvrez-en un nouveau, lancez « claude » et vérifiez :"
+Info "    /status   règles de l'organisation actives, connexion par compte claude.ai"
+Info "    /plugin   catalogue aoi, plugin aoi activé"
+Info "    /mcp      plugin:aoi:rhino et plugin:aoi:revit (Rhino et Revit ouverts), plugin:aoi:veille si vous avez un jeton"
+Info "    /report   rapport des serveurs et des librairies"
+Info "Au premier lancement, acceptez les réglages de l'organisation si Claude Code le demande."
