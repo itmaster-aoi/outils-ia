@@ -7,7 +7,7 @@ description: Rapport des librairies Python chargées par les scripts que Claude 
 
 La commande se tape `/report`. Si une autre commande porte déjà ce nom, utiliser `/aoi:report`.
 
-Le plugin `aoi` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`) est actif dans toutes les commandes de la session :
+Le plugin `aoi` contrôle chaque librairie Python que chargent les scripts lancés par Claude sur ce poste. Le contrôle (`guard/sitecustomize.py`, copié dans `C:\ProgramDataoi\guard`) est actif dans toutes les commandes de la session, Bash comme PowerShell, parce que la console impose `PYTHONPATH=C:\ProgramDataoi\guard` à Claude Code :
 - il **journalise** chaque librairie chargée dans `%LOCALAPPDATA%\aoi\imports.jsonl` ;
 - il **compare** son nom à `whitelist.txt` ;
 - il **refuse l'import** d'une librairie non identifiée. Le script échoue alors avec `Import de '<nom>' refusé`.
@@ -26,11 +26,16 @@ Sont toujours acceptés : la bibliothèque standard de Python, les dépendances 
 4. Pour une librairie refusée ou un serveur non identifié, **n'essaie jamais de contourner le refus** : pas de `-I`, `-S` ou `-E` pour désactiver le contrôle, pas de modification de `whitelist.txt` ou de `PYTHONPATH`, pas d'installation. Propose plutôt :
    - une solution qui n'utilise que des librairies acceptées ;
    - ou de demander à l'IT de valider la librairie, en donnant son nom d'import, son nom pip et l'usage prévu.
-5. Si le journal est vide, vérifie que `PYTHONPATH` contient le dossier `guard` de cette skill. Sinon, le contrôle n'est pas actif : signale-le à l'utilisateur.
+5. Si le journal est vide, vérifie le contrôle :
+   ```
+   "<dossier de cette skill>/runtime/python.exe" "<dossier de cette skill>/scripts/activer_controle.py" --verifier
+   ```
+   Si le résultat est « CONTRÔLE INACTIF », signale-le à l'utilisateur, avec la valeur de PYTHONPATH affichée, et propose `/regen`. Ne règle jamais PYTHONPATH toi-même.
 
 ## Pour l'IT
 
 - **Ajouter un serveur MCP** : l'inscrire dans `mcp-whitelist.txt`, puis créer une nouvelle étiquette du dépôt.
 - **Ajouter une librairie** : l'inscrire dans `whitelist.txt` (nom d'import et nom pip en commentaire), puis créer une nouvelle étiquette du dépôt.
+- **Activation** : managed settings `"env": { "PYTHONPATH": "C:\ProgramData\aoi\guard" }`. L'installeur et `/regen` y copient `sitecustomize.py` et `whitelist.txt` (`scripts/activer_controle.py`). Un hook du plugin ne suffit pas : sous Windows, les commandes PowerShell de Claude Code ne reçoivent pas une variable de `CLAUDE_ENV_FILE` dont la valeur contient une barre oblique.
 - **Mode d'essai** : `AOI_IMPORT_MODE=report` journalise sans refuser, ce qui permet de recenser les besoins avant d'activer le blocage.
 - **Limite** : le contrôle ne vaut que pour les processus Python que lance Claude Code. Un Python lancé avec `-I`, `-S` ou `-E` l'ignore. C'est un garde-fou, pas une barrière : le refus d'installer des paquets reste assuré par les managed settings.

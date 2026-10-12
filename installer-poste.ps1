@@ -263,6 +263,18 @@ if (-not $plugin) {
 }
 $plugin = if ($plugin) { Get-Item $plugin.installPath }
 
+# Contrôle des imports Python : copie fixe que désigne env.PYTHONPATH dans la console
+if ($plugin -and -not $DryRun) {
+  $py = Join-Path $plugin.FullName "skillseportuntime\python.exe"
+  $ac = Join-Path $plugin.FullName "skillseport\scriptsctiver_controle.py"
+  if ((Test-Path $py) -and (Test-Path $ac)) {
+    $ErrorActionPreference = "Continue"
+    & $py $ac | Out-Host
+    Noter "Contrôle des imports" $(if ($LASTEXITCODE -eq 0) { "ok" } else { "À TRAITER" }) "C:\ProgramDataoi\guard"
+    $ErrorActionPreference = "Stop"
+  }
+}
+
 # --- 7. Add-ins Rhino et Revit ---------------------------------------------------------------
 Etape "7. Add-ins Rhino et Revit"
 if ($SkipAddins) {

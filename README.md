@@ -9,7 +9,6 @@ Ce dépôt est le **seul catalogue** de plugins autorisé dans Claude Code sur l
 plugins/aoi/               le plugin de l'atelier
   .claude-plugin/plugin.json
   .mcp.json                       déclaration des serveurs MCP
-  hooks/hooks.json                active le contrôle des imports Python à chaque session
   mcp/                            un dossier par serveur MCP, avec tout le nécessaire
     rhino/                          serveur, librairies figées, plugin Rhino, README
     revit/                          serveur compilé avec outils KG, dépendances figées, add-in Revit 2025, README

@@ -133,6 +133,17 @@ def copier_addin(nom, source, dst, proc, sauvegarder, appliquer):
     return True
 
 
+def controle(plugin, verifier):
+    """Contrôle des imports Python : copie dans C:\ProgramData\aoi (skill report du plugin)."""
+    script = plugin["chemin"] / "skills" / "report" / "scripts" / "activer_controle.py"
+    if script.is_file():
+        r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        print("  " + (r.stdout + r.stderr).strip().replace("
+", "
+  "))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--appliquer", action="store_true")
@@ -155,6 +166,7 @@ def main():
         if avant:
             for x in addins(avant):
                 copier_addin(*x, appliquer=False)
+            controle(avant, verifier=True)
         return 0
 
     print()
@@ -182,6 +194,7 @@ def main():
         print(f"Serveurs retirés  : {', '.join('plugin:aoi:' + s for s in retires)}")
     for x in addins(apres):
         copier_addin(*x, appliquer=True)
+    controle(apres, verifier=False)
     if avant is None or apres["version"] != avant["version"]:
         print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
     else:
