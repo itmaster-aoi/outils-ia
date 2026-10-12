@@ -53,6 +53,36 @@ function Faire($desc, [scriptblock]$action) {
   if ($DryRun) { Info "(diagnostic seul) $desc"; return $false }
   Info $desc; & $action | Out-Host; return $true
 }
+# Lance un programme en affichant une roue qui tourne tant qu'il travaille.
+# Rend Ok (code de sortie 0) et Texte (sortie standard et erreurs, pour le diagnostic).
+function AvecRoue([string]$desc, [string]$exe, [string[]]$arguments) {
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = $exe
+  $psi.Arguments = ($arguments | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '
+  $psi.UseShellExecute = $false
+  $psi.CreateNoWindow = $true
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.StandardOutputEncoding = [Text.Encoding]::UTF8
+  $psi.StandardErrorEncoding = [Text.Encoding]::UTF8
+  $p = [System.Diagnostics.Process]::Start($psi)
+  $out = $p.StandardOutput.ReadToEndAsync()
+  $err = $p.StandardError.ReadToEndAsync()
+  $roue = '|', '/', '-', '\'
+  $anime = -not [Console]::IsOutputRedirected
+  $debut = Get-Date
+  $i = 0
+  while (-not $p.WaitForExit(120)) {
+    if ($anime) {
+      $s = [int]((Get-Date) - $debut).TotalSeconds
+      Write-Host -NoNewline ("`r   {0}   {1} ({2} s)" -f $roue[$i++ % 4], $desc, $s)
+    }
+  }
+  $p.WaitForExit()
+  if ($anime) { Write-Host -NoNewline ("`r" + (' ' * ([Console]::WindowWidth - 1)) + "`r") }
+  Info $desc
+  [pscustomobject]@{ Ok = ($p.ExitCode -eq 0); Texte = ($out.Result + "`n" + $err.Result).Trim() }
+}
 function VarUtilisateur($nom) { [Environment]::GetEnvironmentVariable($nom, "User") }
 function DefinirVar($nom, $valeur) {
   [Environment]::SetEnvironmentVariable($nom, $valeur, "User")
@@ -77,10 +107,13 @@ $candidats = @(
 $bash = $candidats | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $bash) {
   if (Get-Command winget -ErrorAction SilentlyContinue) {
-    Faire "Installation de Git pour l'utilisateur (winget)" {
-      winget install --id Git.Git -e --scope user --silent --accept-package-agreements --accept-source-agreements
+    if ($DryRun) { Info "(diagnostic seul) Installation de Git pour l'utilisateur (winget)" } else {
+      $r = AvecRoue "Installation de Git pour l'utilisateur (winget)" (Get-Command winget).Source @(
+        "install", "--id", "Git.Git", "-e", "--scope", "user", "--silent",
+        "--accept-package-agreements", "--accept-source-agreements")
+      if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
       RafraichirPath
-    } | Out-Null
+    }
     $bash = $candidats | Where-Object { Test-Path $_ } | Select-Object -First 1
   } else {
     Avert "winget est indisponible. Installez PortableGit dans $env:LOCALAPPDATA\Programs\Git (voir le README), puis relancez ce script."
@@ -103,11 +136,13 @@ Etape "2. Claude Code"
 RafraichirPath
 $claude = Get-Command claude -ErrorAction SilentlyContinue
 if (-not $claude) {
-  Faire "Installation de Claude Code pour l'utilisateur" {
-    Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+  if ($DryRun) { Info "(diagnostic seul) Installation de Claude Code pour l'utilisateur" } else {
+    $r = AvecRoue "Installation de Claude Code pour l'utilisateur" (Get-Command powershell).Source @(
+      "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "irm https://claude.ai/install.ps1 | iex")
+    if (-not $r.Ok) { $r.Texte -split "`r?`n" | Select-Object -Last 5 | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
     RafraichirPath
     $env:Path += ";$HOME\.local\bin"
-  } | Out-Null
+  }
   $claude = Get-Command claude -ErrorAction SilentlyContinue
 }
 if ($claude) {
@@ -203,10 +238,9 @@ function Installe($id) {
 # Lance claude, n'affiche sa sortie qu'en cas d'échec, rend $true si la commande a réussi.
 function LancerClaude([string]$desc, [string[]]$arguments) {
   if ($DryRun) { Info "(diagnostic seul) $desc"; return $false }
-  Info $desc
-  $ErrorActionPreference = "Continue"
-  $sortie = (& $claude.Source @arguments 2>&1 | Out-String).Trim()
-  $reussi = $LASTEXITCODE -eq 0
+  $r = AvecRoue $desc $claude.Source $arguments
+  $sortie = $r.Texte
+  $reussi = $r.Ok
   if (-not $reussi -and $sortie) { $sortie -split "`r?`n" | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
   $script:derniereSortie = $sortie
   return $reussi
