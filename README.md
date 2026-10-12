@@ -36,7 +36,7 @@ powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1 -DryRun   # diagn
 powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1           # installation
 ```
 
-Le script installe ou vérifie Git for Windows et Claude Code, signale une éventuelle clé `ANTHROPIC_API_KEY`, enregistre le jeton de veille, retire les anciennes déclarations MCP, installe ou met à jour le plugin `aoi` et copie les add-ins Rhino et Revit (en sauvegardant le registre de commandes Revit existant). Il termine par un bilan. Il est rejouable sans risque.
+Le script installe ou vérifie Git for Windows et Claude Code, signale une éventuelle clé `ANTHROPIC_API_KEY`, enregistre le jeton de veille **s'il y en a un** (facultatif : sans jeton, seul `plugin:aoi:veille` reste inactif ; option `-SansVeille` pour ne pas être interrogé), retire les anciennes déclarations MCP, installe ou met à jour le plugin `aoi` et copie les add-ins Rhino et Revit (en sauvegardant le registre de commandes Revit existant). Il termine par un bilan. Il est rejouable sans risque.
 
 ## Prérequis sur les postes (installés une fois par l'IT)
 
@@ -46,7 +46,7 @@ Python 3.12 et Node.js 25 sont **fournis dans le plugin** (`mcp/*/runtime/`, `sk
 |---|---|
 | Git for Windows, installable sans élévation : `winget install --id Git.Git -e --scope user` | récupérer ce dépôt, et Git Bash pour le hook qui active le contrôle des imports |
 | Plugin Rhino : `mcp/rhino/addin/` copié dans `%APPDATA%\McNeel\Rhinoceros\packages\8.0\` | `rhino` |
-| Jeton d'accès personnel au service de veille, dans la variable `AOI_VEILLE_TOKEN` (jamais dans ce dépôt) | `veille` |
+| *Facultatif* : jeton d'accès personnel au service de veille, dans la variable `AOI_VEILLE_TOKEN` (jamais dans ce dépôt), pour les personnes qui y ont accès | `plugin:aoi:veille` |
 | Add-in Revit : `mcp/revit/addin/2025/` copié dans `%APPDATA%\Autodesk\Revit\Addins\2025\` | `revit` |
 
 ## Consigne d'organisation

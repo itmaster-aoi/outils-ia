@@ -11,7 +11,7 @@
     1. Git for Windows (installation par utilisateur) et chemin de Git Bash pour Claude Code
     2. Claude Code (installation par utilisateur)
     3. Absence de clé ANTHROPIC_API_KEY (sinon les règles de l'organisation ne s'appliquent pas)
-    4. Jeton personnel du service de veille (AOI_VEILLE_TOKEN)
+    4. Jeton personnel du service de veille (AOI_VEILLE_TOKEN), facultatif
     5. Retrait des anciennes déclarations MCP rhino / revit / veille
     6. Plugin aoi (catalogue imposé par l'organisation)
     7. Add-ins Rhino 8 et Revit, copiés depuis le plugin
@@ -27,12 +27,16 @@
 
 .PARAMETER SkipAddins
   Ne copie pas les add-ins Rhino et Revit.
+
+.PARAMETER SansVeille
+  Passe l'étape du jeton de veille sans rien demander (personnes sans accès au service).
 #>
 [CmdletBinding()]
 param(
   [switch]$DryRun,
   [string]$RevitVersion = "2025",
-  [switch]$SkipAddins
+  [switch]$SkipAddins,
+  [switch]$SansVeille
 )
 
 $ErrorActionPreference = "Stop"
@@ -131,27 +135,35 @@ if (VarUtilisateur "ANTHROPIC_API_KEY") {
   Noter "Clé API" "ok" "absente"
 }
 
-# --- 4. Jeton du service de veille -----------------------------------------------------------
-Etape "4. Jeton du service de veille (AOI_VEILLE_TOKEN)"
+# --- 4. Jeton du service de veille (facultatif) ---------------------------------------------
+Etape "4. Jeton du service de veille (facultatif)"
 $claudeJson = Join-Path $HOME ".claude.json"
 $ancien = $null
 if (Test-Path $claudeJson) {
   try { $ancien = (Get-Content $claudeJson -Raw | ConvertFrom-Json).mcpServers } catch { }
 }
+$sansJeton = "facultatif : plugin:aoi:veille restera inactif sur ce poste, les autres outils fonctionnent"
 if (VarUtilisateur "AOI_VEILLE_TOKEN") {
   Ok "Jeton déjà défini"
   Noter "Jeton de veille" "ok" "défini"
 } elseif ($ancien -and $ancien.veille -and $ancien.veille.headers.Authorization) {
   $jeton = $ancien.veille.headers.Authorization -replace '^Bearer\s+', ''
   $fait = Faire "Reprise du jeton de l'ancienne déclaration « veille »" { DefinirVar "AOI_VEILLE_TOKEN" $jeton }
-  Noter "Jeton de veille" $(if ($fait) { "ok" } else { "À TRAITER" }) "à reprendre de l'ancienne configuration"
-} elseif (-not $DryRun) {
-  $sec = Read-Host "   Collez votre jeton personnel du service de veille (Entrée pour passer)" -AsSecureString
-  $jeton = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
-  if ($jeton) { DefinirVar "AOI_VEILLE_TOKEN" $jeton; Ok "Jeton enregistré"; Noter "Jeton de veille" "ok" "saisi" }
-  else { Noter "Jeton de veille" "À TRAITER" "sans jeton, veille est refusé (401)" }
+  Noter "Jeton de veille" $(if ($fait) { "ok" } else { "à reprendre" }) "depuis l'ancienne configuration"
+} elseif ($SansVeille -or $DryRun) {
+  Info "Pas de jeton : $sansJeton."
+  Noter "Jeton de veille" "non concerné" $sansJeton
 } else {
-  Noter "Jeton de veille" "À TRAITER" "non défini"
+  Info "Seules les personnes qui ont accès au service de veille ont un jeton."
+  $sec = Read-Host "   Collez votre jeton, ou appuyez sur Entrée si vous n'êtes pas concerné" -AsSecureString
+  $jeton = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+  if ($jeton) {
+    DefinirVar "AOI_VEILLE_TOKEN" $jeton; Ok "Jeton enregistré"
+    Noter "Jeton de veille" "ok" "saisi"
+  } else {
+    Info "Pas de jeton : $sansJeton. Pour masquer le serveur, désactivez-le dans /mcp ; relancez ce script le jour où vous recevez un jeton."
+    Noter "Jeton de veille" "non concerné" $sansJeton
+  }
 }
 Remove-Variable jeton -ErrorAction SilentlyContinue
 
@@ -267,6 +279,6 @@ $bilan | Format-Table -AutoSize | Out-String | Write-Host
 Write-Host "Ensuite : fermez ce terminal, ouvrez-en un nouveau, lancez « claude » et vérifiez :"
 Write-Host "  /status   règles de l'organisation actives, connexion par compte claude.ai"
 Write-Host "  /plugin   catalogue aoi, plugin aoi activé"
-Write-Host "  /mcp      plugin:aoi:rhino, revit, veille (Rhino et Revit ouverts)"
+Write-Host "  /mcp      plugin:aoi:rhino et plugin:aoi:revit (Rhino et Revit ouverts), plugin:aoi:veille si vous avez un jeton"
 Write-Host "  /report   rapport des serveurs et des librairies"
 Write-Host "Au premier lancement, acceptez les réglages de l'organisation si Claude Code le demande."
