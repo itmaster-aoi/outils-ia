@@ -164,7 +164,8 @@ def main():
         if not claude("plugin", "marketplace", "add", f"{DEPOT}#{imposee}"):
             print("\nÉCHEC : inscription du catalogue refusée. Vérifiez la connexion et les règles de la console.")
             return 1
-    if avant is None:
+    # Retirer le catalogue désinstalle aussi son plugin : on regarde à nouveau ce qui reste.
+    if plugin_installe() is None:
         ok = claude("plugin", "install", PLUGIN)
     else:
         ok = claude("plugin", "update", PLUGIN)

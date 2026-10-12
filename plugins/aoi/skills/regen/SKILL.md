@@ -29,6 +29,7 @@ La version des outils est choisie par l'IT dans la console d'administration (ét
 ## Pour l'IT
 
 - **Publier un nouveau serveur** : l'ajouter dans `plugins/aoi/mcp/<serveur>/` et dans `.mcp.json`, l'inscrire dans `skills/report/mcp-whitelist.txt`, **augmenter la version** de `plugin.json` (sinon `claude plugin update` ne voit rien), créer l'étiquette, puis la reporter dans les deux entrées des managed settings. Les postes la récupèrent ensuite avec `/regen`.
+- **Changer d'étiquette retire puis réinscrit le catalogue** : Claude Code désinstalle alors le plugin et le réinstalle en entier (environ 350 Mo). Le journal des imports (`%LOCALAPPDATA%oi`) n'est pas touché.
 - `installer-poste.ps1` reste nécessaire pour un poste neuf (Git, Claude Code, jeton) et pour un poste qui n'a pas encore de plugin contenant `/regen`.
 - **Add-in d'un serveur** : le décrire dans `mcp/<serveur>/addin.json`, avec un objet par application ou version. Exemple :
   ```json

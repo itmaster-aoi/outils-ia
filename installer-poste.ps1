@@ -181,61 +181,87 @@ if ($vieux -and $claude) {
 # --- 6. Plugin aoi --------------------------------------------------------------------
 Etape "6. Plugin aoi"
 $env:CLAUDE_CODE_PLUGIN_PREFER_HTTPS = "1"
-$cache = Join-Path $HOME ".claude\plugins\cache\aoi\aoi"
-function DossierPlugin {
-  if (Test-Path $cache) {
-    Get-ChildItem $cache -Directory | Where-Object { -not (Test-Path (Join-Path $_.FullName ".orphaned_at")) } |
-      Sort-Object LastWriteTime -Descending | Select-Object -First 1
-  }
-}
 function LireJson($chemin) {
   if (Test-Path $chemin) { try { return Get-Content $chemin -Raw | ConvertFrom-Json } catch { } }
   return $null
 }
-# Étiquette imposée par la console (managed settings reçus par Claude Code)
-$politique = LireJson (Join-Path $HOME ".claude\remote-settings.json")
-$refImposee = $null
-if ($politique -and $politique.extraKnownMarketplaces.aoi) { $refImposee = $politique.extraKnownMarketplaces.aoi.source.ref }
-# Étiquette du catalogue inscrit sur ce poste
-$inscrits = LireJson (Join-Path $HOME ".claude\plugins\known_marketplaces.json")
-$refInscrite = $null
-if ($inscrits -and $inscrits.aoi) { $refInscrite = $inscrits.aoi.source.ref }
+function RefImposee {
+  $p = LireJson (Join-Path $HOME ".claude\remote-settings.json")
+  if ($p -and $p.extraKnownMarketplaces.aoi) { return $p.extraKnownMarketplaces.aoi.source.ref }
+}
+function RefInscrite {
+  $i = LireJson (Join-Path $HOME ".claude\plugins\known_marketplaces.json")
+  if ($i -and $i.aoi) { return $i.aoi.source.ref }
+}
+function Installe($id) {
+  $d = LireJson (Join-Path $HOME ".claude\plugins\installed_plugins.json")
+  if ($d -and $d.plugins -and $d.plugins.$id) {
+    $e = @($d.plugins.$id)[0]
+    if ($e.installPath -and (Test-Path $e.installPath)) { return $e }
+  }
+}
+# Lance claude, n'affiche sa sortie qu'en cas d'échec, rend $true si la commande a réussi.
+function Claude([string]$desc, [string[]]$arguments) {
+  if ($DryRun) { Info "(diagnostic seul) $desc"; return $false }
+  Info $desc
+  $ErrorActionPreference = "Continue"
+  $sortie = (& claude @arguments 2>&1 | Out-String).Trim()
+  $reussi = $LASTEXITCODE -eq 0
+  if (-not $reussi -and $sortie) { $sortie -split "`r?`n" | ForEach-Object { Write-Host "       $_" -ForegroundColor DarkYellow } }
+  $script:derniereSortie = $sortie
+  return $reussi
+}
 
-if (-not $refImposee) {
-  Avert "Les règles de l'organisation n'ont pas encore été reçues. Lancez « claude » une fois et connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
-} else {
+# Toute commande claude télécharge les règles de l'organisation : on part des règles du jour.
+if ($claude -and -not $DryRun) { Claude "Lecture des règles de l'organisation" @("plugin", "marketplace", "list") | Out-Null }
+
+$essai = 0
+do {
+  $essai++
+  $refImposee = RefImposee
+  $refInscrite = RefInscrite
+  if (-not $refImposee) {
+    Avert "Les règles de l'organisation n'ont pas encore été reçues. Lancez « claude » une fois et connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
+    break
+  }
   Info "Étiquette imposée par la console : $refImposee ; inscrite sur ce poste : $(if ($refInscrite) { $refInscrite } else { 'aucune' })"
-  if ($claude -and $refInscrite -ne $refImposee) {
+  if (-not $claude) { break }
+  if ($refInscrite -ne $refImposee) {
     # Une inscription à une autre étiquette est refusée par la politique : on la remplace.
-    Faire "Inscription du catalogue aoi à l'étiquette $refImposee" {
-      if ($refInscrite) { & claude plugin marketplace remove aoi }
-      & claude plugin marketplace add "itmaster-aoi/outils-ia#$refImposee"
-    } | Out-Null
+    if ($refInscrite) { Claude "Retrait du catalogue aoi à l'étiquette $refInscrite" @("plugin", "marketplace", "remove", "aoi") | Out-Null }
+    Claude "Inscription du catalogue aoi à l'étiquette $refImposee" @("plugin", "marketplace", "add", "itmaster-aoi/outils-ia#$refImposee") | Out-Null
   }
   # Ancien nom du plugin (avant le 12.10.2026) : aoi-outils, serveurs plugin:aoi-outils:aoi-*
-  if ($claude -and (Test-Path (Join-Path $HOME ".claude\plugins\cache\aoi\aoi-outils"))) {
-    Faire "Désinstallation de l'ancien plugin aoi-outils (remplacé par aoi)" {
-      & claude plugin uninstall aoi-outils@aoi
-    } | Out-Null
+  if (Installe "aoi-outils@aoi") {
+    Claude "Désinstallation de l'ancien plugin aoi-outils (remplacé par aoi)" @("plugin", "uninstall", "aoi-outils@aoi") | Out-Null
   }
-  if ($claude) {
-    Faire "Installation ou mise à jour du plugin aoi (environ 350 Mo au premier passage)" {
-      & claude plugin install aoi@aoi
-      & claude plugin update aoi@aoi
-    } | Out-Null
+  if (Installe "aoi@aoi") {
+    $ok = Claude "Mise à jour du plugin aoi" @("plugin", "update", "aoi@aoi")
+  } else {
+    $ok = Claude "Installation du plugin aoi (environ 350 Mo)" @("plugin", "install", "aoi@aoi")
   }
-}
-$plugin = DossierPlugin
-if ($plugin -and -not (Test-Path (Join-Path $plugin.FullName "mcp\rhino\runtime\python.exe"))) {
-  Avert "aoi $($plugin.Name) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
-  Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.Name) : version antérieure à 2026.10.12.3"
-} elseif ($plugin) {
-  Ok "aoi $($plugin.Name)"
-  Noter "Plugin aoi" "ok" $plugin.Name
-} else {
+  # Règles reçues entre-temps (étiquette changée dans la console) : un seul nouvel essai.
+  $relancer = (-not $ok) -and ($derniereSortie -match "blocked by your organization") -and ((RefImposee) -ne $refImposee)
+  if ($relancer) { Info "La console impose une nouvelle étiquette : nouvel essai." }
+} while ($relancer -and $essai -lt 2)
+
+$plugin = Installe "aoi@aoi"
+$refImposee = RefImposee
+$refInscrite = RefInscrite
+if (-not $plugin) {
   Avert "Plugin introuvable. Lancez « claude » une fois, connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
   Noter "Plugin aoi" "MANQUANT" "connexion à Claude Code requise"
+} elseif (-not (Test-Path (Join-Path $plugin.installPath "mcp\rhino\runtime\python.exe"))) {
+  Avert "aoi $($plugin.version) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
+  Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version) : version antérieure à 2026.10.12.3"
+} elseif ($refImposee -and $refInscrite -ne $refImposee) {
+  Avert "aoi $($plugin.version) installé, mais le catalogue n'est pas à l'étiquette imposée ($refImposee). Relancez ce script ; si le message persiste, contactez l'IT."
+  Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version), console : $refImposee"
+} else {
+  Ok "aoi $($plugin.version) (étiquette $refInscrite)"
+  Noter "Plugin aoi" "ok" "$($plugin.version)"
 }
+$plugin = if ($plugin) { Get-Item $plugin.installPath }
 
 # --- 7. Add-ins Rhino et Revit ---------------------------------------------------------------
 Etape "7. Add-ins Rhino et Revit"
