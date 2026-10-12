@@ -134,14 +134,12 @@ def copier_addin(nom, source, dst, proc, sauvegarder, appliquer):
 
 
 def controle(plugin, verifier):
-    """Contrôle des imports Python : copie dans C:\ProgramData\aoi (skill report du plugin)."""
+    """Contrôle des imports Python : copie dans C:\\ProgramData\\aoi (skill report du plugin)."""
     script = plugin["chemin"] / "skills" / "report" / "scripts" / "activer_controle.py"
     if script.is_file():
         r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
-        print("  " + (r.stdout + r.stderr).strip().replace("
-", "
-  "))
+        print("  " + (r.stdout + r.stderr).strip().replace("\n", "\n  "))
 
 
 def main():

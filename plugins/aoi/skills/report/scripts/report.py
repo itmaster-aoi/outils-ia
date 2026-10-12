@@ -56,7 +56,7 @@ except OSError:
 if not os.path.exists(log_path):
     print(f"Aucun import journalisé pour le moment ({log_path}).")
     print("Vérifier que le contrôle est actif : scripts/activer_controle.py --verifier "
-          "(PYTHONPATH doit valoir C:\ProgramData\aoi\guard, réglé par la console).")
+          "(PYTHONPATH doit valoir C:\\ProgramData\\aoi\\guard, réglé par la console).")
     sys.exit(0)
 
 since = datetime.datetime.now() - datetime.timedelta(days=args.jours)
