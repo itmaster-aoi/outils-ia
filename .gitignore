@@ -17,3 +17,5 @@ python-aoi/dist/
 
 # Dossier de travail local (toolbox, identifiants) : jamais publié
 source/
+node-aoi/build/
+node-aoi/dist/

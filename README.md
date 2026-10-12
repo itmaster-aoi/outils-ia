@@ -41,7 +41,7 @@ Le script installe ou vérifie Git for Windows et Claude Code, signale une éven
 
 ## Prérequis sur les postes (installés une fois par l'IT)
 
-Python 3.12 et Node.js 25 sont **fournis dans le plugin** (`mcp/*/runtime/`, `skills/report/runtime/`) : ni installation, ni variable d'environnement.
+Python 3.12 et Node.js 25 sont fournis par l'atelier : le **Python AOI** et le **Node AOI** sont des archives publiées à part (versions GitHub `python-aoi-*` et `node-aoi-*`), installées dans `%LOCALAPPDATA%\aoi` par l'installeur ou `/regen`, et retéléchargées seulement quand leur version change. Le petit Python de `skills/report/runtime/` sert à `/report` et `/regen`.
 
 | Prérequis | Pour |
 |---|---|

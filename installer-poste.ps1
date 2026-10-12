@@ -44,9 +44,9 @@ $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 $bilan = [System.Collections.Generic.List[object]]::new()
 
-# Affichage dans le style de la toolbox AOI : titres en vert, lignes « .   », ✅ réussi,
+# Affichage dans le style de la toolbox AOI : titres en jaune, lignes « .   », ✅ réussi,
 # ██ à surveiller, ❌ échec, questions « >>> » en jaune.
-function Etape($titre) { Write-Host ""; Write-Host $titre -ForegroundColor Green }
+function Etape($titre) { Write-Host ""; Write-Host $titre -ForegroundColor Yellow }
 function Ok($msg)      { Write-Host "✅  $msg" -ForegroundColor Green }
 function Info($msg)    { Write-Host ".   $msg" }
 function Avert($msg)   { Write-Host "██  $msg" -ForegroundColor Yellow }
@@ -330,12 +330,12 @@ if ($plugin -and -not $DryRun) {
     Avert "Contrôle des imports non activé : $ac absent de aoi $($plugin.Name). Contactez l'IT."
     Noter "Contrôle des imports" "À TRAITER" "activer_controle.py absent du plugin"
   }
-  # Python AOI (librairies de la liste blanche) : archive à part, téléchargée si sa version change
-  $pt = Join-Path $plugin.FullName "skills\regen\scripts\python_aoi.py"
+  # Python AOI et Node AOI : archives à part, téléchargées seulement si leur version change
+  $pt = Join-Path $plugin.FullName "skills\regen\scripts\archives_aoi.py"
   if ((Test-Path $py) -and (Test-Path $pt)) {
-    $r = AvecRoue "Python AOI (téléchargé seulement si sa version a changé)" $py @($pt)
+    $r = AvecRoue "Python AOI et Node AOI (téléchargés seulement si leur version a changé)" $py @($pt)
     $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Detail $_ }
-    Noter "Python AOI" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "$env:LOCALAPPDATA\aoi\python"
+    Noter "Python et Node AOI" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "$env:LOCALAPPDATA\aoi"
   }
 }
 

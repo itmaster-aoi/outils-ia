@@ -10,13 +10,12 @@ Il repose sur le projet [mcp-servers-for-revit](https://github.com/mcp-servers-f
 | `addin/2025/` | l'add-in Revit 2025 : `mcp-servers-for-revit.addin` et le dossier `revit_mcp_plugin/` |
 | `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet/` | le jeu de commandes d'origine (22 commandes) |
 | `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet.KG/` | le jeu de commandes KG (28 commandes `kg_*`), avec le moteur BimKg (`BimKg.Core`, `BimKg.Runtime`) |
-| `runtime/node.exe` | Node.js 25.8.2 officiel (nodejs.org), signé par l'OpenJS Foundation : rien à installer sur le poste |
 | `LICENSE` | licence MIT du projet d'origine |
 | `LICENSE-KG` | licence MIT de la partie KG (Lauro Foletti) |
 
 ## Installation sur un poste (une fois, par l'IT)
 
-1. Rien à installer pour le serveur : Node.js 25.8.2 est fourni dans `runtime/`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé.
+1. Node : le **Node AOI** (Node.js 25.8.2, `%LOCALAPPDATA%\aoi\node`), publié à part et installé par `installer-poste.cmd` ou `/regen`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé : changer de version de Node impose de recompiler le serveur.
 2. **Add-in Revit** : copier le contenu de `addin/2025/` dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, puis relancer Revit.
 3. Le serveur MCP s'installe tout seul : Claude Code récupère le plugin `aoi` depuis le dépôt de l'atelier.
 

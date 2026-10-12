@@ -9,7 +9,7 @@
       ]
     },
     "revit": {
-      "command": "${CLAUDE_PLUGIN_ROOT}/mcp/revit/runtime/node.exe",
+      "command": "${LOCALAPPDATA}/aoi/node/node.exe",
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/mcp/revit/server/build/index.js"
       ]
