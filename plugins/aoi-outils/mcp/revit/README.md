@@ -11,6 +11,7 @@ Il repose sur le projet [mcp-servers-for-revit](https://github.com/mcp-servers-f
 | `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet/` | le jeu de commandes d'origine (22 commandes) |
 | `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet.KG/` | le jeu de commandes KG (28 commandes `kg_*`), avec le moteur BimKg (`BimKg.Core`, `BimKg.Runtime`) |
 | `LICENSE` | licence MIT du projet d'origine |
+| `LICENSE-KG` | licence MIT de la partie KG (Lauro Foletti) |
 
 ## Installation sur un poste (une fois, par l'IT)
 
@@ -38,4 +39,4 @@ Le serveur crée un fichier `server/revit-data.db`, qui peut contenir des inform
 ## Licences
 
 - Projet d'origine : MIT (`LICENSE`).
-- Outils et jeu de commandes KG (Lauro Foletti) : **licence à préciser avant publication**. Sans licence, un code publié sur GitHub reste « tous droits réservés ».
+- Outils et jeu de commandes KG : MIT, © 2026 Lauro Foletti (`LICENSE-KG`).

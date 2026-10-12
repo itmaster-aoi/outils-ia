@@ -7,8 +7,8 @@ Seules ces versions sont autorisées sur les postes de l'atelier. Toute nouvelle
 | `aoi-rhino` | serveur MCP (`mcp/rhino/server`) | paquet Python `rhinomcp` ([jingcheng-chen/rhinomcp](https://github.com/jingcheng-chen/rhinomcp)) | 0.3.2 | MIT | 12.10.2026 |
 | `aoi-rhino` | plugin Rhino 8 (`mcp/rhino/addin`) | paquet Rhino `rhinomcp` (même projet) | 0.4.1.1 | MIT | 12.10.2026 |
 | `aoi-rhino` | librairies Python (`mcp/rhino/libs`) | copiées de l'environnement validé, voir la liste ci-dessous | Python 3.12, Windows 64 bits | voir chaque `*.dist-info` | 12.10.2026 |
-| `aoi-revit` | serveur MCP avec outils KG (`mcp/revit/server`) | fork [lfoletti/mcp-servers-for-revit](https://github.com/lfoletti/mcp-servers-for-revit), branche `kg-tools-vendoring` (projet d'origine : mcp-servers-for-revit) | commit `90eefab82ab75e9a61e9c511c7e63b88e436d323` (11.08.2026), compilé par l'IT, Node 25 ; 55 outils dont 28 `kg_*` | MIT + KG : à préciser | 12.10.2026 |
-| `aoi-revit` | add-in Revit 2025 (`mcp/revit/addin/2025`) | `RevitMCPCommandSet` (origine) + `RevitMCPCommandSet.KG` 0.1.0 avec BimKg (Lauro Foletti) | 50 commandes (22 + 28 KG) ; `send_code_to_revit` désactivée, `Extended` non repris | MIT + KG : à préciser | 12.10.2026 |
+| `aoi-revit` | serveur MCP avec outils KG (`mcp/revit/server`) | fork [lfoletti/mcp-servers-for-revit](https://github.com/lfoletti/mcp-servers-for-revit), branche `kg-tools-vendoring` (projet d'origine : mcp-servers-for-revit) | commit `90eefab82ab75e9a61e9c511c7e63b88e436d323` (11.08.2026), compilé par l'IT, Node 25 ; 55 outils dont 28 `kg_*` | MIT (origine) + MIT (KG) | 12.10.2026 |
+| `aoi-revit` | add-in Revit 2025 (`mcp/revit/addin/2025`) | `RevitMCPCommandSet` (origine) + `RevitMCPCommandSet.KG` 0.1.0 avec BimKg (Lauro Foletti) | 50 commandes (22 + 28 KG) ; `send_code_to_revit` désactivée, `Extended` non repris | MIT (origine) + MIT (KG) | 12.10.2026 |
 | `aoi-veille` | service distant | `https://veille.casual-labs.ch/mcp` | sans objet : le code tourne chez le fournisseur | – | 12.10.2026 |
 
 ## Librairies Python de `aoi-rhino` (`mcp/rhino/libs`)
