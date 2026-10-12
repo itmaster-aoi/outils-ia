@@ -20,7 +20,30 @@ log_path = os.environ.get("AOI_IMPORT_LOG") or os.path.join(
 
 p = argparse.ArgumentParser()
 p.add_argument("--jours", type=int, default=7, help="période couverte (défaut : 7 jours)")
+p.add_argument("--mcp", default="", help="serveurs MCP chargés dans la session, séparés par des virgules")
 args = p.parse_args()
+
+if args.mcp:
+    mcp_path = os.path.join(os.path.dirname(here), "mcp-whitelist.txt")
+    try:
+        with open(mcp_path, encoding="utf-8") as f:
+            mcp_allowed = {l.split("#", 1)[0].strip() for l in f} - {""}
+    except OSError:
+        mcp_allowed = set()
+        print(f"⚠ Liste blanche MCP introuvable : {mcp_path}")
+    loaded = [m.strip() for m in args.mcp.split(",") if m.strip()]
+    print("# Serveurs MCP chargés dans la session\n")
+    print("| Serveur | Statut |")
+    print("|---|---|")
+    for m in loaded:
+        ok = m in mcp_allowed or m.startswith("claude.ai ")
+        statut = "autorisé" if m in mcp_allowed else (
+            "connecteur claude.ai (géré par la console)" if ok else "**non identifié : à signaler à l'IT**")
+        print(f"| `{m}` | {statut} |")
+    missing = sorted(mcp_allowed - set(loaded))
+    if missing:
+        print(f"\nServeurs autorisés absents de la session : {', '.join(f'`{m}`' for m in missing)}")
+    print()
 
 whitelist = set()
 try:

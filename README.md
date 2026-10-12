@@ -35,6 +35,10 @@ VERSIONS.md                       versions de référence validées
 | Node.js 25, chemin dans la variable `AOI_NODE` | `aoi-revit` |
 | Add-in Revit : `mcp/revit/addin/2025/` copié dans `%APPDATA%\Autodesk\Revit\Addins\2025\` | `aoi-revit` |
 
+## Consigne d'organisation
+
+Les managed settings contiennent une clé `claudeMd` : à chaque session, Claude lance `/aoi-outils:report` au chargement des serveurs MCP et après chaque script Python, et ne contourne jamais le contrôle des librairies. Le texte exact figure dans l'annexe de la charte IA de l'atelier (`securite_ia.md`).
+
 ## Vérifier
 
 ```
