@@ -302,11 +302,13 @@ def demarrage():
         sys.stdout = sys.__stdout__
     # Bilan affiché à l'utilisateur à chaque session (systemMessage). Il n'est pas transmis à
     # Claude (pas d'additionalContext) : le suivi des outils reste séparé de la conversation.
+    # La version du plugin est déjà en tête de ligne : seul son changement ne fait pas un nouvel outil.
+    nouveautes = [f"{l[0]} ({l[2]})" if l[2] != "nouveau" else l[0]
+                  for l in lignes if l[0] != "Plugin aoi"]
     if imposee and inscrite != imposee:
         suivi = f"mise à jour disponible ({imposee}) : tapez /aoi:regen"
-    elif lignes:
-        suivi = "nouveaux outils : " + ", ".join(
-            f"{l[0]} ({l[2]})" if l[2] not in ("nouveau",) else l[0] for l in lignes if l[0] != "Plugin aoi")
+    elif nouveautes:
+        suivi = "nouveaux outils : " + ", ".join(nouveautes)
     else:
         suivi = "votre bibliothèque est à jour"
     texte = [f"Outils de l'atelier v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
