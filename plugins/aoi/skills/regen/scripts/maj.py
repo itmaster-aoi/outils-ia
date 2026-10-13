@@ -99,7 +99,9 @@ def rafraichir_regles():
     claude("plugin", "marketplace", "list", silencieux=True)
     apres = f.stat().st_mtime if f.is_file() else 0
     quand = time.strftime("%d.%m.%Y %H:%M", time.localtime(apres)) if apres else "jamais"
-    etat = "relues à l'instant" if apres > avant else "non rafraîchies, copie du"
+    # Claude Code ne réécrit le fichier que si les règles ont changé : une date inchangée
+    # veut dire « rien de nouveau dans la console » (ou console injoignable).
+    etat = "nouvelles règles reçues à l'instant" if apres > avant else "inchangées depuis le"
     print(f"Règles de la console             : {etat} {quand}")
 
 
@@ -267,13 +269,15 @@ def etat_session(plugin):
 
 
 def demarrage():
-    """Crochet SessionStart : rapport succinct, seulement s'il y a du nouveau.
-
-    Compare le plugin chargé avec celui de la session précédente (%LOCALAPPDATA%\\aoi\\session.json)
-    et signale une mise à jour imposée par la console. Ne modifie rien d'autre que ce fichier."""
+    """Crochet SessionStart : bilan d'une ligne à chaque session (version, serveurs, contrôle des
+    imports, refus récents), puis tableau des nouveautés par rapport à la session précédente
+    (%LOCALAPPDATA%\\aoi\\session.json) et mise à jour imposée par la console, s'il y en a.
+    Ne modifie rien d'autre que ce fichier."""
+    debut = time.time()
     sys.stdout = open(os.devnull, "w", encoding="utf-8")  # silence des fonctions d'état
     try:
-        rafraichir_regles()
+        # Pas de rafraichir_regles() ici : Claude Code vient de relire les règles en démarrant,
+        # et un « claude » imbriqué pendant son démarrage peut bloquer jusqu'au délai du crochet.
         imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
         etat = etat_session(plugin)
         f = AOI / "session.json"
@@ -289,26 +293,55 @@ def demarrage():
             for nom, v in etat["add-ins"].items():
                 if avant.get("add-ins", {}).get(nom) != v:
                     lignes.append((f"Add-in {nom}", avant.get("add-ins", {}).get(nom) or "-", v))
-            for nom, v in etat["archives"].items():
+            for nom, v in etat["archives"].items() if "archives" in avant else ():  # ancien format : pas de comparaison
                 if avant.get("archives", {}).get(nom) != v:
                     lignes.append((f"Archive {nom}", avant.get("archives", {}).get(nom) or "-", v or "-"))
         AOI.mkdir(parents=True, exist_ok=True)
         f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
     finally:
         sys.stdout = sys.__stdout__
-    texte = []
-    if lignes:
-        largeur = [max(len(l[i]) for l in lignes + [("Élément", "Avant", "Maintenant")]) for i in range(3)]
-        fmt = lambda l: "  " + "  ".join(c.ljust(w) for c, w in zip(l, largeur))
-        texte += ["Outils de l'atelier : nouveautés chargées", fmt(("Élément", "Avant", "Maintenant"))]
-        texte += [fmt(l) for l in lignes]
+    # Bilan affiché à l'utilisateur à chaque session (systemMessage). Il n'est pas transmis à
+    # Claude (pas d'additionalContext) : le suivi des outils reste séparé de la conversation.
     if imposee and inscrite != imposee:
-        texte.append(f"Mise à jour des outils de l'atelier disponible ({inscrite or 'aucune'} -> {imposee}) : tapez /aoi:regen.")
-    if texte:
-        msg = "\n".join(texte)
-        print(json.dumps({"systemMessage": msg, "hookSpecificOutput": {
-            "hookEventName": "SessionStart", "additionalContext": msg}}, ensure_ascii=False))
+        suivi = f"mise à jour disponible ({imposee}) : tapez /aoi:regen"
+    elif lignes:
+        suivi = "nouveaux outils : " + ", ".join(
+            f"{l[0]} ({l[2]})" if l[2] not in ("nouveau",) else l[0] for l in lignes if l[0] != "Plugin aoi")
+    else:
+        suivi = "votre bibliothèque est à jour"
+    texte = [f"Outils de l'atelier v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
+             f" · {python_aoi()} · {suivi}"]
+    if not controle_actif():
+        texte.append("ATTENTION : contrôle des imports Python inactif. Lancez /aoi:regen ou contactez l'IT.")
+    print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
+    try:  # trace du crochet, pour vérifier qu'il tourne et combien de temps il prend
+        with open(AOI / "demarrage.log", "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')}  {etat['version']}  {time.time() - debut:.1f} s"
+                    f"  nouveautés : {len(lignes)}\n")
+    except OSError:
+        pass
     return 0
+
+
+def controle_actif():
+    """Contrôle des imports : la copie fixe existe et PYTHONPATH (managed settings) la désigne."""
+    guard = Path(r"C:\ProgramData\aoi\guard")
+    return (guard / "sitecustomize.py").is_file() and str(guard).lower() in os.environ.get("PYTHONPATH", "").lower()
+
+
+def python_aoi():
+    """Version et chemin du Python AOI, celui qu'utilisent les scripts de Claude."""
+    dossier = AOI / "python"
+    exe = dossier / "python.exe"
+    if not exe.is_file():
+        return f"Python AOI absent ({dossier}) : lancez /aoi:regen"
+    try:
+        r = subprocess.run([str(exe), "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"],
+                           capture_output=True, text=True, timeout=10)
+        version = r.stdout.strip() or "?"
+    except (OSError, subprocess.SubprocessError):
+        version = "?"
+    return f"Python {version}, {dossier}"
 
 
 def main():
