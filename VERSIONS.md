@@ -13,7 +13,7 @@ Seules ces versions sont autorisées sur les postes de l'atelier. Toute nouvelle
 | `revit` | Node AOI (`%LOCALAPPDATA%\aoi\node`, archive `node-aoi-25.8.2` publiée à part, fiche `plugins/aoi/node-aoi.json`) | Node.js 25.8.2 win-x64 de nodejs.org | archive SHA-256 `51815d5b0256b947d27d614de04060fcfdbdb830d2c86e63e6f33dbf7964cca7` (conforme à SHASUMS256.txt), signé OpenJS Foundation | MIT | 12.10.2026 |
 | `rhino`, scripts de Claude | Python AOI (`%LOCALAPPDATA%\aoi\python`) | archive publiée à part, version GitHub `python-aoi-<version>` : Python 3.12.10 ci-dessus et paquets de la liste blanche | voir `python-aoi/verrou.txt` et `plugins/aoi/python-aoi.json` (empreinte SHA-256) | PSF + licence de chaque paquet | à la construction |
 | `/adhd` | skill (`skills/adhd/SKILL.md` + `LICENSE`) | [UditAkhourii/adhd](https://github.com/UditAkhourii/adhd), `skills/adhd/SKILL.md` | commit `7b91ce601ed951c1a9658c63f6f9550d2486525b` (05.10.2026), blob d'origine `82513db` ; section « Companion library and CLI » (`npm install -g`) retirée. Le CLI Node `adhd-agent` du même dépôt n'est **pas** repris. | MIT | 13.10.2026 |
-| `veille` | service distant | `https://veille.casual-labs.ch/mcp` | sans objet : le code tourne chez le fournisseur | – | 12.10.2026 |
+| `veille` | service distant (**retiré de `.mcp.json` pour l'instant**, plugin 2026.10.13.8 ; déclaration à reprendre de l'étiquette `2026-10-13.7`) | `https://veille.casual-labs.ch/mcp` | sans objet : le code tourne chez le fournisseur | – | 12.10.2026 |
 
 ## Librairies Python de `rhino` (`mcp/rhino/libs`)
 

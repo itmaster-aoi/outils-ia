@@ -13,13 +13,6 @@
       "args": [
         "${LOCALAPPDATA}/aoi/revit-server-2026-10-12/build/index.js"
       ]
-    },
-    "veille": {
-      "type": "http",
-      "url": "https://veille.casual-labs.ch/mcp",
-      "headers": {
-        "Authorization": "Bearer ${AOI_VEILLE_TOKEN}"
-      }
     }
   }
 }

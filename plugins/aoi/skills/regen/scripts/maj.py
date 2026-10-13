@@ -304,11 +304,13 @@ def demarrage():
     # Claude (pas d'additionalContext) : le suivi des outils reste séparé de la conversation.
     # La version du plugin est déjà en tête de ligne : seul son changement ne fait pas un nouvel outil.
     nouveautes = [f"{l[0]} ({l[2]})" if l[2] != "nouveau" else l[0]
-                  for l in lignes if l[0] != "Plugin aoi"]
+                  for l in lignes if l[0] != "Plugin aoi" and l[2] != "retiré"]
+    retraits = [l[0] for l in lignes if l[2] == "retiré"]
     if imposee and inscrite != imposee:
         suivi = f"mise à jour disponible ({imposee}) : tapez /aoi:regen"
-    elif nouveautes:
-        suivi = "nouveaux outils : " + ", ".join(nouveautes)
+    elif nouveautes or retraits:
+        suivi = " · ".join(([f"nouveaux outils : {', '.join(nouveautes)}"] if nouveautes else [])
+                           + ([f"outils retirés : {', '.join(retraits)}"] if retraits else []))
     else:
         suivi = "vos librairies sont à jour"
     texte = [f"Outils IA atelier oï, v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
