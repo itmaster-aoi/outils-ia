@@ -6,6 +6,8 @@
 
 N'utilise que la bibliothèque standard. L'étiquette vient toujours des managed settings
 (~/.claude/remote-settings.json) : ce script ne choisit jamais lui-même une version.
+Claude Code n'écrit ce fichier qu'au démarrage d'un processus « claude » : le script en lance
+un (lecture seule) pour le rafraîchir, sans qu'il faille redémarrer la session.
 """
 import argparse
 import filecmp
@@ -61,7 +63,13 @@ def serveurs(plugin):
     return sorted(mcp.get("mcpServers", {}))
 
 
-def claude(*args):
+def skills(plugin):
+    if not plugin:
+        return []
+    return sorted(p.parent.name for p in (plugin["chemin"] / "skills").glob("*/SKILL.md"))
+
+
+def claude(*args, silencieux=False):
     exe = shutil.which("claude")
     if not exe:
         raise SystemExit("Commande « claude » introuvable : lancez installer-poste.cmd.")
@@ -69,12 +77,25 @@ def claude(*args):
     # Une session par clé API ne reçoit pas les managed settings : la commande doit
     # passer par le compte claude.ai de l'atelier.
     env.pop("ANTHROPIC_API_KEY", None)
-    print(f"  > claude {' '.join(args)}")
+    if not silencieux:
+        print(f"  > claude {' '.join(args)}")
     r = subprocess.run([exe, *args], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
     sortie = (r.stdout + r.stderr).strip()
-    if sortie:
+    if sortie and not silencieux:
         print("    " + sortie.replace("\n", "\n    "))
     return r.returncode == 0
+
+
+def rafraichir_regles():
+    """Fait relire les managed settings à la console : un processus « claude » qui démarre
+    réécrit ~/.claude/remote-settings.json. La session en cours, elle, garde ses règles."""
+    f = CLAUDE / "remote-settings.json"
+    avant = f.stat().st_mtime if f.is_file() else 0
+    claude("plugin", "marketplace", "list", silencieux=True)
+    apres = f.stat().st_mtime if f.is_file() else 0
+    quand = time.strftime("%d.%m.%Y %H:%M", time.localtime(apres)) if apres else "jamais"
+    etat = "relues à l'instant" if apres > avant else "non rafraîchies, copie du"
+    print(f"Règles de la console             : {etat} {quand}")
 
 
 def processus_actifs(*noms):
@@ -152,6 +173,7 @@ def main():
     ap.add_argument("--appliquer", action="store_true")
     a = ap.parse_args()
 
+    rafraichir_regles()
     imposee, inscrite, avant = ref_imposee(), ref_inscrite(), plugin_installe()
     print(f"Étiquette imposée par la console : {imposee or 'aucune (règles non reçues)'}")
     print(f"Étiquette inscrite sur ce poste  : {inscrite or 'aucune'}")
@@ -195,6 +217,8 @@ def main():
     print(f"Nouveaux serveurs : {', '.join('plugin:aoi:' + s for s in nouveaux) or 'aucun'}")
     if retires:
         print(f"Serveurs retirés  : {', '.join('plugin:aoi:' + s for s in retires)}")
+    nouvelles = sorted(set(skills(apres)) - set(skills(avant)))
+    print(f"Nouvelles skills  : {', '.join('/aoi:' + s for s in nouvelles) or 'aucune'}")
     for x in addins(apres):
         copier_addin(*x, appliquer=True)
     controle(apres, verifier=False)
