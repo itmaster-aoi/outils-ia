@@ -310,8 +310,8 @@ def demarrage():
     elif nouveautes:
         suivi = "nouveaux outils : " + ", ".join(nouveautes)
     else:
-        suivi = "votre bibliothèque est à jour"
-    texte = [f"Outils de l'atelier v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
+        suivi = "vos librairies sont à jour"
+    texte = [f"Outils IA atelier oï, v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
              f" · {python_aoi()} · {suivi}"]
     if not controle_actif():
         texte.append("ATTENTION : contrôle des imports Python inactif. Lancez /aoi:regen ou contactez l'IT.")
