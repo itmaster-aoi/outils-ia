@@ -3,9 +3,14 @@
     {
       "nom": "Rhino 8",
       "si_existe": "%APPDATA%/McNeel/Rhinoceros",
-      "source": "addin",
       "destination": "%APPDATA%/McNeel/Rhinoceros/packages/8.0",
-      "processus": "Rhino.exe"
+      "processus": "Rhino.exe",
+      "archive": {
+        "version": "2026-10-12",
+        "url": "https://github.com/itmaster-aoi/outils-ia/releases/download/rhino-addin-2026-10-12/rhino-addin-2026-10-12.zip",
+        "sha256": "f667ba176e315ed8e09c0ab3f979b657494c927d9613bea11af37ea4fa835a31",
+        "taille": 3942963
+      }
     }
   ]
 }

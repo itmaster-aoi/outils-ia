@@ -11,7 +11,7 @@
     "revit": {
       "command": "${LOCALAPPDATA}/aoi/node/node.exe",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/revit/server/build/index.js"
+        "${LOCALAPPDATA}/aoi/revit-server-2026-10-12/build/index.js"
       ]
     },
     "veille": {

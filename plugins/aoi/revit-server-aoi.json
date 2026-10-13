@@ -1,0 +1,11 @@
+{
+  "version": "2026-10-12",
+  "url": "https://github.com/itmaster-aoi/outils-ia/releases/download/revit-server-2026-10-12/revit-server-2026-10-12.zip",
+  "sha256": "2369b0e2776c50ce0dcd27e4765023a38abb35d3e09d7111482865ffe5584af5",
+  "taille": 8267382,
+  "versionne": true,
+  "exe": "build/index.js",
+  "conserver": [
+    "revit-data.db"
+  ]
+}

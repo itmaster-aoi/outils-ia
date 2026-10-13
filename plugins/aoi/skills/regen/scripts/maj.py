@@ -24,6 +24,9 @@ DEPOT = "itmaster-aoi/outils-ia"
 PLUGIN = "aoi@aoi"
 CLAUDE = Path.home() / ".claude"
 AOI = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
+# Le Python « embeddable » du plugin (fichier ._pth) n'ajoute pas le dossier du script à sys.path :
+# sans cette ligne, « import archives_aoi » échoue alors qu'il marche avec un Python complet.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -172,10 +175,13 @@ def addins(plugin, appliquer=False):
                 continue
             if e.get("archive"):
                 source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
-            else:
+            elif e.get("source"):
                 source, version = manifeste.parent / e["source"], None
                 if not source.is_dir():
                     continue
+            else:  # forme inconnue (fiche plus récente que ce script) : ignorée, sans planter
+                print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (mettez /regen à jour)")
+                continue
             liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
                           e.get("processus", ""), e.get("sauvegarder", []), version))
     return liste
@@ -205,8 +211,10 @@ def copier_addin(nom, source, dst, proc, sauvegarder, version, appliquer):
 
 
 def anciennes_versions(garder):
-    return [d for d in (CLAUDE / "plugins" / "cache" / "aoi" / "aoi").glob("*")
-            if d.is_dir() and d.resolve() not in garder]
+    cache = CLAUDE / "plugins" / "cache" / "aoi" / "aoi"
+    for reste in cache.glob("*.a-effacer"):  # effacement interrompu la fois précédente
+        shutil.rmtree(reste, ignore_errors=True)
+    return [d for d in cache.glob("*") if d.is_dir() and d.resolve() not in garder]
 
 
 def nettoyer_cache(*garder):
@@ -218,11 +226,16 @@ def nettoyer_cache(*garder):
     libere, echecs = 0, []
     for d in anciennes_versions(garder):
         taille = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+        # Renommer d'abord : Windows refuse si un fichier du dossier est ouvert (serveur MCP
+        # d'une session en cours). On n'efface donc jamais à moitié une version utilisée.
+        corbeille = d.with_name(d.name + ".a-effacer")
         try:
-            shutil.rmtree(d)
-            libere += taille
+            d.rename(corbeille)
         except OSError:
             echecs.append(d.name)
+            continue
+        shutil.rmtree(corbeille, ignore_errors=True)
+        libere += taille
     if libere:
         print(f"Anciennes versions effacées du cache : {libere / 2**20:,.0f} Mo libérés".replace(",", " "))
     if echecs:
@@ -244,8 +257,12 @@ def controle(plugin, verifier):
 
 
 def etat_session(plugin):
+    archives = {}
+    if plugin:  # parties publiées à part : <nom>-aoi.json à la racine du plugin
+        for f in sorted(plugin["chemin"].glob("*-aoi.json")):
+            archives[f.name[:-len("-aoi.json")]] = (lire_json(f) or {}).get("version")
     return {"version": plugin["version"] if plugin else None,
-            "serveurs": serveurs(plugin), "skills": skills(plugin),
+            "serveurs": serveurs(plugin), "skills": skills(plugin), "archives": archives,
             "add-ins": {x[0]: x[5] or "dans le plugin" for x in addins(plugin)} if plugin else {}}
 
 
@@ -272,6 +289,9 @@ def demarrage():
             for nom, v in etat["add-ins"].items():
                 if avant.get("add-ins", {}).get(nom) != v:
                     lignes.append((f"Add-in {nom}", avant.get("add-ins", {}).get(nom) or "-", v))
+            for nom, v in etat["archives"].items():
+                if avant.get("archives", {}).get(nom) != v:
+                    lignes.append((f"Archive {nom}", avant.get("archives", {}).get(nom) or "-", v or "-"))
         AOI.mkdir(parents=True, exist_ok=True)
         f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
     finally:
