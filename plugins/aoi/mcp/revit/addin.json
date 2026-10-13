@@ -1,12 +1,19 @@
 {
-  "add-ins": [
-    {
-      "nom": "Revit 2025",
-      "si_existe": "%APPDATA%/Autodesk/Revit",
-      "source": "addin/2025",
-      "destination": "%APPDATA%/Autodesk/Revit/Addins/2025",
-      "processus": "Revit.exe",
-      "sauvegarder": ["revit_mcp_plugin/Commands/commandRegistry.json"]
-    }
-  ]
+    "add-ins":  [
+                    {
+                        "nom":  "Revit 2025",
+                        "si_existe":  "%APPDATA%/Autodesk/Revit",
+                        "archive":  {
+                                        "version":  "2026-10-12",
+                                        "url":  "https://github.com/itmaster-aoi/outils-ia/releases/download/revit-addin-2026-10-12/revit-addin-2026-10-12.zip",
+                                        "sha256":  "db26488f54efef61d8de074d9159b9cddc5b3c94f52f44812521439d1d82386b",
+                                        "taille":  29315720
+                                    },
+                        "destination":  "%APPDATA%/Autodesk/Revit/Addins/2025",
+                        "processus":  "Revit.exe",
+                        "sauvegarder":  [
+                                            "revit_mcp_plugin/Commands/commandRegistry.json"
+                                        ]
+                    }
+                ]
 }

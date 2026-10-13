@@ -15,19 +15,23 @@ La version des outils est choisie par l'IT dans la console d'administration (ét
    ```
    "<dossier de cette skill>/../report/runtime/python.exe" "<dossier de cette skill>/scripts/maj.py"
    ```
-2. Si l'état est « catalogue à jour » et que les add-ins sont à jour, dis-le en une ligne et arrête-toi.
+2. Si l'état est « catalogue à jour », que les add-ins sont à jour et qu'aucune « ANCIENNES VERSIONS » n'est signalée, dis-le en une ligne et arrête-toi.
 3. Sinon, annonce la mise à jour (étiquette actuelle et étiquette imposée), puis lance :
    ```
    "<dossier de cette skill>/../report/runtime/python.exe" "<dossier de cette skill>/scripts/maj.py" --appliquer
    ```
    Le script réinscrit le catalogue à l'étiquette imposée, met le plugin à jour et recopie les add-ins Rhino et Revit qui ont changé, si Rhino et Revit sont fermés.
    Le script commence toujours par faire relire les règles de la console (ligne « Règles de la console ») : une étiquette changée dans la console est vue sans redémarrer la session.
-4. Présente le résultat : version avant et après, **nouveaux serveurs**, serveurs retirés, **nouvelles skills**, add-ins recopiés ou en attente. Termine par la consigne de **quitter et relancer Claude Code** : les serveurs ne se chargent qu'au démarrage.
+   Après la mise à jour, il efface les anciennes versions du plugin gardées dans le cache (environ 300 Mo chacune), sauf celle dont tourne la session en cours : elle partira au `/regen` suivant.
+4. Présente le résultat : version avant et après, **nouveaux serveurs**, serveurs retirés, **nouvelles skills**, add-ins recopiés ou en attente, place libérée dans le cache. Termine par la consigne de **quitter et relancer Claude Code** : les serveurs ne se chargent qu'au démarrage.
 5. En cas d'échec (« RÈGLES NON REÇUES », inscription refusée, plugin introuvable) :
    - ne tente **aucune autre source** : pas d'autre dépôt, pas d'autre étiquette, pas de `git clone`, pas d'installation manuelle ;
    - propose de lancer `installer-poste.cmd`, ou de contacter l'IT si le problème persiste.
 
 ## Pour l'IT
+
+- **Au démarrage de chaque session** (crochet `SessionStart` du plugin, `hooks/hooks.json`) : `maj.py --demarrage` compare le plugin chargé à celui de la session précédente (`%LOCALAPPDATA%\aoi\session.json`) et affiche un tableau des nouveautés (version, serveurs, skills, add-ins) s'il y en a, ainsi qu'une ligne si la console impose une étiquette plus récente. Il ne met rien à jour lui-même : `/regen` reste nécessaire, car une mise à jour au démarrage ne serait chargée qu'à la session suivante.
+- **Add-ins publiés à part** : une entrée de `addin.json` peut donner une `archive` (version, url, sha256, taille) au lieu d'une `source` du plugin. `/regen` et `installer-poste.ps1` (`maj.py --addins`) ne la téléchargent que si sa version manque dans `%LOCALAPPDATA%\aoi\addins`, et la refusent si l'empreinte diffère. C'est le cas de l'add-in Revit (`revit-addin/construire.ps1`).
 
 - **Règles de la console** : Claude Code n'écrit `~/.claude/remote-settings.json` qu'au démarrage d'un processus `claude`. `maj.py` lance donc d'abord `claude plugin marketplace list` (lecture seule), qui le réécrit. La session en cours garde ses anciennes règles jusqu'au redémarrage, mais `/regen` voit déjà la nouvelle étiquette.
 

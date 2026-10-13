@@ -19,3 +19,6 @@ python-aoi/dist/
 source/
 node-aoi/build/
 node-aoi/dist/
+# Add-in Revit : contenu de l'add-in et archive, publiée comme version GitHub (revit-addin/construire.ps1)
+revit-addin/build/
+revit-addin/dist/

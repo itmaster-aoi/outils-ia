@@ -7,16 +7,16 @@ Il repose sur le projet [mcp-servers-for-revit](https://github.com/mcp-servers-f
 | Dossier | Contenu |
 |---|---|
 | `server/` | le serveur MCP compilé (`build/`, 55 outils, dont 28 `kg_*`), avec ses dépendances de production figées (`node_modules/`) |
-| `addin/2025/` | l'add-in Revit 2025 : `mcp-servers-for-revit.addin` et le dossier `revit_mcp_plugin/` |
-| `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet/` | le jeu de commandes d'origine (22 commandes) |
-| `addin/2025/revit_mcp_plugin/Commands/RevitMCPCommandSet.KG/` | le jeu de commandes KG (28 commandes `kg_*`), avec le moteur BimKg (`BimKg.Core`, `BimKg.Runtime`) |
+| `addin.json` | la fiche de l'add-in Revit 2025 : version, adresse de l'archive, empreinte SHA-256 |
+
+L'add-in Revit (environ 90 Mo) **n'est plus dans le plugin** : il est publié comme version GitHub du dépôt (`revit-addin-<version>`), construit par `revit-addin/construire.ps1` à partir de `revit-addin/build/2025/` (non publié). L'archive contient `mcp-servers-for-revit.addin` et le dossier `revit_mcp_plugin/`, avec le jeu de commandes d'origine (`Commands/RevitMCPCommandSet/`, 22 commandes) et le jeu KG (`Commands/RevitMCPCommandSet.KG/`, 28 commandes `kg_*`, avec le moteur BimKg).
 | `LICENSE` | licence MIT du projet d'origine |
 | `LICENSE-KG` | licence MIT de la partie KG (Lauro Foletti) |
 
 ## Installation sur un poste (une fois, par l'IT)
 
 1. Node : le **Node AOI** (Node.js 25.8.2, `%LOCALAPPDATA%\aoi\node`), publié à part et installé par `installer-poste.cmd` ou `/regen`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé : changer de version de Node impose de recompiler le serveur.
-2. **Add-in Revit** : copier le contenu de `addin/2025/` dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, puis relancer Revit.
+2. **Add-in Revit** : `installer-poste.cmd` ou `/regen` téléchargent l'archive (seulement si sa version manque sur le poste, dans `%LOCALAPPDATA%\aoi\addins`), vérifient son empreinte et la copient dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, Revit fermé. Relancer ensuite Revit.
 3. Le serveur MCP s'installe tout seul : Claude Code récupère le plugin `aoi` depuis le dépôt de l'atelier.
 
 L'add-in autonome **BIM KG** (`BimKg.addin`) n'est pas nécessaire. Le jeu de commandes KG embarque son propre moteur et fonctionne seul. S'il trouve l'add-in BIM KG, il cohabite avec lui.

@@ -17,11 +17,13 @@ import shutil
 import subprocess
 import sys
 import time
+import zipfile
 from pathlib import Path
 
 DEPOT = "itmaster-aoi/outils-ia"
 PLUGIN = "aoi@aoi"
 CLAUDE = Path.home() / ".claude"
+AOI = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -110,31 +112,79 @@ def processus_actifs(*noms):
 def deja_copie(source, dst):
     """Vrai si chaque fichier de source existe dans dst avec le même contenu."""
     for f in source.rglob("*"):
-        if f.is_file():
+        if f.is_file() and f.name != "aoi-version.txt":
             g = dst / f.relative_to(source)
             if not (g.is_file() and filecmp.cmp(f, g, shallow=False)):
                 return False
     return True
 
 
-def addins(plugin):
+def archive_addin(nom, fiche, appliquer):
+    """Dossier extrait de l'archive d'un add-in publiée à part du plugin (version GitHub).
+
+    L'archive n'est téléchargée que si sa version manque sur le poste, et refusée si son
+    empreinte SHA-256 ne correspond pas à la fiche. Renvoie None si elle reste à télécharger."""
+    slug = "".join(c if c.isalnum() else "-" for c in nom.lower()).strip("-")
+    dossier = AOI / "addins" / f"{slug}-{fiche['version']}"
+    if (dossier / "aoi-version.txt").is_file():
+        return dossier
+    if not appliquer:
+        return None
+    from archives_aoi import sha256, telecharger  # même dossier que ce script
+    dossier.parent.mkdir(parents=True, exist_ok=True)
+    zip_, neuf = dossier.with_suffix(".zip"), dossier.with_suffix(".tmp")
+    print(f"  {nom} : téléchargement de l'add-in {fiche['version']} ({fiche.get('taille', 0) >> 20} Mo)")
+    try:
+        telecharger(fiche["url"], zip_, fiche.get("taille"))
+        if sha256(zip_) != fiche["sha256"].lower():
+            print(f"  ÉCHEC : l'empreinte SHA-256 de l'add-in {nom} ne correspond pas à la fiche. Archive refusée, contactez l'IT.")
+            return None
+        shutil.rmtree(neuf, ignore_errors=True)
+        with zipfile.ZipFile(zip_) as z:
+            z.extractall(neuf)
+        (neuf / "aoi-version.txt").write_text(fiche["version"], encoding="utf-8")
+        neuf.rename(dossier)
+    except OSError as e:
+        print(f"  ÉCHEC : add-in {nom} : {e}")
+        return None
+    finally:
+        zip_.unlink(missing_ok=True)
+        shutil.rmtree(neuf, ignore_errors=True)
+    for ancien in dossier.parent.glob(f"{slug}-*"):  # versions précédentes de cet add-in
+        if ancien != dossier and ancien.is_dir():
+            shutil.rmtree(ancien, ignore_errors=True)
+    return dossier
+
+
+def addins(plugin, appliquer=False):
     """Add-ins décrits par mcp/<serveur>/addin.json : un serveur sans ce fichier n'a pas d'add-in.
 
-    (nom, dossier source dans le plugin, dossier de destination, processus à fermer, fichiers à sauvegarder)
+    (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version)
+    La source est soit un dossier du plugin (« source »), soit une archive publiée à part
+    (« archive ») ; None si l'archive reste à télécharger.
     Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
     """
     liste = []
     for manifeste in sorted((plugin["chemin"] / "mcp").glob("*/addin.json")):
         for e in (lire_json(manifeste) or {}).get("add-ins", []):
-            source = manifeste.parent / e["source"]
             temoin = Path(os.path.expandvars(e.get("si_existe", e["destination"])))
-            if source.is_dir() and temoin.is_dir():
-                liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
-                              e.get("processus", ""), e.get("sauvegarder", [])))
+            if not temoin.is_dir():
+                continue
+            if e.get("archive"):
+                source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
+            else:
+                source, version = manifeste.parent / e["source"], None
+                if not source.is_dir():
+                    continue
+            liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
+                          e.get("processus", ""), e.get("sauvegarder", []), version))
     return liste
 
 
-def copier_addin(nom, source, dst, proc, sauvegarder, appliquer):
+def copier_addin(nom, source, dst, proc, sauvegarder, version, appliquer):
+    if source is None:
+        print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
+        return False
     if deja_copie(source, dst):
         print(f"  {nom} : add-in à jour")
         return True
@@ -149,9 +199,34 @@ def copier_addin(nom, source, dst, proc, sauvegarder, appliquer):
         f = dst / rel
         if f.is_file():
             shutil.copy2(f, f.with_name(f.name + time.strftime(".avant-aoi-%Y%m%d-%H%M%S")))
-    shutil.copytree(source, dst, dirs_exist_ok=True)
+    shutil.copytree(source, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("aoi-version.txt"))
     print(f"  {nom} : add-in recopié vers {dst}")
     return True
+
+
+def anciennes_versions(garder):
+    return [d for d in (CLAUDE / "plugins" / "cache" / "aoi" / "aoi").glob("*")
+            if d.is_dir() and d.resolve() not in garder]
+
+
+def nettoyer_cache(*garder):
+    """Claude Code garde une copie complète de chaque version du plugin (~300 Mo chacune) et
+    ne les efface jamais. On garde la version installée et celle dont tourne la session
+    en cours (ses serveurs et ce script en dépendent) : elle partira au /regen suivant."""
+    garder = {Path(g["chemin"]).resolve() for g in garder if g}
+    garder.add(Path(sys.executable).resolve().parents[3])  # .../<version>/skills/report/runtime/python.exe
+    libere, echecs = 0, []
+    for d in anciennes_versions(garder):
+        taille = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+        try:
+            shutil.rmtree(d)
+            libere += taille
+        except OSError:
+            echecs.append(d.name)
+    if libere:
+        print(f"Anciennes versions effacées du cache : {libere / 2**20:,.0f} Mo libérés".replace(",", " "))
+    if echecs:
+        print(f"Anciennes versions encore utilisées, à effacer au prochain /regen : {', '.join(echecs)}")
 
 
 def controle(plugin, verifier):
@@ -168,10 +243,69 @@ def controle(plugin, verifier):
         subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []))
 
 
+def etat_session(plugin):
+    return {"version": plugin["version"] if plugin else None,
+            "serveurs": serveurs(plugin), "skills": skills(plugin),
+            "add-ins": {x[0]: x[5] or "dans le plugin" for x in addins(plugin)} if plugin else {}}
+
+
+def demarrage():
+    """Crochet SessionStart : rapport succinct, seulement s'il y a du nouveau.
+
+    Compare le plugin chargé avec celui de la session précédente (%LOCALAPPDATA%\\aoi\\session.json)
+    et signale une mise à jour imposée par la console. Ne modifie rien d'autre que ce fichier."""
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # silence des fonctions d'état
+    try:
+        rafraichir_regles()
+        imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
+        etat = etat_session(plugin)
+        f = AOI / "session.json"
+        avant = lire_json(f) or {}
+        lignes = []
+        if avant and avant.get("version") != etat["version"]:
+            lignes.append(("Plugin aoi", avant.get("version") or "-", etat["version"] or "-"))
+            for cle, prefixe, nom in (("serveurs", "plugin:aoi:", "Serveur"), ("skills", "/aoi:", "Skill")):
+                for s in sorted(set(etat[cle]) - set(avant.get(cle, []))):
+                    lignes.append((f"{nom} {prefixe}{s}", "-", "nouveau"))
+                for s in sorted(set(avant.get(cle, [])) - set(etat[cle])):
+                    lignes.append((f"{nom} {prefixe}{s}", "présent", "retiré"))
+            for nom, v in etat["add-ins"].items():
+                if avant.get("add-ins", {}).get(nom) != v:
+                    lignes.append((f"Add-in {nom}", avant.get("add-ins", {}).get(nom) or "-", v))
+        AOI.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
+    finally:
+        sys.stdout = sys.__stdout__
+    texte = []
+    if lignes:
+        largeur = [max(len(l[i]) for l in lignes + [("Élément", "Avant", "Maintenant")]) for i in range(3)]
+        fmt = lambda l: "  " + "  ".join(c.ljust(w) for c, w in zip(l, largeur))
+        texte += ["Outils de l'atelier : nouveautés chargées", fmt(("Élément", "Avant", "Maintenant"))]
+        texte += [fmt(l) for l in lignes]
+    if imposee and inscrite != imposee:
+        texte.append(f"Mise à jour des outils de l'atelier disponible ({inscrite or 'aucune'} -> {imposee}) : tapez /aoi:regen.")
+    if texte:
+        msg = "\n".join(texte)
+        print(json.dumps({"systemMessage": msg, "hookSpecificOutput": {
+            "hookEventName": "SessionStart", "additionalContext": msg}}, ensure_ascii=False))
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--appliquer", action="store_true")
+    ap.add_argument("--addins", action="store_true", help="seulement les add-ins (installeur)")
+    ap.add_argument("--demarrage", action="store_true", help="crochet SessionStart : rapport des nouveautés")
     a = ap.parse_args()
+    if a.demarrage:
+        return demarrage()
+    if a.addins:
+        plugin = plugin_installe()
+        if not plugin:
+            print("Plugin aoi introuvable : add-ins non installés.")
+            return 1
+        ok = [copier_addin(*x, appliquer=True) for x in addins(plugin, appliquer=True)]
+        return 0 if all(ok) else 1
 
     rafraichir_regles()
     imposee, inscrite, avant = ref_imposee(), ref_inscrite(), plugin_installe()
@@ -189,6 +323,10 @@ def main():
     if not a.appliquer:
         print("\nÉTAT : " + ("catalogue à jour." if a_jour else f"mise à jour disponible vers {imposee}."))
         if avant:
+            vieilles = anciennes_versions({avant["chemin"].resolve(), Path(sys.executable).resolve().parents[3]})
+            if vieilles:
+                print(f"  ANCIENNES VERSIONS dans le cache : {', '.join(d.name for d in vieilles)} "
+                      "(--appliquer les efface)")
             for x in addins(avant):
                 copier_addin(*x, appliquer=False)
             controle(avant, verifier=True)
@@ -219,9 +357,10 @@ def main():
         print(f"Serveurs retirés  : {', '.join('plugin:aoi:' + s for s in retires)}")
     nouvelles = sorted(set(skills(apres)) - set(skills(avant)))
     print(f"Nouvelles skills  : {', '.join('/aoi:' + s for s in nouvelles) or 'aucune'}")
-    for x in addins(apres):
+    for x in addins(apres, appliquer=True):
         copier_addin(*x, appliquer=True)
     controle(apres, verifier=False)
+    nettoyer_cache(avant, apres)
     if avant is None or apres["version"] != avant["version"]:
         print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
     else:

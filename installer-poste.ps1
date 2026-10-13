@@ -344,32 +344,21 @@ Etape "7. Add-ins Rhino et Revit"
 if ($SkipAddins) {
   Info "Ignoré (-SkipAddins)"
 } elseif ($plugin) {
-  $src = $plugin.FullName
-  # Rhino 8
-  $rhinoDst = "$env:APPDATA\McNeel\Rhinoceros\packages\8.0"
-  if (Test-Path "$env:APPDATA\McNeel\Rhinoceros") {
-    Faire "Copie du plugin Rhino vers $rhinoDst" {
-      New-Item -ItemType Directory -Force $rhinoDst | Out-Null
-      Copy-Item "$src\mcp\rhino\addin\rhinomcp" $rhinoDst -Recurse -Force
-    } | Out-Null
-    Noter "Add-in Rhino 8" $(if ($DryRun) { "À TRAITER" } else { "ok" }) $rhinoDst
+  # Même logique que /regen : chaque add-in est décrit par mcp/<serveur>/addin.json. Celui de
+  # Revit est une archive publiée à part, téléchargée seulement si sa version manque sur le poste.
+  # Seules les applications déjà lancées sur ce compte sont traitées, et seulement si elles sont fermées.
+  $py = Join-Path $plugin.FullName "skills\report\runtime\python.exe"
+  $maj = Join-Path $plugin.FullName "skills\regen\scripts\maj.py"
+  if ($DryRun) {
+    Info "Add-ins : non traités (-DryRun)"
+    Noter "Add-ins" "À TRAITER" "-DryRun"
+  } elseif ((Test-Path $py) -and (Test-Path $maj)) {
+    $r = AvecRoue "Add-ins Rhino et Revit (Revit téléchargé seulement si sa version a changé)" $py @($maj, "--addins")
+    $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Detail $_ }
+    Noter "Add-ins" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "voir le détail ci-dessus"
   } else {
-    Info "Rhino n'a jamais été lancé sur ce compte : add-in non copié."
-    Noter "Add-in Rhino 8" "ignoré" "Rhino absent"
-  }
-  # Revit
-  $revitDst = "$env:APPDATA\Autodesk\Revit\Addins\$RevitVersion"
-  if (Test-Path "$env:APPDATA\Autodesk\Revit") {
-    Faire "Copie de l'add-in Revit $RevitVersion vers $revitDst" {
-      New-Item -ItemType Directory -Force $revitDst | Out-Null
-      $reg = "$revitDst\revit_mcp_plugin\Commands\commandRegistry.json"
-      if (Test-Path $reg) { Copy-Item $reg "$reg.avant-aoi-$(Get-Date -Format yyyyMMdd-HHmmss)" }
-      Copy-Item "$src\mcp\revit\addin\2025\*" $revitDst -Recurse -Force
-    } | Out-Null
-    Noter "Add-in Revit $RevitVersion" $(if ($DryRun) { "À TRAITER" } else { "ok" }) $revitDst
-  } else {
-    Info "Revit n'a jamais été lancé sur ce compte : add-in non copié."
-    Noter "Add-in Revit" "ignoré" "Revit absent"
+    Avert "Add-ins non installés : $maj absent de aoi $($plugin.Name). Contactez l'IT."
+    Noter "Add-ins" "À TRAITER" "maj.py absent du plugin"
   }
 } else {
   Noter "Add-ins" "MANQUANT" "plugin absent"

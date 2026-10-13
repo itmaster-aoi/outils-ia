@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/skills/report/runtime/python.exe\" \"${CLAUDE_PLUGIN_ROOT}/skills/regen/scripts/maj.py\" --demarrage",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
