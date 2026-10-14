@@ -23,9 +23,9 @@ L'add-in autonome **BIM KG** (`BimKg.addin`) n'est pas nécessaire. Le jeu de co
 
 ## Commandes activées dans Revit
 
-Le registre (`revit_mcp_plugin/Commands/commandRegistry.json`) active **50 commandes** : 22 d'origine et 28 KG. Le jeu `RevitMCPCommandSet.Extended` du poste de référence n'est pas repris.
+Le registre (`revit_mcp_plugin/Commands/commandRegistry.json`) active **51 commandes** : 23 d'origine et 28 KG. Le jeu `RevitMCPCommandSet.Extended` du poste de référence n'est pas repris.
 
-**L'exécution de code C# arbitraire reste désactivée.** La commande d'origine `send_code_to_revit`, qui fait exécuter dans Revit du code C# écrit par Claude, n'est pas inscrite au registre. L'outil serveur `revit_execute`, qui en est un alias, est donc sans effet. Pour l'activer, l'IT doit l'ajouter au registre en connaissance de cause.
+**L'exécution de code C# est activée par défaut** (depuis le plugin 2026.10.14.1, add-in `revit-addin-2026-10-14`). La commande d'origine `send_code_to_revit` fait exécuter dans Revit du code C# écrit par Claude, avec accès au document et à l'API Revit. L'outil serveur `revit_execute` en est un alias. Pour la désactiver, l'IT passe `enabled` à `false` dans le registre et publie une nouvelle archive.
 
 ## Vérification
 

@@ -45,7 +45,7 @@ Python 3.12 et Node.js 25 sont fournis par l'atelier : le **Python AOI** et le *
 
 | Prérequis | Pour |
 |---|---|
-| Git for Windows, installable sans élévation : `winget install --id Git.Git -e --scope user` | récupérer ce dépôt, et Git Bash pour le hook qui active le contrôle des imports |
+| Git for Windows, installable sans élévation : `winget install --id Git.Git -e --scope user`. Sur un poste sans winget, l'installeur l'installe pour l'utilisateur depuis les versions officielles de [microsoft/winget-cli](https://github.com/microsoft/winget-cli/releases) | récupérer ce dépôt, et Git Bash pour le hook qui active le contrôle des imports |
 | Plugin Rhino : `mcp/rhino/addin/` copié dans `%APPDATA%\McNeel\Rhinoceros\packages\8.0\` | `rhino` |
 | *Facultatif* : jeton d'accès personnel au service de veille, dans la variable `AOI_VEILLE_TOKEN` (jamais dans ce dépôt), pour les personnes qui y ont accès | `plugin:aoi:veille` (retiré du plugin pour l'instant, depuis 2026.10.13.8) |
 | Add-in Revit : `mcp/revit/addin/2025/` copié dans `%APPDATA%\Autodesk\Revit\Addins\2025\` | `revit` |

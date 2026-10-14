@@ -8,7 +8,7 @@
     powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1
 
   Étapes, chacune vérifiée et rejouable sans risque :
-    1. Git for Windows (installation par utilisateur) et chemin de Git Bash pour Claude Code
+    1. Git for Windows (installation par utilisateur, avec winget installé au besoin) et chemin de Git Bash pour Claude Code
     2. Claude Code (installation par utilisateur)
     3. Absence de clé ANTHROPIC_API_KEY (sinon les règles de l'organisation ne s'appliquent pas)
     4. Jeton personnel du service de veille (AOI_VEILLE_TOKEN), facultatif
@@ -103,6 +103,42 @@ function DefinirVar($nom, $valeur) {
 function RafraichirPath {
   $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [Environment]::GetEnvironmentVariable("Path", "User")
 }
+# winget (App Installer) pour cet utilisateur, sans élévation. Sur un poste où App Installer est
+# présent mais pas enregistré pour ce compte, un réenregistrement suffit. Sinon, téléchargement
+# depuis les versions officielles de microsoft/winget-cli : Add-AppxPackage refuse un paquet dont
+# la signature n'est pas reconnue par Windows.
+function InstallerWinget {
+  $famille = "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
+  $apps = "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+  try { Add-AppxPackage -RegisterByFamilyName -MainPackage $famille -ErrorAction Stop } catch { }
+  RafraichirPath
+  if ($env:Path -notlike "*$apps*") { $env:Path += ";$apps" }
+  if (Get-Command winget -ErrorAction SilentlyContinue) { return }
+
+  $arch = switch ($env:PROCESSOR_ARCHITECTURE) { "ARM64" { "arm64" } "x86" { "x86" } default { "x64" } }
+  $base = "https://github.com/microsoft/winget-cli/releases/latest/download"
+  $dossier = Join-Path $env:TEMP ("aoi-winget-" + [IO.Path]::GetRandomFileName())
+  New-Item -ItemType Directory -Path $dossier | Out-Null
+  try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    $progres = $ProgressPreference; $ProgressPreference = "SilentlyContinue"
+    $bundle = Join-Path $dossier "$famille.msixbundle"
+    $deps = Join-Path $dossier "dependances.zip"
+    Info "Téléchargement de winget (github.com/microsoft/winget-cli, dernière version)"
+    Invoke-WebRequest -UseBasicParsing "$base/$famille.msixbundle" -OutFile $bundle
+    Invoke-WebRequest -UseBasicParsing "$base/DesktopAppInstaller_Dependencies.zip" -OutFile $deps
+    $ProgressPreference = $progres
+    Expand-Archive $deps -DestinationPath (Join-Path $dossier "dependances")
+    $appx = Get-ChildItem (Join-Path $dossier "dependances") -Recurse -Include *.appx, *.msix |
+      Where-Object { $_.FullName -match "[\\_]$arch[\\_.]" } | ForEach-Object { $_.FullName }
+    Info "Installation de winget pour l'utilisateur ($arch, $(@($appx).Count) dépendances)"
+    Add-AppxPackage -Path $bundle -DependencyPath $appx -ForceUpdateFromAnyVersion -ErrorAction Stop
+  } catch {
+    Detail $_.Exception.Message
+  } finally {
+    Remove-Item $dossier -Recurse -Force -ErrorAction SilentlyContinue
+  }
+}
 
 # --- 0. Contexte -----------------------------------------------------------------------------
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -125,6 +161,10 @@ $candidats = @(
 )
 $bash = $candidats | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $bash) {
+  if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    if ($DryRun) { Info "(diagnostic seul) Installation de winget pour l'utilisateur (github.com/microsoft/winget-cli)" }
+    else { InstallerWinget }
+  }
   if (Get-Command winget -ErrorAction SilentlyContinue) {
     if ($DryRun) { Info "(diagnostic seul) Installation de Git pour l'utilisateur (winget)" } else {
       $r = AvecRoue "Installation de Git pour l'utilisateur (winget)" (Get-Command winget).Source @(
