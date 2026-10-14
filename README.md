@@ -16,6 +16,7 @@ plugins/aoi/               le plugin de l'atelier
     report/                       /report : contrôle et rapport des librairies Python
     regen/                        /regen : met le poste à la version imposée par la console
 VERSIONS.md                       versions de référence validées
+CHANGELOG.md                      journal des changements, une entrée par étiquette
 ```
 
 ## Règles
