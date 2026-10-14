@@ -4,9 +4,11 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
-## Installeur 2026-10-14 (branche main, hors étiquette)
+## Installeur 2026-10-14.2 (branche main, hors étiquette)
 
 - `installer-poste.ps1` compare sa version (`$VersionInstalleur`) à celle du dépôt et avertit si la copie lancée est dépassée, par exemple sur un partage réseau oublié. La personne choisit de continuer ou non. Les copies antérieures à cette version n'ont pas ce contrôle.
+- Nouvelle étape 4, « Connexion à claude.ai » : à la première fois, la connexion s'ouvre depuis l'installeur, qui continue ensuite. Il n'est plus nécessaire de le lancer deux fois. Une connexion autre que claude.ai est signalée.
+- Étape du jeton de veille retirée, avec l'option `-SansVeille`.
 
 ## 2026-10-14.1 (plugin 2026.10.14.1)
 
