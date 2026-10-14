@@ -2,7 +2,11 @@
 
 Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette est celle que la console impose aux postes (`extraKnownMarketplaces` et `strictKnownMarketplaces`) ; les postes la récupèrent avec `/regen`. Les versions de chaque composant sont dans [`VERSIONS.md`](VERSIONS.md), le détail dans les messages de commit.
 
-À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`.
+À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
+
+## Installeur 2026-10-14 (branche main, hors étiquette)
+
+- `installer-poste.ps1` compare sa version (`$VersionInstalleur`) à celle du dépôt et avertit si la copie lancée est dépassée, par exemple sur un partage réseau oublié. La personne choisit de continuer ou non. Les copies antérieures à cette version n'ont pas ce contrôle.
 
 ## 2026-10-14.1 (plugin 2026.10.14.1)
 

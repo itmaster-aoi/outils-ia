@@ -39,6 +39,11 @@ param(
   [switch]$SansVeille
 )
 
+# Date de cette version de l'installeur : à changer à chaque modification du script, dans le même
+# commit. Comparée à celle du dépôt (branche main) pour signaler une copie dépassée sur un partage.
+$VersionInstalleur = "2026-10-14"
+$DepotInstalleur = "https://raw.githubusercontent.com/itmaster-aoi/outils-ia/main/installer-poste.ps1"
+
 $ErrorActionPreference = "Stop"
 # Affiche correctement les accents et les symboles de Claude Code dans la console
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
@@ -152,6 +157,26 @@ Encadre @(
   "$($env:USERNAME.ToLower()) @ $env:COMPUTERNAME"
 )
 if ($admin) { Avert "Ce PowerShell tourne en administrateur. Relancez-le en utilisateur normal : tout s'installe dans votre profil." }
+
+# Copie de l'installeur dépassée (partage réseau oublié) : avertir avant de toucher au poste.
+try {
+  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+  $distant = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 $DepotInstalleur).Content
+  $versionDepot = if ($distant -match '\$VersionInstalleur\s*=\s*"([\d-]+)"') { $Matches[1] }
+} catch { $versionDepot = $null }
+if (-not $versionDepot) {
+  Info "Installeur $VersionInstalleur (version du dépôt non vérifiée : GitHub injoignable ou réponse illisible)"
+} elseif ($versionDepot -gt $VersionInstalleur) {
+  Avert "Cet installeur ($VersionInstalleur) est dépassé : le dépôt a la version $versionDepot."
+  Detail "Copie lancée : $PSCommandPath"
+  Detail "Version à jour : https://github.com/itmaster-aoi/outils-ia (installer-poste.ps1 et installer-poste.cmd)"
+  $rep = if ($DryRun) { "o" } else { Question "Continuer quand même avec cette version ? (o/n)"; Read-Host }
+  if ($rep -ne "o") { Info "Arrêt. Remplacez cette copie de l'installeur, puis relancez-la."; exit 1 }
+  Noter "Installeur" "À METTRE À JOUR" "$VersionInstalleur, dépôt : $versionDepot"
+} else {
+  Ok "Installeur $VersionInstalleur (à jour)"
+  Noter "Installeur" "ok" $VersionInstalleur
+}
 
 # --- 1. Git for Windows ----------------------------------------------------------------------
 Etape "1. Git for Windows"
