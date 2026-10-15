@@ -1,0 +1,9 @@
+Origine      : https://github.com/Graphify-Labs/graphify (graphify/skill-windows.md, graphify/skills/windows/references)
+Version      : 0.9.91
+Commit       : 10130e79ed9caf8f60d998073e097531eaa1a395
+Source       : C:\Users\lauro\Documents\IT\outils-ia\python-aoi\build\graphify
+Généré le    : 15.10.2026 par python-aoi/adapter_skill_graphify.py (construire.ps1)
+Licences     : LICENSE, LICENSE-MIT, NOTICE
+Adaptations  : étape 1 et garde de l'interpréteur remplacées (Python AOI, aucune installation) ;
+               18 appels « graphify … » remplacés par « python.exe -m graphify … » du Python AOI ;
+               conseils « pip install … » de la prose renvoyés à l'IT. Le reste est le texte d'origine.

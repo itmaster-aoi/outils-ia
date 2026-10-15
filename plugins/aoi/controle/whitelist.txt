@@ -29,3 +29,7 @@ matplotlib      # pip : matplotlib
 # Divers
 yaml            # pip : pyyaml
 requests        # pip : requests
+
+# Graphes de connaissances
+graphify        # clone GitHub Graphify-Labs/graphify (paquet pip graphifyy), installé dans le Python AOI par python-aoi/construire.ps1
+networkx        # pip : networkx, dépendance de graphify que la skill importe aussi directement

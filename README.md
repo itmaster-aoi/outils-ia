@@ -15,6 +15,7 @@ plugins/aoi/               le plugin de l'atelier
   controle/                       contrôle des imports Python (guard, liste blanche) et Python embarqué
   skills/
     regen/                        /regen : met le poste à la version imposée par la console
+    graphify/                     /graphify : graphe de connaissances d'un dossier (Graphify-Labs/graphify, Python AOI), généré par python-aoi/adapter_skill_graphify.py
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette
 ```

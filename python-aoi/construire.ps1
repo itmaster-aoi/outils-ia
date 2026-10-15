@@ -6,11 +6,15 @@
   Python 3.12 portable (celui du plugin, controle/runtime) + les paquets de paquets.txt,
   en roues binaires pour Windows 64 bits, sans pip. Le contrôle des imports est branché d'office :
   le fichier python312._pth ajoute C:\ProgramData\aoi\guard au chemin de recherche.
+  graphify (Graphify-Labs/graphify) vient d'un clone GitHub relu par l'IT, python-aoi\build\graphify,
+  installé sans ses dépendances (elles sont dans paquets.txt). La skill /graphify du plugin est
+  générée du même clone (adapter_skill_graphify.py) : skill et librairie ont le même commit.
 
   Produit :
     python-aoi\dist\python-aoi-<version>.zip
-    python-aoi\verrou.txt                        versions exactes des paquets
+    python-aoi\verrou.txt                        versions exactes des paquets, commit de graphify
     plugins\aoi\python-aoi.json                  version, adresse et empreinte SHA-256
+    plugins\aoi\skills\graphify\                 skill /graphify, générée du clone
 
   Ensuite : publier l'archive comme fichier de la version GitHub « python-aoi-<version> »,
   créer une étiquette du plugin, la reporter dans la console. Les postes l'installent avec
@@ -23,10 +27,15 @@
 .PARAMETER PythonConstruction
   Python 3.12 avec pip, utilisé seulement pour télécharger les paquets.
   Par défaut : anaconda de l'utilisateur, sinon « py -3.12 ».
+
+.PARAMETER GraphifyCommit
+  Commit validé du clone de graphify (python-aoi\build\graphify). S'il est donné, la construction
+  refuse un clone à un autre commit ; sinon le commit courant du clone est inscrit dans verrou.txt.
 #>
 param(
   [string]$Version = (Get-Date -Format "yyyy-MM-dd"),
-  [string]$PythonConstruction
+  [string]$PythonConstruction,
+  [string]$GraphifyCommit
 )
 $ErrorActionPreference = "Stop"
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
@@ -57,7 +66,7 @@ if (-not $PythonConstruction) { throw "Aucun Python avec pip trouvé : passez -P
 Write-Host "Python de construction : $PythonConstruction"
 
 # 1. Python portable du plugin
-if (Test-Path (Split-Path $build)) { Remove-Item (Split-Path $build) -Recurse -Force }
+if (Test-Path $build) { Remove-Item $build -Recurse -Force }   # build\graphify (le clone) est gardé
 New-Item -ItemType Directory -Force $build, $dist | Out-Null
 Copy-Item "$runtime\*" $build -Recurse
 $sp = Join-Path $build "Lib\site-packages"
@@ -67,6 +76,19 @@ $sp = Join-Path $build "Lib\site-packages"
   --python-version 3.12 --implementation cp --no-compile --disable-pip-version-check `
   -r (Join-Path $ici "paquets.txt")
 if ($LASTEXITCODE -ne 0) { throw "Échec du téléchargement des paquets." }
+Get-ChildItem $sp -Directory -Filter "bin" | Remove-Item -Recurse -Force
+
+# 2b. graphify : clone GitHub relu par l'IT, installé sans ses dépendances (elles viennent de paquets.txt)
+$clone = Join-Path $ici "build\graphify"
+if (-not (Test-Path (Join-Path $clone "pyproject.toml"))) {
+  throw "Clone de graphify introuvable. Lancez : git clone --branch v8 https://github.com/Graphify-Labs/graphify `"$clone`" puis git -C `"$clone`" checkout <commit validé>."
+}
+$commit = (& git -C $clone rev-parse HEAD).Trim()
+if ($GraphifyCommit -and -not $commit.StartsWith($GraphifyCommit)) { throw "Le clone de graphify est au commit $commit, pas au commit validé $GraphifyCommit." }
+if (& git -C $clone status --porcelain) { throw "Le clone de graphify a des modifications locales : construction refusée." }
+Write-Host "graphify : clone $clone, commit $commit"
+& $PythonConstruction -m pip install --target $sp --no-deps --no-compile --disable-pip-version-check $clone
+if ($LASTEXITCODE -ne 0) { throw "Échec de l'installation de graphify depuis le clone." }
 Get-ChildItem $sp -Directory -Filter "bin" | Remove-Item -Recurse -Force
 
 # 3. Chemin de recherche : Python, site-packages, puis le contrôle des imports de l'atelier
@@ -84,15 +106,20 @@ $verrou = Get-ChildItem $sp -Directory -Filter "*.dist-info" | ForEach-Object {
   $_.Name -replace '\.dist-info$', '' -replace '-(?=[^-]+$)', '=='
 } | Sort-Object
 $entete = "# Python AOI $Version : Python 3.12.10 portable (python.org) et paquets ci-dessous"
-($entete, $verrou) | ForEach-Object { $_ } | Set-Content (Join-Path $ici "verrou.txt") -Encoding UTF8
+$origine = "# graphify : clone https://github.com/Graphify-Labs/graphify, commit $commit (installé sans pip, voir construire.ps1)"
+($entete, $origine, $verrou) | ForEach-Object { $_ } | Set-Content (Join-Path $ici "verrou.txt") -Encoding UTF8
 Copy-Item (Join-Path $ici "verrou.txt") (Join-Path $build "aoi-verrou.txt")
 
 # 5. Essai : chaque librairie de la liste blanche se charge, contrôle des imports en mode relevé
 $env:AOI_IMPORT_MODE = "report"
 $env:AOI_IMPORT_LOG = Join-Path $ici "build\essai-imports.jsonl"
-& (Join-Path $build "python.exe") -c "import openpyxl, docx, pptx, pypdf, pymupdf, fitz, reportlab, numpy, pandas, PIL, matplotlib, yaml, requests, sys; print('Essai réussi :', sys.version.split()[0])"
+& (Join-Path $build "python.exe") -c "import openpyxl, docx, pptx, pypdf, pymupdf, fitz, reportlab, numpy, pandas, PIL, matplotlib, yaml, requests, networkx, rapidfuzz, tree_sitter, tree_sitter_python, graphify, graphify.detect, graphify.extract, sys; from tree_sitter import Language, Parser; Parser(Language(tree_sitter_python.language())).parse(b'x = 1'); from importlib.metadata import version; print('Essai réussi :', sys.version.split()[0], '- graphify', version('graphifyy'))"
 if ($LASTEXITCODE -ne 0) { throw "Une librairie ne se charge pas." }
 Remove-Item Env:AOI_IMPORT_MODE, Env:AOI_IMPORT_LOG
+
+# 5b. Skill /graphify du plugin, générée du même clone : texte d'origine, Python AOI à la place des installeurs
+& (Join-Path $runtime "python.exe") (Join-Path $ici "adapter_skill_graphify.py") $clone
+if ($LASTEXITCODE -ne 0) { throw "Échec de la génération de la skill graphify." }
 
 # 6. Archive et fiche du plugin
 if (Test-Path $archive) { Remove-Item $archive }
@@ -114,4 +141,5 @@ $json = ($fiche | ConvertTo-Json) + "`n"
 Write-Host ""
 Write-Host "Archive : $archive ($([math]::Round($taille / 1MB)) Mo)"
 Write-Host "SHA-256 : $sha"
+Write-Host "graphify : commit $commit (à reporter dans VERSIONS.md)"
 Write-Host "Publier : gh release create $etiquette `"$archive`" --repo $depot --title `"Python AOI $Version`" --notes-file `"$(Join-Path $ici 'verrou.txt')`""

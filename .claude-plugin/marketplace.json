@@ -9,7 +9,7 @@
     {
       "name": "aoi",
       "source": "./plugins/aoi",
-      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit ; skills /aoi:regen, /aoi:adhd."
+      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit ; skills /aoi:regen, /aoi:adhd, /aoi:graphify."
     }
   ],
   "renames": {

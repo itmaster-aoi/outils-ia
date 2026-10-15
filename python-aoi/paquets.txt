@@ -12,3 +12,17 @@ pillow
 matplotlib
 pyyaml
 requests
+# graphify lui-même vient d'un clone GitHub (python-aoi/build/graphify), installé par construire.ps1
+# sans ses dépendances : les voici, en roues binaires. Les grammaires tree-sitter sont limitées aux
+# langages de l'atelier ; un fichier d'un autre langage est passé avec un avertissement, sans arrêter
+# l'analyse. Une grammaire sans roue Windows est à retirer d'ici.
+networkx
+rapidfuzz
+tree-sitter>=0.25,<0.26
+tree-sitter-python
+tree-sitter-javascript
+tree-sitter-typescript
+tree-sitter-c-sharp
+tree-sitter-json
+tree-sitter-bash
+tree-sitter-powershell

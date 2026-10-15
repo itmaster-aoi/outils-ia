@@ -4,6 +4,12 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-15.3 (plugin 2026.10.15.3, Python AOI 2026-10-15)
+
+- **graphify** ([Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify)) entre dans l'outillage : clone GitHub relu par l'IT, installé dans le Python AOI par `python-aoi/construire.ps1` (aucun `pip` sur les postes), dépendances en roues binaires dans `python-aoi/paquets.txt` (grammaires tree-sitter limitées aux langages de l'atelier). `graphify` et `networkx` ajoutés à `controle/whitelist.txt`.
+- Nouvelle skill `/aoi:graphify` (`skills/graphify/`), générée par `python-aoi/adapter_skill_graphify.py` à partir du même clone : texte d'origine (variante Windows), le Python AOI remplace les installeurs (uv, pipx, pip), les appels `graphify …` deviennent `python.exe -m graphify …`.
+- Python AOI `2026-10-15` (85 Mo, empreinte dans `plugins/aoi/python-aoi.json`) : Python 3.12.10 et paquets précédents, plus graphify 0.9.91 (commit `10130e79`), networkx 3.7, rapidfuzz 3.14, tree-sitter 0.25 et sept grammaires. Les postes le téléchargent au prochain `/regen` ou à l'installation, le Python AOI n'étant rechargé que quand sa version change.
+
 ## 2026-10-15.2 (plugin 2026.10.15.2)
 
 - `/regen` passe la main à la nouvelle version : après l'installation du plugin, `maj.py --finir` de la version installée prépare le poste (add-ins, contrôle des imports, Python et Node AOI, cache) avec ses propres chemins. Corrige le cas de la 2026-10-15.1, où un `/regen` depuis la 2026-10-14.1 ne recopiait pas le contrôle des imports, déplacé dans `controle/`.
