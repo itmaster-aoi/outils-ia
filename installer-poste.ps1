@@ -38,7 +38,7 @@ param(
 # Version de l'installeur (date, suffixe .N pour plusieurs versions le même jour) : à changer à
 # chaque modification du script, dans le même commit. Comparée à celle du dépôt (branche main)
 # pour signaler une copie dépassée sur un partage.
-$VersionInstalleur = "2026-10-15.2"
+$VersionInstalleur = "2026-10-15.3"
 $DepotInstalleur = "https://raw.githubusercontent.com/itmaster-aoi/outils-ia/main/installer-poste.ps1"
 
 $ErrorActionPreference = "Stop"
@@ -295,7 +295,7 @@ $ancien = $null
 if (Test-Path $claudeJson) {
   try { $ancien = (Get-Content $claudeJson -Raw | ConvertFrom-Json).mcpServers } catch { }
 }
-$vieux = @("rhino", "revit", "veille") | Where-Object { $ancien -and $ancien.PSObject.Properties.Name -contains $_ }
+$vieux = @("rhino", "revit", "veille", "kg", "contaixt") | Where-Object { $ancien -and $ancien.PSObject.Properties.Name -contains $_ }
 if ($vieux -and $claude) {
   foreach ($n in $vieux) { Faire "Retrait de « $n »" { & claude mcp remove $n -s user | Out-Null } | Out-Null }
   Noter "Anciennes déclarations" $(if ($DryRun) { "À TRAITER" } else { "ok" }) ($vieux -join ", ")

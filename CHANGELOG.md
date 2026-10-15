@@ -4,6 +4,11 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-15.5 (plugin 2026.10.15.5, installeur 2026-10-15.3)
+
+- Nouveau serveur `plugin:aoi:contaixt` : service distant HTTP `https://veille.casual-labs.ch/mcp`, sans jeton (page d'installation du fournisseur : `https://veille.casual-labs.ch/setup`). Remplace l'ancien `veille` (même hôte, avec `AOI_VEILLE_TOKEN`), qui reste retiré.
+- `installer-poste.ps1` : l'étape 5 retire aussi les déclarations user `kg` et `contaixt`, que le script d'installation du fournisseur ajoute en scope user, pour éviter un doublon avec le plugin.
+
 ## 2026-10-15.4 (plugin 2026.10.15.4, installeur 2026-10-15.2)
 
 - Add-in Rhino : Rhino 8.32 minimum. Une version plus ancienne ne peut pas charger l'add-in. Nouvelle clé `version_min` dans `addin.json` (version lue dans le registre) : en dessous, `/regen` et l'installeur ne téléchargent ni ne copient l'add-in et affichent « ÉCHEC : version … installée, l'add-in demande 8.32 ou plus récente ». Le démarrage de session affiche une alerte. Un add-in déjà copié n'est pas retiré.

@@ -13,6 +13,10 @@
       "args": [
         "${LOCALAPPDATA}/aoi/revit-server-2026-10-12/build/index.js"
       ]
+    },
+    "contaixt": {
+      "type": "http",
+      "url": "https://veille.casual-labs.ch/mcp"
     }
   }
 }
