@@ -162,10 +162,47 @@ def archive_addin(nom, fiche, appliquer):
     return dossier
 
 
+def version_application(fiche):
+    """Version de l'application lue dans le registre (« registre », « valeur »), ou None."""
+    import winreg
+    racine, _, cle = fiche["registre"].replace("/", "\\").partition("\\")
+    ruche = {"HKLM": winreg.HKEY_LOCAL_MACHINE, "HKCU": winreg.HKEY_CURRENT_USER}.get(racine.upper())
+    if ruche is None:
+        return None
+    try:
+        with winreg.OpenKey(ruche, cle) as k:
+            return str(winreg.QueryValueEx(k, fiche.get("valeur", "Version"))[0])
+    except OSError:
+        return None
+
+
+def en_nombres(version):
+    try:
+        return tuple(int(x) for x in version.split("."))
+    except ValueError:
+        return None
+
+
+def application_incompatible(e):
+    """Motif du refus si l'application est plus ancienne que « version_min » de la fiche, sinon None.
+    Une version illisible est refusée aussi : un add-in trop récent peut empêcher l'application de démarrer."""
+    m = e.get("version_min")
+    if not m:
+        return None
+    v = version_application(m)
+    if v is None or en_nombres(v) is None:
+        return f"version de {e['nom']} illisible ({m['registre']}), add-in non installé. Contactez l'IT."
+    if en_nombres(v) < en_nombres(m["min"]):
+        return (f"version {v} installée, l'add-in demande {m['min']} ou plus récente. "
+                f"Mettez {e['nom']} à jour, puis relancez /aoi:regen.")
+    return None
+
+
 def addins(plugin, appliquer=False):
     """Add-ins décrits par mcp/<serveur>/addin.json : un serveur sans ce fichier n'a pas d'add-in.
 
-    (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version)
+    (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version,
+    motif du refus si l'application est trop ancienne)
     La source est soit un dossier du plugin (« source »), soit une archive publiée à part
     (« archive ») ; None si l'archive reste à télécharger.
     Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
@@ -175,6 +212,12 @@ def addins(plugin, appliquer=False):
         for e in (lire_json(manifeste) or {}).get("add-ins", []):
             temoin = Path(os.path.expandvars(e.get("si_existe", e["destination"])))
             if not temoin.is_dir():
+                continue
+            refus = application_incompatible(e)
+            if refus:  # rien à télécharger pour une application qui ne pourra pas charger l'add-in
+                liste.append((e["nom"], None, Path(os.path.expandvars(e["destination"])),
+                              e.get("processus", ""), e.get("sauvegarder", []),
+                              (e.get("archive") or {}).get("version"), refus))
                 continue
             if e.get("archive"):
                 source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
@@ -186,11 +229,14 @@ def addins(plugin, appliquer=False):
                 print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (mettez /regen à jour)")
                 continue
             liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
-                          e.get("processus", ""), e.get("sauvegarder", []), version))
+                          e.get("processus", ""), e.get("sauvegarder", []), version, None))
     return liste
 
 
-def copier_addin(nom, source, dst, proc, sauvegarder, version, appliquer):
+def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, appliquer):
+    if refus:
+        print(f"  {nom} : ÉCHEC : {refus}")
+        return False
     if source is None:
         print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
         return False
@@ -366,6 +412,9 @@ def demarrage():
              f" · {python_aoi()} · {suivi}"]
     if not controle_actif():
         texte.append("ATTENTION : contrôle des imports Python inactif. Lancez /aoi:regen ou contactez l'IT.")
+    for x in addins(plugin) if plugin else ():
+        if x[6]:
+            texte.append(f"ATTENTION : add-in {x[0]} : {x[6]}")
     print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
     try:  # trace du crochet, pour vérifier qu'il tourne et combien de temps il prend
         with open(AOI / "demarrage.log", "a", encoding="utf-8") as f:

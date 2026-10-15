@@ -38,7 +38,7 @@ param(
 # Version de l'installeur (date, suffixe .N pour plusieurs versions le même jour) : à changer à
 # chaque modification du script, dans le même commit. Comparée à celle du dépôt (branche main)
 # pour signaler une copie dépassée sur un partage.
-$VersionInstalleur = "2026-10-15.1"
+$VersionInstalleur = "2026-10-15.2"
 $DepotInstalleur = "https://raw.githubusercontent.com/itmaster-aoi/outils-ia/main/installer-poste.ps1"
 
 $ErrorActionPreference = "Stop"
@@ -371,6 +371,15 @@ do {
 } while ($relancer -and $essai -lt 2)
 
 $plugin = Installe "aoi@aoi"
+# Cache incomplet (installation interrompue, fichiers retirés) : « plugin update » répond « déjà à jour »
+# sans rien recopier. On réinstalle, à la même étiquette, si /regen manque.
+if ($plugin -and $claude -and -not $DryRun -and
+    -not (Test-Path (Join-Path $plugin.installPath "skills\regen\scripts\maj.py"))) {
+  Avert "aoi $($plugin.version) incomplet sur ce poste (skills\regen absent) : réinstallation."
+  LancerClaude "Désinstallation du plugin aoi incomplet" @("plugin", "uninstall", "aoi@aoi") | Out-Null
+  LancerClaude "Réinstallation du plugin aoi" @("plugin", "install", "aoi@aoi") | Out-Null
+  $plugin = Installe "aoi@aoi"
+}
 $refImposee = RefImposee
 $refInscrite = RefInscrite
 if (-not $plugin) {
@@ -380,6 +389,9 @@ if (-not $plugin) {
                  (Test-Path (Join-Path $plugin.installPath "skills\report\runtime\python.exe")))) {
   Avert "aoi $($plugin.version) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
   Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version) : version antérieure à 2026.10.12.3"
+} elseif (-not (Test-Path (Join-Path $plugin.installPath "skills\regen\scripts\maj.py"))) {
+  Avert "aoi $($plugin.version) reste incomplet (skills\regen absent) : vérifiez l'antivirus, puis relancez ce script ; sinon contactez l'IT."
+  Noter "Plugin aoi" "INCOMPLET" "$($plugin.version) : skills\regen absent"
 } elseif ($refImposee -and $refInscrite -ne $refImposee) {
   Avert "aoi $($plugin.version) installé, mais le catalogue n'est pas à l'étiquette imposée ($refImposee). Relancez ce script ; si le message persiste, contactez l'IT."
   Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version), console : $refImposee"
@@ -413,6 +425,9 @@ if ($plugin -and -not $DryRun) {
     $r = AvecRoue "Python AOI et Node AOI (téléchargés seulement si leur version a changé)" $py @($pt)
     $r.Texte -split "`r?`n" | Where-Object { $_ -notmatch '^\s*\.\.\. ' } | ForEach-Object { Detail $_ }
     Noter "Python et Node AOI" $(if ($r.Ok) { "ok" } else { "À TRAITER" }) "$env:LOCALAPPDATA\aoi"
+  } else {
+    Avert "Python AOI et Node AOI non installés : $pt absent de aoi $($plugin.Name). Contactez l'IT."
+    Noter "Python et Node AOI" "À TRAITER" "archives_aoi.py absent du plugin"
   }
 }
 
@@ -449,7 +464,7 @@ foreach ($b in $bilan) {
   switch -Regex ($b.Etat) {
     '^ok$'                  { Ok $ligne }
     '^(non concerné|ignoré)$' { Info $ligne }
-    'MANQUANT'              { Erreur $ligne }
+    'MANQUANT|INCOMPLET'    { Erreur $ligne }
     default                 { Avert $ligne }
   }
 }

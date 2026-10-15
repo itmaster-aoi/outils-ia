@@ -5,6 +5,11 @@
       "si_existe": "%APPDATA%/McNeel/Rhinoceros",
       "destination": "%APPDATA%/McNeel/Rhinoceros/packages/8.0",
       "processus": "Rhino.exe",
+      "version_min": {
+        "registre": "HKLM/SOFTWARE/McNeel/Rhinoceros/8.0/Install",
+        "valeur": "Version",
+        "min": "8.32"
+      },
       "archive": {
         "version": "2026-10-12",
         "url": "https://github.com/itmaster-aoi/outils-ia/releases/download/rhino-addin-2026-10-12/rhino-addin-2026-10-12.zip",

@@ -4,6 +4,11 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-15.4 (plugin 2026.10.15.4, installeur 2026-10-15.2)
+
+- Add-in Rhino : Rhino 8.32 minimum. Une version plus ancienne ne peut pas charger l'add-in. Nouvelle clé `version_min` dans `addin.json` (version lue dans le registre) : en dessous, `/regen` et l'installeur ne téléchargent ni ne copient l'add-in et affichent « ÉCHEC : version … installée, l'add-in demande 8.32 ou plus récente ». Le démarrage de session affiche une alerte. Un add-in déjà copié n'est pas retiré.
+- `installer-poste.ps1` : un plugin présent mais incomplet (`skills\regen` absent, après une installation interrompue) est désinstallé puis réinstallé à la même étiquette. Avant, `claude plugin update` répondait « déjà à jour » et le bilan affichait « ok ». S'il reste incomplet, le bilan affiche « INCOMPLET ». L'étape Python et Node AOI n'est plus sautée en silence quand `archives_aoi.py` manque.
+
 ## 2026-10-15.3 (plugin 2026.10.15.3, Python AOI 2026-10-15)
 
 - **graphify** ([Graphify-Labs/graphify](https://github.com/Graphify-Labs/graphify)) entre dans l'outillage : clone GitHub relu par l'IT, installé dans le Python AOI par `python-aoi/construire.ps1` (aucun `pip` sur les postes), dépendances en roues binaires dans `python-aoi/paquets.txt` (grammaires tree-sitter limitées aux langages de l'atelier). `graphify` et `networkx` ajoutés à `controle/whitelist.txt`.
