@@ -12,8 +12,8 @@ plugins/aoi/               le plugin de l'atelier
   mcp/                            un dossier par serveur MCP, avec tout le nécessaire
     rhino/                          serveur, librairies figées, plugin Rhino, README
     revit/                          serveur compilé avec outils KG, dépendances figées, add-in Revit 2025, README
+  controle/                       contrôle des imports Python (guard, liste blanche) et Python embarqué
   skills/
-    report/                       /report : contrôle et rapport des librairies Python
     regen/                        /regen : met le poste à la version imposée par la console
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette
@@ -42,7 +42,7 @@ Le script installe ou vérifie Git for Windows et Claude Code, signale une éven
 
 ## Prérequis sur les postes (installés une fois par l'IT)
 
-Python 3.12 et Node.js 25 sont fournis par l'atelier : le **Python AOI** et le **Node AOI** sont des archives publiées à part (versions GitHub `python-aoi-*` et `node-aoi-*`), installées dans `%LOCALAPPDATA%\aoi` par l'installeur ou `/regen`, et retéléchargées seulement quand leur version change. Le petit Python de `skills/report/runtime/` sert à `/report` et `/regen`.
+Python 3.12 et Node.js 25 sont fournis par l'atelier : le **Python AOI** et le **Node AOI** sont des archives publiées à part (versions GitHub `python-aoi-*` et `node-aoi-*`), installées dans `%LOCALAPPDATA%\aoi` par l'installeur ou `/regen`, et retéléchargées seulement quand leur version change. Le petit Python de `controle/runtime/` sert au crochet de démarrage, à `/regen` et à l'installeur.
 
 | Prérequis | Pour |
 |---|---|
@@ -52,7 +52,7 @@ Python 3.12 et Node.js 25 sont fournis par l'atelier : le **Python AOI** et le *
 
 ## Consigne d'organisation
 
-Les managed settings contiennent une clé `claudeMd` : à chaque session, Claude lance `/aoi:report` au chargement des serveurs MCP et après chaque script Python, et ne contourne jamais le contrôle des librairies. Le texte exact figure dans l'annexe de la charte IA de l'atelier (`securite_ia.md`).
+Les managed settings contiennent une clé `claudeMd` : Claude ne contourne jamais le contrôle des librairies. Le texte exact figure dans l'annexe de la charte IA de l'atelier (`securite_ia.md`).
 
 ## Vérifier
 
@@ -60,4 +60,4 @@ Les managed settings contiennent une clé `claudeMd` : à chaque session, Claude
 claude plugin validate .
 claude plugin validate ./plugins/aoi
 ```
-Puis, sur un poste, dans Claude Code : `/plugin` (catalogue `aoi`, plugin `aoi`), `/mcp` (serveurs `plugin:aoi:*`), `/report` (ou `/aoi:report` si une autre commande porte déjà ce nom).
+Puis, sur un poste, dans Claude Code : `/plugin` (catalogue `aoi`, plugin `aoi`), `/mcp` (serveurs `plugin:aoi:*`).

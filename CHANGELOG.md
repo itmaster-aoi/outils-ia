@@ -4,6 +4,12 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-15.1 (plugin 2026.10.15.1, installeur 2026-10-15.1)
+
+- Skill `/aoi:report` retirée, avec `report.py` et `mcp-whitelist.txt` (lu seulement par `report.py`). La consigne correspondante est retirée des managed settings.
+- Le contrôle des imports reste actif et inchangé : `guard/sitecustomize.py`, `whitelist.txt`, `activer_controle.py` et le Python embarqué passent de `skills/report/` à `plugins/aoi/controle/`. Crochet de démarrage, `/regen`, installeur et scripts de construction suivent le nouveau chemin.
+- `installer-poste.ps1` accepte encore un plugin antérieur (`skills/report/`) ; la ligne « /report » des vérifications finales est retirée.
+
 ## Installeur 2026-10-14.2 (branche main, hors étiquette)
 
 - `installer-poste.ps1` compare sa version (`$VersionInstalleur`) à celle du dépôt et avertit si la copie lancée est dépassée, par exemple sur un partage réseau oublié. La personne choisit de continuer ou non. Les copies antérieures à cette version n'ont pas ce contrôle.

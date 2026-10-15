@@ -224,7 +224,7 @@ def nettoyer_cache(*garder):
     ne les efface jamais. On garde la version installée et celle dont tourne la session
     en cours (ses serveurs et ce script en dépendent) : elle partira au /regen suivant."""
     garder = {Path(g["chemin"]).resolve() for g in garder if g}
-    garder.add(Path(sys.executable).resolve().parents[3])  # .../<version>/skills/report/runtime/python.exe
+    garder.add(Path(sys.executable).resolve().parents[2])  # .../<version>/controle/runtime/python.exe
     libere, echecs = 0, []
     for d in anciennes_versions(garder):
         taille = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
@@ -245,8 +245,8 @@ def nettoyer_cache(*garder):
 
 
 def controle(plugin, verifier):
-    """Contrôle des imports Python : copie dans C:\\ProgramData\\aoi (skill report du plugin)."""
-    script = plugin["chemin"] / "skills" / "report" / "scripts" / "activer_controle.py"
+    """Contrôle des imports Python : copie dans C:\\ProgramData\\aoi (dossier controle du plugin)."""
+    script = plugin["chemin"] / "controle" / "scripts" / "activer_controle.py"
     if script.is_file():
         r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -380,7 +380,7 @@ def main():
     if not a.appliquer:
         print("\nÉTAT : " + ("catalogue à jour." if a_jour else f"mise à jour disponible vers {imposee}."))
         if avant:
-            vieilles = anciennes_versions({avant["chemin"].resolve(), Path(sys.executable).resolve().parents[3]})
+            vieilles = anciennes_versions({avant["chemin"].resolve(), Path(sys.executable).resolve().parents[2]})
             if vieilles:
                 print(f"  ANCIENNES VERSIONS dans le cache : {', '.join(d.name for d in vieilles)} "
                       "(--appliquer les efface)")

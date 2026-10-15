@@ -16,11 +16,11 @@ import shutil
 import sys
 from pathlib import Path
 
-SKILL = Path(__file__).resolve().parent.parent
+RACINE = Path(__file__).resolve().parent.parent
 DEST = Path(os.environ.get("ProgramData") or r"C:\ProgramData") / "aoi"
 GUARD = DEST / "guard"
-FICHIERS = [(SKILL / "guard" / "sitecustomize.py", GUARD / "sitecustomize.py"),
-            (SKILL / "whitelist.txt", DEST / "whitelist.txt")]
+FICHIERS = [(RACINE / "guard" / "sitecustomize.py", GUARD / "sitecustomize.py"),
+            (RACINE / "whitelist.txt", DEST / "whitelist.txt")]
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")

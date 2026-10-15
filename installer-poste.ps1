@@ -38,7 +38,7 @@ param(
 # Version de l'installeur (date, suffixe .N pour plusieurs versions le même jour) : à changer à
 # chaque modification du script, dans le même commit. Comparée à celle du dépôt (branche main)
 # pour signaler une copie dépassée sur un partage.
-$VersionInstalleur = "2026-10-14.2"
+$VersionInstalleur = "2026-10-15.1"
 $DepotInstalleur = "https://raw.githubusercontent.com/itmaster-aoi/outils-ia/main/installer-poste.ps1"
 
 $ErrorActionPreference = "Stop"
@@ -376,7 +376,8 @@ $refInscrite = RefInscrite
 if (-not $plugin) {
   Avert "Plugin introuvable. Lancez « claude » une fois, connectez-vous avec le compte claude.ai de l'atelier, puis relancez ce script."
   Noter "Plugin aoi" "MANQUANT" "connexion à Claude Code requise"
-} elseif (-not (Test-Path (Join-Path $plugin.installPath "skills\report\runtime\python.exe"))) {
+} elseif (-not ((Test-Path (Join-Path $plugin.installPath "controle\runtime\python.exe")) -or
+                 (Test-Path (Join-Path $plugin.installPath "skills\report\runtime\python.exe")))) {
   Avert "aoi $($plugin.version) est une version sans interpréteurs embarqués. Vérifiez que la console impose l'étiquette 2026-10-12.3 ou plus récente, puis relancez ce script."
   Noter "Plugin aoi" "À METTRE À JOUR" "$($plugin.version) : version antérieure à 2026.10.12.3"
 } elseif ($refImposee -and $refInscrite -ne $refImposee) {
@@ -387,11 +388,16 @@ if (-not $plugin) {
   Noter "Plugin aoi" "ok" "$($plugin.version)"
 }
 $plugin = if ($plugin) { Get-Item $plugin.installPath }
+# Python embarqué et contrôle des imports : controle\ depuis le plugin 2026.10.15.1, skills\report\ avant
+$controle = if ($plugin) {
+  $c = Join-Path $plugin.FullName "controle"
+  if (Test-Path $c) { $c } else { Join-Path $plugin.FullName "skills\report" }
+}
 
 # Contrôle des imports Python : copie fixe que désigne env.PYTHONPATH dans la console
 if ($plugin -and -not $DryRun) {
-  $py = Join-Path $plugin.FullName "skills\report\runtime\python.exe"
-  $ac = Join-Path $plugin.FullName "skills\report\scripts\activer_controle.py"
+  $py = Join-Path $controle "runtime\python.exe"
+  $ac = Join-Path $controle "scripts\activer_controle.py"
   if ((Test-Path $py) -and (Test-Path $ac)) {
     $ErrorActionPreference = "Continue"
     & $py $ac | Out-Host
@@ -418,8 +424,8 @@ if ($SkipAddins) {
   # Même logique que /regen : chaque add-in est décrit par mcp/<serveur>/addin.json. Celui de
   # Revit est une archive publiée à part, téléchargée seulement si sa version manque sur le poste.
   # Seules les applications déjà lancées sur ce compte sont traitées, et seulement si elles sont fermées.
-  $py = Join-Path $plugin.FullName "skills\report\runtime\python.exe"
-  $maj = Join-Path $plugin.FullName "skills\regen\scripts\maj.py"
+  $py = Join-Path $controle "runtime\python.exe"
+  $maj =Join-Path $plugin.FullName "skills\regen\scripts\maj.py"
   if ($DryRun) {
     Info "Add-ins : non traités (-DryRun)"
     Noter "Add-ins" "À TRAITER" "-DryRun"
@@ -452,5 +458,4 @@ Info "Fermez ce terminal, ouvrez-en un nouveau, lancez « claude » et vérifiez
 Info "    /status   règles de l'organisation actives, connexion par compte claude.ai"
 Info "    /plugin   catalogue aoi, plugin aoi activé"
 Info "    /mcp      plugin:aoi:rhino et plugin:aoi:revit (Rhino et Revit ouverts)"
-Info "    /report   rapport des serveurs et des librairies"
 Info "Au premier lancement, acceptez les réglages de l'organisation si Claude Code le demande."

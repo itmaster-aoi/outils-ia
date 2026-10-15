@@ -1,4 +1,4 @@
-# Paquets pip du Python AOI : un par ligne, correspondant à skills/report/whitelist.txt.
+# Paquets pip du Python AOI : un par ligne, correspondant à controle/whitelist.txt.
 # Les versions exactes retenues sont notées dans verrou.txt à chaque construction.
 openpyxl
 python-docx

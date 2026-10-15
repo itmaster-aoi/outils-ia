@@ -1,9 +1,0 @@
-# Liste blanche des serveurs MCP de l'atelier
-#
-# Un nom par ligne, tel que Claude Code l'affiche dans /mcp.
-# Les serveurs du plugin de l'atelier s'appellent plugin:aoi:<nom>.
-# Tout ajout passe par l'IT : relecture, puis nouvelle étiquette du dépôt.
-
-plugin:aoi:rhino     # Rhino 8 (rhinomcp)
-plugin:aoi:revit     # Revit 2025 (mcp-servers-for-revit + KG)
-plugin:aoi:veille    # graphes de veille (service distant)

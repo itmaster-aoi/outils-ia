@@ -3,7 +3,7 @@
   Construit l'archive du Python AOI de l'atelier (réservé à l'IT).
 
 .DESCRIPTION
-  Python 3.12 portable (celui du plugin, skills/report/runtime) + les paquets de paquets.txt,
+  Python 3.12 portable (celui du plugin, controle/runtime) + les paquets de paquets.txt,
   en roues binaires pour Windows 64 bits, sans pip. Le contrôle des imports est branché d'office :
   le fichier python312._pth ajoute C:\ProgramData\aoi\guard au chemin de recherche.
 
@@ -38,7 +38,7 @@ if ($env:CLAUDECODE -or $env:CLAUDE_CODE_CHILD_SESSION) {
 
 $racine = Split-Path $PSScriptRoot
 $ici = $PSScriptRoot
-$runtime = Join-Path $racine "plugins\aoi\skills\report\runtime"
+$runtime = Join-Path $racine "plugins\aoi\controle\runtime"
 $build = Join-Path $ici "build\python"
 $dist = Join-Path $ici "dist"
 $archive = Join-Path $dist "python-aoi-$Version.zip"

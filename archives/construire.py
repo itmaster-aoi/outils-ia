@@ -11,7 +11,7 @@ par l'étiquette du plugin : une archive modifiée est refusée.
     archives/build/<nom>/              contenu de la partie (non publié, voir .gitignore)
     archives/dist/<nom>-<version>.zip  archive à publier (commande affichée à la fin)
 
-À lancer avec le Python du plugin : plugins/aoi/skills/report/runtime/python.exe.
+À lancer avec le Python du plugin : plugins/aoi/controle/runtime/python.exe.
 N'utilise que la bibliothèque standard.
 """
 import hashlib
