@@ -2,6 +2,7 @@
 
     activer_controle.py              copie le contrôle et la liste blanche dans C:\\ProgramData\\aoi
     activer_controle.py --verifier   indique seulement si le contrôle est en place
+    activer_controle.py --si-besoin  copie seulement si la copie diffère (crochet de démarrage)
 
 Les managed settings de l'atelier contiennent "env": {"PYTHONPATH": "C:\\ProgramData\\aoi\\guard"} :
 Claude Code transmet cette valeur à toutes ses commandes, Bash et PowerShell. Le chemin est le même
@@ -35,8 +36,12 @@ def copie_a_jour():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verifier", action="store_true")
+    ap.add_argument("--si-besoin", action="store_true", help="copier seulement si la copie diffère (crochet de démarrage)")
     a = ap.parse_args()
 
+    if a.si_besoin and copie_a_jour():
+        print(f"Copie du contrôle ({GUARD}) : à jour")
+        return 0
     if not a.verifier:
         try:
             GUARD.mkdir(parents=True, exist_ok=True)

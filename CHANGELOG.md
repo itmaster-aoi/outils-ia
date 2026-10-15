@@ -4,6 +4,14 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-15.2 (plugin 2026.10.15.2)
+
+- `/regen` passe la main à la nouvelle version : après l'installation du plugin, `maj.py --finir` de la version installée prépare le poste (add-ins, contrôle des imports, Python et Node AOI, cache) avec ses propres chemins. Corrige le cas de la 2026-10-15.1, où un `/regen` depuis la 2026-10-14.1 ne recopiait pas le contrôle des imports, déplacé dans `controle/`.
+- Au démarrage de chaque session, le contrôle des imports est recopié s'il diffère de celui du plugin (`activer_controle.py --si-besoin`).
+- Cache : un reste d'effacement verrouillé n'est plus renommé à chaque passage (`.a-effacer.a-effacer`).
+- Un script attendu absent du plugin s'affiche « ÉCHEC : … introuvable » au lieu d'être passé en silence. Le bilan de `/regen` indique aussi les skills retirées.
+- Règle ajoutée dans `skills/regen/SKILL.md` (« Pour l'IT ») : ne pas déplacer ce qu'utilise un ancien `/regen`.
+
 ## 2026-10-15.1 (plugin 2026.10.15.1, installeur 2026-10-15.1)
 
 - Skill `/aoi:report` retirée, avec `report.py` et `mcp-whitelist.txt` (lu seulement par `report.py`). La consigne correspondante est retirée des managed settings.

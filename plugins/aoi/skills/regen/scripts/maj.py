@@ -1,8 +1,9 @@
 """Met le plugin aoi à l'étiquette imposée par la console, sans passer par installer-poste.ps1.
 
     maj.py              état du poste, sans rien changer
-    maj.py --appliquer  inscrit le catalogue à l'étiquette imposée, met le plugin à jour,
-                        recopie les add-ins Rhino et Revit s'ils ont changé
+    maj.py --appliquer  inscrit le catalogue à l'étiquette imposée, met le plugin à jour, puis
+                        passe la main au maj.py de la nouvelle version (--finir) : add-ins,
+                        contrôle des imports, Python et Node AOI, nettoyage du cache
 
 N'utilise que la bibliothèque standard. L'étiquette vient toujours des managed settings
 (~/.claude/remote-settings.json) : ce script ne choisit jamais lui-même une version.
@@ -216,7 +217,9 @@ def anciennes_versions(garder):
     cache = CLAUDE / "plugins" / "cache" / "aoi" / "aoi"
     for reste in cache.glob("*.a-effacer"):  # effacement interrompu la fois précédente
         shutil.rmtree(reste, ignore_errors=True)
-    return [d for d in cache.glob("*") if d.is_dir() and d.resolve() not in garder]
+    # Un reste encore verrouillé n'est pas une version : le renommer encore donnerait .a-effacer.a-effacer…
+    return [d for d in cache.glob("*") if d.is_dir() and not d.name.endswith(".a-effacer")
+            and d.resolve() not in garder]
 
 
 def nettoyer_cache(*garder):
@@ -251,11 +254,56 @@ def controle(plugin, verifier):
         r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
                            capture_output=True, text=True, encoding="utf-8", errors="replace")
         print("  " + (r.stdout + r.stderr).strip().replace("\n", "\n  "))
+    else:  # jamais en silence : une étape passée sans le dire laisse le poste à moitié à jour
+        print(f"  ÉCHEC : contrôle des imports non traité, {script} introuvable dans le plugin {plugin['version']}. Contactez l'IT.")
     # Python AOI, Node AOI : archives téléchargées à part, seulement si leur version change
     script = plugin["chemin"] / "skills" / "regen" / "scripts" / "archives_aoi.py"
     if script.is_file():
         sys.stdout.flush()
         subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []))
+    else:
+        print(f"  ÉCHEC : Python AOI et Node AOI non traités, {script} introuvable dans le plugin {plugin['version']}. Contactez l'IT.")
+
+
+def finir(avant, apres):
+    """Étapes qui suivent l'installation du plugin : add-ins, contrôle des imports, archives, cache.
+    Lancées par le maj.py de la NOUVELLE version (voir main) : chaque version prépare le poste
+    avec ses propres chemins, si bien qu'un fichier peut changer de place d'une version à l'autre."""
+    for x in addins(apres, appliquer=True):
+        copier_addin(*x, appliquer=True)
+    controle(apres, verifier=False)
+    nettoyer_cache(avant, apres)
+    if avant is None or apres["version"] != avant["version"]:
+        print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
+    else:
+        print("\nDéjà à jour : aucun redémarrage nécessaire.")
+    return 0
+
+
+def passer_la_main(avant, apres):
+    """Lance « maj.py --finir » de la version qu'on vient d'installer, avec son propre Python.
+    Renvoie son code de sortie, ou None si cette version ne sait pas le faire (plus ancienne)."""
+    py = apres["chemin"] / "controle" / "runtime" / "python.exe"
+    maj = apres["chemin"] / "skills" / "regen" / "scripts" / "maj.py"
+    if not (py.is_file() and maj.is_file()) or "--finir" not in maj.read_text(encoding="utf-8", errors="replace"):
+        return None
+    args = [str(py), str(maj), "--finir"]
+    if avant:
+        args += ["--avant-chemin", str(avant["chemin"]), "--avant-version", avant["version"] or ""]
+    sys.stdout.flush()
+    return subprocess.run(args).returncode
+
+
+def controle_si_besoin():
+    """Crochet de démarrage : recopie le contrôle des imports s'il diffère de celui de ce plugin.
+    Rattrape une mise à jour faite par un /regen plus ancien, qui ne connaissait pas ce chemin."""
+    script = Path(__file__).resolve().parents[3] / "controle" / "scripts" / "activer_controle.py"
+    if not script.is_file():
+        return
+    try:
+        subprocess.run([sys.executable, str(script), "--si-besoin"], capture_output=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        pass
 
 
 def etat_session(plugin):
@@ -278,6 +326,7 @@ def demarrage():
     try:
         # Pas de rafraichir_regles() ici : Claude Code vient de relire les règles en démarrant,
         # et un « claude » imbriqué pendant son démarrage peut bloquer jusqu'au délai du crochet.
+        controle_si_besoin()
         imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
         etat = etat_session(plugin)
         f = AOI / "session.json"
@@ -353,9 +402,19 @@ def main():
     ap.add_argument("--appliquer", action="store_true")
     ap.add_argument("--addins", action="store_true", help="seulement les add-ins (installeur)")
     ap.add_argument("--demarrage", action="store_true", help="crochet SessionStart : rapport des nouveautés")
+    ap.add_argument("--finir", action="store_true", help="étapes après installation, lancées par le /regen précédent")
+    ap.add_argument("--avant-chemin")
+    ap.add_argument("--avant-version")
     a = ap.parse_args()
     if a.demarrage:
         return demarrage()
+    if a.finir:
+        apres = plugin_installe()
+        if not apres:
+            print("\nÉCHEC : plugin aoi introuvable après l'installation.")
+            return 1
+        avant = {"version": a.avant_version, "chemin": Path(a.avant_chemin)} if a.avant_chemin else None
+        return finir(avant, apres)
     if a.addins:
         plugin = plugin_installe()
         if not plugin:
@@ -414,15 +473,11 @@ def main():
         print(f"Serveurs retirés  : {', '.join('plugin:aoi:' + s for s in retires)}")
     nouvelles = sorted(set(skills(apres)) - set(skills(avant)))
     print(f"Nouvelles skills  : {', '.join('/aoi:' + s for s in nouvelles) or 'aucune'}")
-    for x in addins(apres, appliquer=True):
-        copier_addin(*x, appliquer=True)
-    controle(apres, verifier=False)
-    nettoyer_cache(avant, apres)
-    if avant is None or apres["version"] != avant["version"]:
-        print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
-    else:
-        print("\nDéjà à jour : aucun redémarrage nécessaire.")
-    return 0
+    retirees = sorted(set(skills(avant)) - set(skills(apres)))
+    if retirees:
+        print(f"Skills retirées   : {', '.join('/aoi:' + s for s in retirees)}")
+    code = passer_la_main(avant, apres)
+    return finir(avant, apres) if code is None else code
 
 
 if __name__ == "__main__":
