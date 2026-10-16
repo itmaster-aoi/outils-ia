@@ -4,6 +4,10 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.1 (plugin 2026.10.16.1)
+
+- `controle/whitelist.txt` : nouvelle section « Développement » avec `mcp`, `pydantic` et `pywin32`. Ces paquets ne font pas partie du Python AOI (`python-aoi/paquets.txt` inchangé) : l'import n'est plus refusé par le contrôle, mais ils doivent être présents dans l'environnement qui les importe.
+
 ## 2026-10-15.5 (plugin 2026.10.15.5, installeur 2026-10-15.3)
 
 - Nouveau serveur `plugin:aoi:contaixt` : service distant HTTP `https://veille.casual-labs.ch/mcp`, sans jeton (page d'installation du fournisseur : `https://veille.casual-labs.ch/setup`). Remplace l'ancien `veille` (même hôte, avec `AOI_VEILLE_TOKEN`), qui reste retiré.
