@@ -1,0 +1,10 @@
+{
+  "add-ins": [
+    {
+      "nom": "KeyShot Studio",
+      "si_existe": "%PUBLIC%/Documents/KeyShot Studio",
+      "source": "addin/Scripts",
+      "destination": "%PUBLIC%/Documents/KeyShot Studio/Scripts"
+    }
+  ]
+}

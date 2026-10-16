@@ -4,6 +4,12 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.4 (plugin 2026.10.16.4)
+
+- Nouveau serveur `plugin:aoi:keyshot` : Claude pilote KeyShot Studio 2026 (fenêtre ouverte) par un pont lancé dans KeyShot (`aoi_keyshot_bridge`, onglet Scripts). 31 outils : scène et pièces, capture, caméras (dont une caméra cadrée automatiquement), matériaux de la scène et de la bibliothèque (copies, réglages, graphe, annulation), rendus en arrière-plan, enregistrement avec copie de l'ancien `.bip`. `execute_python` est désactivé sauf réglage du poste.
+- Add-in KeyShot : `/regen` copie le pont dans `%PUBLIC%\Documents\KeyShot Studio\Scripts` si ce dossier existe. Un poste sans KeyShot Studio est ignoré sans message. Pas de version minimale : la clé de registre prévue (`HKLM\SOFTWARE\Luxion\KeyShot`) n'a pas pu être vérifiée. KeyShot ne voit le script qu'après un redémarrage.
+- Librairies : copie identique de celles de rhino dans `mcp/keyshot/libs` (`mcp` 1.28.1). Les partager avec `../rhino/libs` ne fonctionne pas : le contrôle des imports refuse `mcp` hors du dossier du serveur.
+
 ## 2026-10-16.3 (plugin 2026.10.16.3, librairies du Python AOI 2026-10-16)
 
 - Librairies ajoutées au Python AOI sans le reconstruire : demandées dans `python-aoi/ajouts.txt`, résolues par `python-aoi/verrouiller.py` (hors de Claude Code, essai d'import avec la liste blanche du dépôt), inscrites avec leur empreinte SHA-256 dans `plugins/aoi/python-libs.json`. `/regen` et l'installeur (`archives_aoi.py`) téléchargent les roues depuis PyPI, refusent toute empreinte différente, les décompressent dans `%LOCALAPPDATA%\aoi\python-libs-<version>` et les branchent sur le Python AOI par `aoi-libs.pth`. Plus d'archive à reconstruire pour une librairie de plus.

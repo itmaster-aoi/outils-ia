@@ -8,6 +8,14 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/run.py"
       ]
     },
+    "keyshot": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "-I",
+        "-S",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/keyshot/run.py"
+      ]
+    },
     "revit": {
       "command": "${LOCALAPPDATA}/aoi/node/node.exe",
       "args": [
