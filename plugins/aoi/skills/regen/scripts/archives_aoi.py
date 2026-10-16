@@ -9,6 +9,12 @@ Chaque fiche <nom>-aoi.json à la racine du plugin donne la version, l'adresse d
 installée dans %LOCALAPPDATA%\\aoi\\<nom> et n'est téléchargée que si la version installée
 diffère : un changement d'étiquette du plugin ne la recharge pas. Une archive dont l'empreinte
 ne correspond pas est refusée.
+
+Librairies ajoutées au Python AOI sans le reconstruire : python-libs.json à la racine du plugin
+(écrit par python-aoi/verrouiller.py) donne chaque roue, son adresse sur PyPI et son empreinte
+SHA-256. Les roues sont décompressées dans %LOCALAPPDATA%\\aoi\\python-libs-<version>, que le
+fichier aoi-libs.pth du Python AOI ajoute à son chemin de recherche, après ses propres paquets.
+Le contrôle des imports s'applique à ces librairies comme aux autres.
 N'utilise que la bibliothèque standard.
 """
 import argparse
@@ -179,6 +185,109 @@ def installer(fiche, dossier, nom, verifier):
     return True
 
 
+def installer_roue(roue, dest):
+    """Décompresse une roue (.whl) dans dest, comme pip : le contenu de <nom>.data/purelib et
+    platlib rejoint la racine ; scripts, en-têtes et données du .data ne sont pas repris."""
+    with zipfile.ZipFile(roue) as z:
+        z.extractall(dest)  # extractall neutralise les chemins absolus et les « .. »
+    for data in Path(dest).glob("*.data"):
+        for sous in ("purelib", "platlib"):
+            src = data / sous
+            if src.is_dir():
+                for p in src.iterdir():
+                    cible = Path(dest) / p.name
+                    if cible.is_dir() and p.is_dir():
+                        shutil.copytree(p, cible, dirs_exist_ok=True)
+                    else:
+                        shutil.move(str(p), str(cible))
+        shutil.rmtree(data, ignore_errors=True)
+
+
+def ligne_pth(dest):
+    # addsitedir (et non un simple chemin) : les .pth des roues sont lus à leur tour (pywin32)
+    return f'import site; site.addsitedir(r"{dest}")\n'
+
+
+def installer_libs(verifier):
+    """Librairies de python-libs.json, à côté du Python AOI. Voir l'en-tête du fichier."""
+    nom = "Librairies du Python AOI"
+    chemin = PLUGIN / "python-libs.json"
+    if not chemin.is_file():
+        return True
+    try:
+        fiche = json.loads(chemin.read_text(encoding="utf-8"))
+    except ValueError:
+        print(f"ÉCHEC : fiche illisible {chemin.name}")
+        return False
+    python = BASE / "python"
+    pth = python / "Lib" / "site-packages" / "aoi-libs.pth"
+    if not (python / "python.exe").is_file():
+        print(f"{nom} : en attente du Python AOI")
+        return False
+    try:
+        base = (python / "aoi-version.txt").read_text(encoding="utf-8").strip()
+    except OSError:
+        base = None
+    if fiche.get("python_aoi") and base != fiche["python_aoi"]:
+        print(f"ATTENTION : {nom} établies pour le Python AOI {fiche['python_aoi']}, installé : {base or '?'}. Signalez-le à l'IT (verrouiller.py à relancer).")
+    voulue, roues = fiche["version"], fiche.get("paquets", [])
+    dest = BASE / f"python-libs-{voulue}"
+    anciennes = [d for d in BASE.glob("python-libs-*")
+                 if d.is_dir() and d != dest and not d.name.endswith((".tmp", ".a-effacer"))]
+
+    if not roues:  # liste vide : rien à ajouter au Python AOI
+        if not verifier:
+            pth.unlink(missing_ok=True)
+            for d in anciennes:
+                effacer_si_libre(d)
+        print(f"{nom} : aucune")
+        return True
+    if (dest / "aoi-version.txt").is_file():
+        if verifier:
+            ok = pth.is_file() and pth.read_text(encoding="utf-8") == ligne_pth(dest)
+            print(f"{nom} : à jour ({voulue}, {len(roues)} paquets)" if ok
+                  else f"{nom} : {voulue} à rebrancher avec /regen")
+            return ok
+    elif verifier:
+        print(f"{nom} : version validée {voulue} ({len(roues)} paquets) à installer avec /regen")
+        return False
+    else:
+        neuf = BASE / f"python-libs-{voulue}.tmp"
+        shutil.rmtree(neuf, ignore_errors=True)
+        neuf.mkdir(parents=True)
+        total = sum(r.get("taille", 0) for r in roues)
+        print(f"{nom} : téléchargement de la version {voulue} ({len(roues)} paquets, {total >> 20} Mo)")
+        try:
+            for r in roues:
+                roue = neuf / r["fichier"]
+                telecharger(r["url"], roue, None)
+                if sha256(roue) != r["sha256"].lower():
+                    print(f"ÉCHEC : l'empreinte SHA-256 de {r['fichier']} ne correspond pas à la fiche. Librairies refusées, contactez l'IT.")
+                    return False
+                installer_roue(roue, neuf)
+                roue.unlink()
+            (neuf / "aoi-version.txt").write_text(voulue, encoding="utf-8")
+            shutil.rmtree(dest, ignore_errors=True)
+            neuf.rename(dest)
+        except (OSError, zipfile.BadZipFile) as e:
+            print(f"ÉCHEC : {nom} : {e}")
+            return False
+        finally:
+            shutil.rmtree(neuf, ignore_errors=True)
+        print(f"{nom} : version {voulue} installée dans {dest} : "
+              + ", ".join(f"{r['nom']} {r['version']}" for r in roues if r.get("demande")))
+    # Le Python AOI remplacé par une nouvelle archive perd ce fichier : il est réécrit à chaque passage.
+    if not pth.is_file() or pth.read_text(encoding="utf-8") != ligne_pth(dest):
+        pth.write_text(ligne_pth(dest), encoding="utf-8")
+        print(f"{nom} : branchées sur le Python AOI ({pth.name})")
+    else:
+        print(f"{nom} : à jour ({voulue}, {len(roues)} paquets)")
+    for d in anciennes:
+        if effacer_si_libre(d):
+            print(f"{nom} : ancienne version {d.name} effacée")
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verifier", action="store_true")
@@ -193,6 +302,7 @@ def main():
             ok = False
             continue
         ok &= installer(fiche, dossier, NOMS.get(dossier, f"{dossier} AOI"), a.verifier)
+    ok &= installer_libs(a.verifier)  # après le Python AOI, qui reçoit aoi-libs.pth
     return 0 if ok else 1
 
 

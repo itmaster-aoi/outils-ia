@@ -1,0 +1,6 @@
+# Librairies ajoutées au Python AOI sans le reconstruire : une par ligne, comme paquets.txt.
+# Après modification : lancer verrouiller.py (hors de Claude Code), qui écrit plugins/aoi/python-libs.json.
+# Les modules importés doivent aussi être dans plugins/aoi/controle/whitelist.txt.
+mcp
+pydantic
+pywin32

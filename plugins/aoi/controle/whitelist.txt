@@ -37,4 +37,14 @@ networkx        # pip : networkx, dépendance de graphify que la skill importe a
 # Développement
 mcp
 pydantic
-pywin32
+
+# PyWin32
+pywintypes      # pip : pywin32, types de base
+pythoncom       # pip : pywin32, COM
+win32com        # pip : pywin32, automatisation COM (ex. piloter une application)
+win32api        # pip : pywin32
+win32con        # pip : pywin32, constantes Windows
+win32gui
+win32process
+win32file
+win32clipboard

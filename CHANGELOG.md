@@ -4,6 +4,12 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.3 (plugin 2026.10.16.3, librairies du Python AOI 2026-10-16)
+
+- Librairies ajoutées au Python AOI sans le reconstruire : demandées dans `python-aoi/ajouts.txt`, résolues par `python-aoi/verrouiller.py` (hors de Claude Code, essai d'import avec la liste blanche du dépôt), inscrites avec leur empreinte SHA-256 dans `plugins/aoi/python-libs.json`. `/regen` et l'installeur (`archives_aoi.py`) téléchargent les roues depuis PyPI, refusent toute empreinte différente, les décompressent dans `%LOCALAPPDATA%\aoi\python-libs-<version>` et les branchent sur le Python AOI par `aoi-libs.pth`. Plus d'archive à reconstruire pour une librairie de plus.
+- Premières librairies : `mcp` 2.3.0, `pydantic` 2.14.1, `pywin32` 312 et leurs dépendances (27 roues, 14 Mo).
+- `controle/whitelist.txt` : la ligne `pywin32`, qui n'est pas un nom de module, est remplacée par `pywintypes`, `pythoncom`, `win32com`, `win32api`, `win32con`, `win32gui`, `win32process`, `win32file`, `win32clipboard`.
+
 ## 2026-10-16.2 (plugin 2026.10.16.2)
 
 - Serveur `plugin:aoi:contaixt` : nouvelle adresse `https://contaixt.ai/mcp`, à la place de `https://veille.casual-labs.ch/mcp` (même serveur, 83.228.221.151). Toujours sans jeton. Au 16.10.2026, le filtrage web FortiGuard du pare-feu de l'atelier bloque encore `contaixt.ai` (refus provisoire).
