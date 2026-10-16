@@ -4,6 +4,10 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.2 (plugin 2026.10.16.2)
+
+- Serveur `plugin:aoi:contaixt` : nouvelle adresse `https://contaixt.ai/mcp`, à la place de `https://veille.casual-labs.ch/mcp` (même serveur, 83.228.221.151). Toujours sans jeton. Au 16.10.2026, le filtrage web FortiGuard du pare-feu de l'atelier bloque encore `contaixt.ai` (refus provisoire).
+
 ## 2026-10-16.1 (plugin 2026.10.16.1)
 
 - `controle/whitelist.txt` : nouvelle section « Développement » avec `mcp`, `pydantic` et `pywin32`. Ces paquets ne font pas partie du Python AOI (`python-aoi/paquets.txt` inchangé) : l'import n'est plus refusé par le contrôle, mais ils doivent être présents dans l'environnement qui les importe.
