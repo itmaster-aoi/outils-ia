@@ -202,7 +202,7 @@ def addins(plugin, appliquer=False):
     """Add-ins décrits par mcp/<serveur>/addin.json : un serveur sans ce fichier n'a pas d'add-in.
 
     (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version,
-    motif du refus si l'application est trop ancienne)
+    motif du refus si l'application est trop ancienne, anciens fichiers à retirer de la destination)
     La source est soit un dossier du plugin (« source »), soit une archive publiée à part
     (« archive ») ; None si l'archive reste à télécharger.
     Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
@@ -217,7 +217,7 @@ def addins(plugin, appliquer=False):
             if refus:  # rien à télécharger pour une application qui ne pourra pas charger l'add-in
                 liste.append((e["nom"], None, Path(os.path.expandvars(e["destination"])),
                               e.get("processus", ""), e.get("sauvegarder", []),
-                              (e.get("archive") or {}).get("version"), refus))
+                              (e.get("archive") or {}).get("version"), refus, e.get("retirer", [])))
                 continue
             if e.get("archive"):
                 source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
@@ -229,17 +229,30 @@ def addins(plugin, appliquer=False):
                 print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (mettez /regen à jour)")
                 continue
             liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
-                          e.get("processus", ""), e.get("sauvegarder", []), version, None))
+                          e.get("processus", ""), e.get("sauvegarder", []), version, None,
+                          e.get("retirer", [])))
     return liste
 
 
-def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, appliquer):
+def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, appliquer):
     if refus:
         print(f"  {nom} : ÉCHEC : {refus}")
         return False
     if source is None:
         print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
         return False
+    # Fichiers d'une version précédente sous un autre nom : copytree ne les efface pas
+    restes = [dst / rel for rel in retirer if (dst / rel).is_file()]
+    if restes and not appliquer:
+        print(f"  {nom} : anciens fichiers à retirer ({', '.join(f.name for f in restes)})")
+        return False
+    if restes and not (proc and processus_actifs(proc)):
+        for f in restes:
+            try:
+                f.unlink()
+                print(f"  {nom} : ancien fichier retiré : {f}")
+            except OSError as err:
+                print(f"  {nom} : ÉCHEC : {f} n'a pas pu être retiré ({err})")
     if deja_copie(source, dst):
         print(f"  {nom} : add-in à jour")
         return True

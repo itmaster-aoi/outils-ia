@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # AUTHOR Lauro Foletti
-# VERSION 0.2.12
-# Bridge between Claude (keyshot MCP server) and this KeyShot window. Run once per session; aoi_keyshot_stop stops it.
+# VERSION 0.2.13
+# Bridge between Claude (keyshot MCP server) and this KeyShot window. Run once per session; « MCP server stop » stops it.
 """Pont KeyShot pour le serveur MCP `keyshotmcp` (mode `timer`, B0).
 
 Un Run dans l'onglet Scripts arme une minuterie Windows (SetTimer) sur le
@@ -20,7 +20,8 @@ messages) rappelle la minuterie pendant qu'une commande tourne. Ces
 battements-là ne font que des entrées-sorties et répondent « occupé » ;
 ils n'appellent jamais `lux`.
 
-Le code tourne dans un vrai module (`sys.modules["aoi_keyshot_bridge"]`) :
+Fichier « MCP server start.py » (nom affiché dans l'onglet Scripts). Le code tourne
+dans un vrai module (`sys.modules["aoi_keyshot_bridge"]`, nom interne inchangé) :
 KeyShot peut vider l'espace de noms du script après le Run, pas celui d'un
 module. Stdlib et lux seulement.
 """
@@ -48,7 +49,7 @@ try:
 except ImportError:
     lux = None
 
-BRIDGE_VERSION = "0.2.12"
+BRIDGE_VERSION = "0.2.13"
 NOM_MODULE = "aoi_keyshot_bridge"
 HOTE = "127.0.0.1"
 PORT = int(os.environ.get("KEYSHOT_MCP_PORT", "1998"))
@@ -280,7 +281,7 @@ class Pont:
                 fiche = json.load(f)
             if fiche.get("pid") == os.getpid() and fiche.get("port") == self.port_demande:
                 return ("le port %d est déjà tenu par un pont de ce KeyShot (version %s). Lancez "
-                        "aoi_keyshot_stop ; s'il ne trouve rien, relancez KeyShot."
+                        "MCP server stop ; s'il ne trouve rien, relancez KeyShot."
                         % (self.port_demande, fiche.get("version")))
         except (OSError, ValueError, AttributeError):
             pass
@@ -1326,7 +1327,7 @@ def _chemin_source():
     if chemin and os.path.exists(chemin):
         return chemin
     try:
-        chemin = os.path.join(lux.getKeyShotFolder(lux.FOLDER_SCRIPTS), "aoi_keyshot_bridge.py")
+        chemin = os.path.join(lux.getKeyShotFolder(lux.FOLDER_SCRIPTS), "MCP server start.py")
         return chemin if os.path.exists(chemin) else None
     except Exception:
         return None

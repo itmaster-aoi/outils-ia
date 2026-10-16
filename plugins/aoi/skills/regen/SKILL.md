@@ -52,6 +52,7 @@ La version des outils est choisie par l'IT dans la console d'administration (ét
       "sauvegarder": ["revit_mcp_plugin/Commands/commandRegistry.json"] } ] }
   ```
   `/regen` copie le contenu de `source` dans `destination` si l'application a déjà été lancée sur ce compte (`si_existe`) et si elle est fermée (`processus`). Un serveur sans `addin.json` n'a pas d'add-in.
+  `retirer` (facultatif) : fichiers d'une version précédente, relatifs à `destination`, que `/regen` efface avant la copie (la copie n'efface rien d'elle-même). Exemple (KeyShot, scripts renommés) : `"retirer": ["aoi_keyshot_bridge.py", "aoi_keyshot_stop.py"]`.
   `version_min` (facultatif) refuse l'add-in si l'application est trop ancienne : version lue dans le registre, ni téléchargement ni copie, « ÉCHEC » dans `/regen` et l'installeur, alerte au démarrage de session. Une version illisible est refusée aussi. Exemple (Rhino) :
   ```json
   "version_min": { "registre": "HKLM/SOFTWARE/McNeel/Rhinoceros/8.0/Install", "valeur": "Version", "min": "8.32" }

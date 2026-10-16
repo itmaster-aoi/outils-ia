@@ -4,7 +4,8 @@
       "nom": "KeyShot Studio",
       "si_existe": "%PUBLIC%/Documents/KeyShot Studio",
       "source": "addin/Scripts",
-      "destination": "%PUBLIC%/Documents/KeyShot Studio/Scripts"
+      "destination": "%PUBLIC%/Documents/KeyShot Studio/Scripts",
+      "retirer": ["aoi_keyshot_bridge.py", "aoi_keyshot_stop.py"]
     }
   ]
 }

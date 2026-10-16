@@ -4,6 +4,11 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.6 (plugin 2026.10.16.6)
+
+- Scripts KeyShot renommés : `aoi_keyshot_bridge` devient « MCP server start » et `aoi_keyshot_stop` devient « MCP server stop » (noms affichés dans l'onglet Scripts de la console de scripting). Pont 0.2.13 et serveur 0.1.1 : seuls les noms changent dans les messages et dans le chemin relu par `reload_bridge`. Après `/regen`, redémarrer KeyShot (il ne voit les scripts renommés qu'à son démarrage ; `reload_bridge` ne peut pas recharger un pont 0.2.12 dont le fichier a été retiré), puis lancer « MCP server start ».
+- `/regen` : nouvelle clé facultative `retirer` dans `addin.json`, avec la liste des fichiers d'une version précédente à effacer de la destination avant la copie. KeyShot l'utilise pour retirer `aoi_keyshot_bridge.py` et `aoi_keyshot_stop.py`.
+
 ## 2026-10-16.5 (plugin 2026.10.16.5)
 
 - Scripts KeyShot (`aoi_keyshot_bridge`, `aoi_keyshot_stop`) : auteur affiché dans la console de scripting « Lauro Foletti » au lieu de « atelier oi (IT) ». Code inchangé (pont 0.2.12, arrêt 0.1.0). `/regen` recopie les deux scripts.
