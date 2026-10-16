@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# AUTHOR atelier oi (IT)
+# AUTHOR Lauro Foletti
 # VERSION 0.2.12
 # Bridge between Claude (keyshot MCP server) and this KeyShot window. Run once per session; aoi_keyshot_stop stops it.
 """Pont KeyShot pour le serveur MCP `keyshotmcp` (mode `timer`, B0).

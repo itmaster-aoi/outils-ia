@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# AUTHOR atelier oi (IT)
+# AUTHOR Lauro Foletti
 # VERSION 0.1.0
 # Stops the Claude bridge (aoi_keyshot_bridge): timer off, port closed, token removed.
 """Arrêt du pont KeyShot (« STOP CLAUDE »). Sans effet si aucun pont ne tourne."""

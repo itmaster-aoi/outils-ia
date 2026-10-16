@@ -4,6 +4,10 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-16.5 (plugin 2026.10.16.5)
+
+- Scripts KeyShot (`aoi_keyshot_bridge`, `aoi_keyshot_stop`) : auteur affiché dans la console de scripting « Lauro Foletti » au lieu de « atelier oi (IT) ». Code inchangé (pont 0.2.12, arrêt 0.1.0). `/regen` recopie les deux scripts.
+
 ## 2026-10-16.4 (plugin 2026.10.16.4)
 
 - Nouveau serveur `plugin:aoi:keyshot` : Claude pilote KeyShot Studio 2026 (fenêtre ouverte) par un pont lancé dans KeyShot (`aoi_keyshot_bridge`, onglet Scripts). 31 outils : scène et pièces, capture, caméras (dont une caméra cadrée automatiquement), matériaux de la scène et de la bibliothèque (copies, réglages, graphe, annulation), rendus en arrière-plan, enregistrement avec copie de l'ancien `.bip`. `execute_python` est désactivé sauf réglage du poste.
