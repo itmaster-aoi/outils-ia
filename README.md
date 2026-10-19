@@ -16,6 +16,8 @@ plugins/aoi/               le plugin de l'atelier
   skills/
     regen/                        /regen : met le poste à la version imposée par la console
     graphify/                     /graphify : graphe de connaissances d'un dossier (Graphify-Labs/graphify, Python AOI), généré par python-aoi/adapter_skill_graphify.py
+  output-styles/
+    ste.md                        style de sortie aoi:ste : rédaction technique simplifiée (ASD-STE100)
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette
 ```

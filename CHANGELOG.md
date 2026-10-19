@@ -4,6 +4,10 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-19.1 (plugin 2026.10.19.1)
+
+- Nouveau style de sortie `aoi:ste` (`output-styles/ste.md`) : rédaction technique simplifiée inspirée d'ASD-STE100, en français et en anglais. Phrases courtes, une action par instruction, voix active, termes constants, mises en garde avant l'étape concernée. `keep-coding-instructions: true` garde les consignes de développement de Claude Code. Pour l'imposer : `"outputStyle": "aoi:ste"` dans les managed settings de la console. Sans ce réglage, chaque utilisateur peut le choisir avec `/output-style aoi:ste`. Après `/regen`, redémarrer Claude Code : les styles sont lus au démarrage.
+
 ## 2026-10-16.6 (plugin 2026.10.16.6)
 
 - Scripts KeyShot renommés : `aoi_keyshot_bridge` devient « MCP server start » et `aoi_keyshot_stop` devient « MCP server stop » (noms affichés dans l'onglet Scripts de la console de scripting). Pont 0.2.13 et serveur 0.1.1 : seuls les noms changent dans les messages et dans le chemin relu par `reload_bridge`. Après `/regen`, redémarrer KeyShot (il ne voit les scripts renommés qu'à son démarrage ; `reload_bridge` ne peut pas recharger un pont 0.2.12 dont le fichier a été retiré), puis lancer « MCP server start ».
