@@ -4,6 +4,15 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-19.2 (plugin 2026.10.19.2)
+
+- Serveur `plugin:aoi:keyshot` : keyshot-mcp 1.0.0, importé de [lfoletti/keyshot-mcp](https://github.com/lfoletti/keyshot-mcp), étiquette `v1.0.0`, commit `266c26a1ef90ed5882213d7818d207207a335d1d` par `amont/importer_keyshot.py`, sans adaptation du code (provenance et empreintes dans `mcp/keyshot/VERSION-AOI.txt`). Remplace le serveur 0.1.1 et le pont 0.2.13. Le pont et le serveur portent désormais le même numéro.
+  - 33 outils (+ `set_visibility`, `save_material_to_library`) et un second prompt, `keyshot_materiaux`.
+  - Couleurs `#RRGGBB` lues en sRGB : elles sortent plus sombres qu'avant. Les textures ne sont lues que dans les dossiers autorisés (`dossiers_textures`), jamais sur un chemin réseau. Les noms de matériaux refusent les caractères interdits dans un nom de fichier.
+  - Noms du projet d'origine : scripts KeyShot « MCP start » et « MCP stop » (au lieu de « MCP server start » et « MCP server stop », que `/regen` efface), réglages et journal dans `%LOCALAPPDATA%\keyshot-mcp\` (l'ancien `%LOCALAPPDATA%\aoi\keyshot\pont-config.json` n'est plus lu : le recopier si un poste en avait un), variable `KEYSHOT_MCP_EXECUTE_PYTHON`.
+  - Après `/regen` : redémarrer KeyShot, puis lancer « MCP start ».
+- Nouveau `amont/importer_keyshot.py` : importe une étiquette d'un clone de lfoletti/keyshot-mcp dans `mcp/keyshot/` (contrôle du clone, copie, fiche add-in, README, provenance ; avec `--plugin`, versions de `plugin.json`, `VERSIONS.md` et brouillon de cette entrée).
+
 ## 2026-10-19.1 (plugin 2026.10.19.1)
 
 - Nouveau style de sortie `aoi:ste` (`output-styles/ste.md`) : rédaction technique simplifiée inspirée d'ASD-STE100, en français et en anglais. Phrases courtes, une action par instruction, voix active, termes constants, mises en garde avant l'étape concernée. `keep-coding-instructions: true` garde les consignes de développement de Claude Code. Pour l'imposer : `"outputStyle": "aoi:ste"` dans les managed settings de la console. Sans ce réglage, chaque utilisateur peut le choisir avec `/output-style aoi:ste`. Après `/regen`, redémarrer Claude Code : les styles sont lus au démarrage.

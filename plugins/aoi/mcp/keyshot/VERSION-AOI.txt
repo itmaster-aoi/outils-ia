@@ -1,0 +1,21 @@
+Origine      : https://github.com/lfoletti/keyshot-mcp
+Étiquette    : v1.0.0
+Commit       : 266c26a1ef90ed5882213d7818d207207a335d1d
+Version      : serveur et pont 1.0.0, 33 outils, prompts keyshot_materiaux, keyshot_strategy
+Importé le   : 19.10.2026 par amont/importer_keyshot.py
+Repris       : run.py, LICENSE, server, addin/Scripts (sans __pycache__)
+Adaptations  : aucune dans le code. Générés pour l'atelier : addin.json, README.md, ce fichier.
+Hors import  : libs/ (copie des librairies de rhino, voir VERSIONS.md).
+SHA-256      :
+  ccffc9ea6e4b00726a2106795847e6ee0979f523169dcb4a138f43249909a1ac  LICENSE
+  5ba04f0fefd4c0dbd45405c15f37613a8ad782c42bdd3d3d60e135bf94e0e7c8  addin/Scripts/MCP start.py
+  0e497216b2261e85f725a64ea4ef782a0dd4ddfa92dfa01841188312d238cf9b  addin/Scripts/MCP stop.py
+  dc580f56e1309d2fe4c6501e74007f17ec0916a2780b58e628c3bf8aa98bf78a  run.py
+  40b63f13e749eaf89f67dccb211e15e09e0ea64898cbf5c0b9862acc45d945d7  server/keyshotmcp/__init__.py
+  fceb7d5ca7af82789297682028696a840f1ff5c1dc5460d0093f0bb259e39051  server/keyshotmcp/prompts.py
+  4d9000335ee164c2770ce287e439063ca90483a4694ddaf8fd168e282e743acd  server/keyshotmcp/server.py
+  7b4ba465afb3e6b5ce95e086a8f65386224f7009c09076dd7da1361c1ea230ca  server/keyshotmcp/tools/_commun.py
+  0b46eda8f9f2c2edaafc1afa3430e1144e9d8456aa043d72cce067e5e553a55f  server/keyshotmcp/tools/materiaux.py
+  c318fb4eddcbc97ad1db1ba9a553cf2c9128ea5988fa35e05bfd7e2a28faff13  server/keyshotmcp/tools/pont.py
+  65ccc2243cac99c1d33e3bd49197fd0ba9748c4163a1a345b0e7b0e83918fcc4  server/keyshotmcp/tools/rendu.py
+  ceacdd8c9289eaa7ab1c35b996e161b51dfddcafe4ea9c5922543b6c12317dd0  server/keyshotmcp/tools/scene.py
