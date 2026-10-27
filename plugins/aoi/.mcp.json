@@ -38,10 +38,6 @@
         "CORTEXDB_RERANK_URL": "",
         "CORTEXDB_RERANK_API_KEY": ""
       }
-    },
-    "contaixt": {
-      "type": "http",
-      "url": "https://contaixt.ai/mcp"
     }
   }
 }

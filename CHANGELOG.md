@@ -4,6 +4,12 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-27.2 (plugin 2026.10.27.2)
+
+- Serveur `plugin:aoi:contaixt` retiré (`https://contaixt.ai/mcp`, ajouté au plugin 2026.10.15.5). `installer-poste.ps1` continue de retirer une déclaration user `contaixt` laissée par le script du fournisseur.
+- `/regen` (`maj.py`, `plugin_installe()`) : pour le plugin en portée `managed`, `claude plugin update` met la nouvelle version dans le cache sans toujours corriger `installed_plugins.json`. `maj.py` lisait alors l'ancienne version et installait les archives de celle-ci : au passage à 2026.10.27.1, `cortexdb-server` n'était pas installé et `plugin:aoi:cortexdb` échouait (« Connection closed »). `maj.py` prend désormais la version du catalogue inscrit quand elle est déjà dans le cache. Le crochet de démarrage affiche aussi la bonne version.
+  - Le premier `/regen` vers 2026.10.27.2 tourne encore avec l'ancien `maj.py`. Après le redémarrage de Claude Code, lancer `/regen` une 2e fois : il installe `cortexdb-server` s'il manque.
+
 ## 2026-10-27.1 (plugin 2026.10.27.1)
 
 - Nouveau serveur `plugin:aoi:cortexdb` : mémoire d'agent et graphe de connaissances dans un fichier SQLite local (`~/.cortexdb/cortexdb.db`). Projet [liliang-cn/cortexdb](https://github.com/liliang-cn/cortexdb) 2.139.1, fork de référence [itmaster-aoi/cortexdb](https://github.com/itmaster-aoi/cortexdb), commit `a808c1296002043eea5f5c3e7d550530ce1a5755`.

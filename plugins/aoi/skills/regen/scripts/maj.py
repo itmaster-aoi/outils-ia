@@ -59,7 +59,19 @@ def plugin_installe():
         return None
     e = entrees[0]
     chemin = Path(e.get("installPath", ""))
-    return {"version": e.get("version"), "chemin": chemin} if chemin.is_dir() else None
+    if not chemin.is_dir():
+        return None
+    # Plugin en portée « managed » : « claude plugin update » met la nouvelle version dans le cache
+    # sans toujours corriger installed_plugins.json (constaté au plugin 2026.10.27.1). On prend
+    # alors la version du catalogue inscrit, si elle est déjà dans le cache.
+    catalogue = ((lire_json(CLAUDE / "plugins" / "known_marketplaces.json") or {}).get("aoi") or {}).get("installLocation")
+    voulue = (lire_json(Path(catalogue or CLAUDE / "plugins" / "marketplaces" / "aoi")
+                        / "plugins" / "aoi" / ".claude-plugin" / "plugin.json") or {}).get("version")
+    cache = chemin.parent / str(voulue)
+    if voulue and voulue != e.get("version") and \
+            (lire_json(cache / ".claude-plugin" / "plugin.json") or {}).get("version") == voulue:
+        return {"version": voulue, "chemin": cache}
+    return {"version": e.get("version"), "chemin": chemin}
 
 
 def serveurs(plugin):

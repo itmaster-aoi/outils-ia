@@ -22,7 +22,6 @@ Seules ces versions sont autorisées sur les postes de l'atelier. Toute nouvelle
 | `cortexdb` | commandes `/aoi:remember` et `/aoi:recall` (`commands/`, importées par `amont/importer_cortexdb.py`, voir `mcp/cortexdb/VERSION-AOI.txt`) | fork [itmaster-aoi/cortexdb](https://github.com/itmaster-aoi/cortexdb) de [liliang-cn/cortexdb](https://github.com/liliang-cn/cortexdb), étiquette `v2.139.1`, commit `a808c1296002043eea5f5c3e7d550530ce1a5755`, `plugins/cortexdb/commands/` | 2.139.1, reprises telles quelles ; skill et 11 autres commandes non reprises | MIT | 27.10.2026 |
 | `/aoi:cortexdb` | skill (`skills/cortexdb/SKILL.md`) | code de l'atelier : quand mémoriser, quoi ne jamais mémoriser, outils `memory_save` et `knowledge_memory_recall` | 1 (27.10.2026) | MIT | 27.10.2026 |
 | `aoi:ste` | style de sortie (`output-styles/ste.md`) | code de l'atelier, inspiré de la norme ASD-STE100 (Simplified Technical English) | 1 (19.10.2026), `keep-coding-instructions: true` | MIT | 19.10.2026 |
-| `contaixt` | service distant HTTP, sans jeton (plugin 2026.10.15.5 ; remplace l'ancien `veille`, retiré au plugin 2026.10.13.8 ; adresse changée au plugin 2026.10.16.2) | `https://contaixt.ai/mcp` (anciennement `https://veille.casual-labs.ch/mcp`, même serveur) | sans objet : le code tourne chez le fournisseur | – | 16.10.2026 |
 
 ## Librairies Python de `rhino` (`mcp/rhino/libs`, copiées à l'identique dans `mcp/keyshot/libs`)
 
