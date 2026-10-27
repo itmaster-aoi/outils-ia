@@ -4,6 +4,13 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-27.3 (plugin 2026.10.27.3)
+
+- Skill `/aoi:cortexdb`, version 2 : Claude remplace le modèle de langage de cortexdb, avec l'abonnement de l'atelier. Aucun modèle externe n'est configuré, les variables de `.mcp.json` restent vides.
+  - Recherche : Claude prépare `keywords`, `alternate_queries` et `entity_names` avant `knowledge_memory_recall` et `memory_search`.
+  - Enregistrement : Claude cherche d'abord les faits contredits et les remplace avec `supersedes`.
+  - Nouveau « Bilan d'une session », sur demande : Claude propose les faits durables, l'utilisateur confirme.
+
 ## 2026-10-27.2 (plugin 2026.10.27.2)
 
 - Serveur `plugin:aoi:contaixt` retiré (`https://contaixt.ai/mcp`, ajouté au plugin 2026.10.15.5). `installer-poste.ps1` continue de retirer une déclaration user `contaixt` laissée par le script du fournisseur.
