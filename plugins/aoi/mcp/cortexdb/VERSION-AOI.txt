@@ -1,0 +1,12 @@
+Origine      : https://github.com/itmaster-aoi/cortexdb (fork de https://github.com/liliang-cn/cortexdb)
+Étiquette    : v2.139.1
+Commit       : a808c1296002043eea5f5c3e7d550530ce1a5755
+Version      : 2.139.1
+Importé le   : 27.10.2026 par amont/importer_cortexdb.py
+Repris       : plugins/cortexdb/commands/remember.md, plugins/cortexdb/commands/recall.md, LICENSE
+Adaptations  : aucune dans les fichiers repris. Générés pour l'atelier : README.md, ce fichier.
+Hors import  : serveur (archive cortexdb-server, archives/construire.py), skills/cortexdb (écrite par l'IT).
+SHA-256 (chemins relatifs à plugins/aoi) :
+  fa5c4ce25b7cdcfe6a92385cbcb3f8a6cefcb2857c8683672304d0393a583c09  commands/recall.md
+  7b6a59f98ed2a2863a3bca9476f71c585ee424edafb63ed2b7401b848b761d31  commands/remember.md
+  428bc42987dc6ecfb04543ef362f5801f95717df78e36346c76cd8da7382fa16  mcp/cortexdb/LICENSE

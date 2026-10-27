@@ -1,7 +1,7 @@
 """Construit l'archive d'une partie lourde des outils de l'atelier et écrit sa fiche dans le plugin.
 
     python archives/construire.py <nom> <version>
-    nom : rhino-libs | revit-server | rhino-addin | revit-addin
+    nom : rhino-libs | revit-server | cortexdb-server | rhino-addin | revit-addin
 
 Les parties lourdes (librairies, serveurs compilés, add-ins) ne sont plus dans le plugin : elles
 sont publiées comme versions GitHub du dépôt (<nom>-<version>) et /regen ou l'installeur ne les
@@ -34,9 +34,15 @@ PARTIES = {
                      "temoin": "mcp/__init__.py"},
     "revit-server": {"titre": "Serveur MCP Revit", "fiche": "racine",
                      "temoin": "build/index.js", "conserver": ["revit-data.db"]},
+    # Binaire publié par l'auteur (cortexdb-mcp-windows-amd64.exe), renommé cortexdb-mcp.exe
+    "cortexdb-server": {"titre": "Serveur MCP CortexDB", "fiche": "racine",
+                        "temoin": "cortexdb-mcp.exe"},
     "rhino-addin":  {"titre": "Add-in Rhino 8", "fiche": "addin", "serveur": "rhino", "nom": "Rhino 8"},
     "revit-addin":  {"titre": "Add-in Revit 2025", "fiche": "addin", "serveur": "revit", "nom": "Revit 2025"},
 }
+
+# Serveurs lancés depuis l'archive : entrée de .mcp.json et clé qui porte le chemin
+MCP = {"revit-server": ("revit", "args"), "cortexdb-server": ("cortexdb", "command")}
 
 
 def archiver(source, zip_):
@@ -86,10 +92,12 @@ def main():
         fiche = PLUGIN / f"{nom}-aoi.json"
         ecrire(fiche, {**archive, "versionne": True, "exe": p["temoin"],
                        **({"conserver": p["conserver"]} if p.get("conserver") else {})})
-        if nom == "revit-server":  # .mcp.json lance le serveur de cette version
+        if nom in MCP:  # .mcp.json lance le serveur de cette version
+            serveur, cle = MCP[nom]
+            chemin = f"${{LOCALAPPDATA}}/aoi/{nom}-{version}/{p['temoin']}"
             mcp = PLUGIN / ".mcp.json"
             d = json.loads(mcp.read_text(encoding="utf-8"))
-            d["mcpServers"]["revit"]["args"] = [f"${{LOCALAPPDATA}}/aoi/{nom}-{version}/{p['temoin']}"]
+            d["mcpServers"][serveur][cle] = [chemin] if cle == "args" else chemin
             ecrire(mcp, d)
         # rhino-libs : mcp/rhino/run.py lit lui-même la version dans rhino-libs-aoi.json
     else:

@@ -9,7 +9,7 @@
     {
       "name": "aoi",
       "source": "./plugins/aoi",
-      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:contaixt ; skills /aoi:regen, /aoi:adhd, /aoi:graphify ; style de sortie aoi:ste."
+      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:contaixt ; skills /aoi:regen, /aoi:adhd, /aoi:graphify, /aoi:cortexdb ; commandes /aoi:remember, /aoi:recall ; style de sortie aoi:ste."
     }
   ],
   "renames": {

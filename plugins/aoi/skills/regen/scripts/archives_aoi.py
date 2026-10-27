@@ -31,7 +31,7 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parents[3]
 BASE = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
 NOMS = {"python": "Python AOI", "node": "Node AOI", "rhino-libs": "Librairies du serveur Rhino",
-        "revit-server": "Serveur MCP Revit"}
+        "revit-server": "Serveur MCP Revit", "cortexdb-server": "Serveur MCP CortexDB"}
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")

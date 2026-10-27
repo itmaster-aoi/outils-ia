@@ -4,6 +4,15 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-27.1 (plugin 2026.10.27.1)
+
+- Nouveau serveur `plugin:aoi:cortexdb` : mémoire d'agent et graphe de connaissances dans un fichier SQLite local (`~/.cortexdb/cortexdb.db`). Projet [liliang-cn/cortexdb](https://github.com/liliang-cn/cortexdb) 2.139.1, fork de référence [itmaster-aoi/cortexdb](https://github.com/itmaster-aoi/cortexdb), commit `a808c1296002043eea5f5c3e7d550530ce1a5755`.
+  - Serveur : binaire Windows publié par l'auteur, empreinte vérifiée, livré par l'archive `cortexdb-server-2.139.1` (`archives/construire.py cortexdb-server`) et installé par `/regen` dans `%LOCALAPPDATA%\aoi\cortexdb-server-2.139.1`. Le lanceur d'origine, qui téléchargeait le binaire au premier lancement, n'est pas repris.
+  - `.mcp.json` vide les variables des services externes (embeddings, modèle de langage, reranker) et du serveur partagé : mode lexical, sans service externe, même si le poste a une clé `OPENAI_API_KEY`.
+  - Commandes `/aoi:remember` et `/aoi:recall` reprises telles quelles par le nouveau `amont/importer_cortexdb.py`. Nouvelle skill `/aoi:cortexdb`, écrite pour l'atelier : quand mémoriser, ce qu'il ne faut jamais mémoriser.
+  - Non repris : la skill d'origine (documentation de la librairie Go), les 11 autres commandes (appels du binaire en bash), les crochets (rappel à chaque requête, contexte avant chaque lecture de fichier), le mod `cortexdb-live`.
+- `archives/construire.py` : partie `cortexdb-server` ; la mise à jour de `.mcp.json` vaut pour `revit-server` et `cortexdb-server`. `/regen` affiche « Serveur MCP CortexDB ».
+
 ## 2026-10-19.2 (plugin 2026.10.19.2)
 
 - Serveur `plugin:aoi:keyshot` : keyshot-mcp 1.0.0, importé de [lfoletti/keyshot-mcp](https://github.com/lfoletti/keyshot-mcp), étiquette `v1.0.0`, commit `266c26a1ef90ed5882213d7818d207207a335d1d` par `amont/importer_keyshot.py`, sans adaptation du code (provenance et empreintes dans `mcp/keyshot/VERSION-AOI.txt`). Remplace le serveur 0.1.1 et le pont 0.2.13. Le pont et le serveur portent désormais le même numéro.

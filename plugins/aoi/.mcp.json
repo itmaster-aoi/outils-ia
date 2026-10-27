@@ -22,6 +22,23 @@
         "${LOCALAPPDATA}/aoi/revit-server-2026-10-12/build/index.js"
       ]
     },
+    "cortexdb": {
+      "command": "${LOCALAPPDATA}/aoi/cortexdb-server-2.139.1/cortexdb-mcp.exe",
+      "env": {
+        "CORTEXDB_REMOTE": "",
+        "CORTEXDB_GRPC_TOKEN": "",
+        "CORTEXDB_EMBED_BASE_URL": "",
+        "CORTEXDB_EMBED_API_KEY": "",
+        "OPENAI_BASE_URL": "",
+        "OPENAI_API_KEY": "",
+        "CORTEXDB_LLM_BASE_URL": "",
+        "CORTEXDB_LLM_URL": "",
+        "CORTEXDB_LLM_API_KEY": "",
+        "CORTEXDB_RERANK_BASE_URL": "",
+        "CORTEXDB_RERANK_URL": "",
+        "CORTEXDB_RERANK_API_KEY": ""
+      }
+    },
     "contaixt": {
       "type": "http",
       "url": "https://contaixt.ai/mcp"

@@ -13,13 +13,17 @@ plugins/aoi/               le plugin de l'atelier
     rhino/                          serveur, librairies figées, plugin Rhino, README
     revit/                          serveur compilé avec outils KG, dépendances figées, add-in Revit 2025, README
     keyshot/                        serveur et pont KeyShot (lfoletti/keyshot-mcp), librairies figées, README
+    cortexdb/                       licence, README et provenance de cortexdb (binaire publié à part, archive cortexdb-server)
+  commands/                       /aoi:remember et /aoi:recall (cortexdb, importées par amont/importer_cortexdb.py)
   controle/                       contrôle des imports Python (guard, liste blanche) et Python embarqué
   skills/
     regen/                        /regen : met le poste à la version imposée par la console
+    cortexdb/                     /cortexdb : mémoire durable de l'utilisateur (skill de l'atelier, serveur cortexdb)
     graphify/                     /graphify : graphe de connaissances d'un dossier (Graphify-Labs/graphify, Python AOI), généré par python-aoi/adapter_skill_graphify.py
   output-styles/
     ste.md                        style de sortie aoi:ste : rédaction technique simplifiée (ASD-STE100)
 amont/importer_keyshot.py         importe une étiquette de lfoletti/keyshot-mcp (clone fait hors de Claude Code) dans mcp/keyshot
+amont/importer_cortexdb.py        importe /remember et /recall d'une étiquette de itmaster-aoi/cortexdb (clone fait hors de Claude Code)
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette
 ```
