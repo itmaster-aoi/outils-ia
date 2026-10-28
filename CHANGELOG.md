@@ -4,6 +4,16 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-28.2 (plugin 2026.10.28.2)
+
+- Nouvelle organisation des dossiers ([`docs/organisation-dossiers.md`](docs/organisation-dossiers.md)) : `%LOCALAPPDATA%\aoi\serveurs`, `donnees` et `journal`. Cette étiquette lit les deux organisations. Un poste reste sur l'ancienne tant que `migrer-dossiers.cmd` n'a pas été lancé.
+  - `.mcp.json` lance cortexdb et le serveur Revit par `lanceur/lancer.py`, sans numéro de version. Le lanceur choisit le dossier du serveur et, après migration, la base cortexdb (`CORTEXDB_PATH`). Le serveur s'arrête avec le lanceur (Job Object).
+  - `migrer-dossiers.cmd` (dossier du plugin, chemin complet donné par `maj.py --verifier-dossiers`) : à lancer une fois par compte Windows, Claude Code et logiciels hôtes fermés. Il copie les serveurs, la base cortexdb (copie contrôlée) et les journaux, sans rien effacer. `--annuler` revient à l'ancienne organisation.
+  - `/regen` et le démarrage de session affichent l'état des dossiers (« à migrer » ou « migré »).
+- Correction de `/regen` : un serveur de la même version, endommagé, est réinstallé sans perdre ses fichiers `conserver` (`revit-data.db`). Un dossier de serveur encore utilisé n'est plus effacé à moitié.
+- `archives/construire.py` ne réécrit plus `.mcp.json`.
+- Nouveau `tests/test_migration_dossiers.py` : 32 tests sur un poste simulé, avec le Python embarqué du plugin.
+
 ## 2026-10-28.1 (plugin 2026.10.28.1)
 
 - Nouveau serveur `plugin:aoi:autocad` pour AutoCAD 2027 (version complète, pas LT) : 37 outils pour lire, contrôler, nettoyer, modifier, tracer en PDF et exporter des dessins DWG, et préparer des lots.
