@@ -1,8 +1,21 @@
 # Journal des changements
 
-Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette est celle que la console impose aux postes (`extraKnownMarketplaces` et `strictKnownMarketplaces`) ; les postes la récupèrent avec `/regen`. Les versions de chaque composant sont dans [`VERSIONS.md`](VERSIONS.md), le détail dans les messages de commit.
+Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette est celle que la console impose aux postes (`extraKnownMarketplaces` et `strictKnownMarketplaces`) ; les postes la récupèrent avec `upgrader-outils.cmd` (avant 2026-10-28.4 : `/regen`). Les versions de chaque composant sont dans [`VERSIONS.md`](VERSIONS.md), le détail dans les messages de commit.
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
+
+## 2026-10-28.4 (plugin 2026.10.28.4)
+
+La skill `/aoi:regen` est retirée. La mise à jour se lance hors de Claude Code, par `upgrader-outils.cmd` ([`docs/upgrader-outils.md`](docs/upgrader-outils.md)). Ce lanceur, `installer-claude.cmd` et `installer-poste.cmd` sont dans un dépôt interne de l'IT, non publié, et copiés sur le partage de l'atelier. Geste des utilisateurs : fermer Claude Code et les logiciels, lancer `upgrader-outils.cmd`, relancer Claude Code. Un poste au plugin 2026.10.28.3 peut le lancer directement.
+
+- `installer-poste.cmd` et `installer-poste.ps1` sont retirés de ce dépôt public. Une copie plus ancienne de l'installeur ne trouve plus sa version de référence en ligne : elle affiche « version du dépôt non vérifiée ».
+- Add-in KeyShot : `"processus": "keyshot.exe"` dans `addin.json` (et `amont/importer_keyshot.py`). `maj.py` ne copie plus les scripts KeyShot si KeyShot est ouvert.
+- Messages de `maj.py`, `archives_aoi.py`, du crochet de démarrage, de `lancer.py`, de la skill graphify et des README : « fermez Claude Code, puis lancez upgrader-outils.cmd » au lieu de « tapez /aoi:regen ».
+- Correction : la fin de la mise à jour n'affiche plus « Déjà à jour : aucun redémarrage nécessaire » quand la session tourne avec une version plus ancienne. La consigne de relancer Claude Code est toujours affichée.
+- `finir()` renvoie 1 si une étape a échoué (avant : toujours 0). « claude » introuvable : `maj.py` renvoie à `installer-claude.cmd`.
+- `activer_controle.py --verifier` hors de Claude Code : vérifie la copie du contrôle, pas le `PYTHONPATH` de la console (absent hors de Claude Code).
+- Chemins conservés pour les versions précédentes et le lanceur : `skills/regen/scripts/maj.py`, `controle/runtime/python.exe`, `--finir`.
+- Nouveau `tests/test_messages_aoi.py` : plus de renvoi à `/aoi:regen`, chemins du moteur, contrôle hors de Claude Code.
 
 ## 2026-10-28.3 (plugin 2026.10.28.3)
 

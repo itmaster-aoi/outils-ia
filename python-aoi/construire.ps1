@@ -18,7 +18,7 @@
 
   Ensuite : publier l'archive comme fichier de la version GitHub « python-aoi-<version> »,
   créer une étiquette du plugin, la reporter dans la console. Les postes l'installent avec
-  /regen ou installer-poste.cmd, seulement si la version a changé.
+  upgrader-outils.cmd ou installer-poste.cmd, seulement si la version a changé.
 
 .PARAMETER Version
   Version de l'archive, par défaut la date du jour (2026-10-12). Ajouter .2, .3 pour une

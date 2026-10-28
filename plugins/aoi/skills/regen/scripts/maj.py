@@ -1,4 +1,5 @@
 """Met le plugin aoi à l'étiquette imposée par la console, sans passer par installer-poste.ps1.
+Lancé par upgrader-outils.cmd (dépôt interne de l'IT, non publié), Claude Code fermé.
 
     maj.py              état du poste, sans rien changer
     maj.py --appliquer  inscrit le catalogue à l'étiquette imposée, met le plugin à jour, puis
@@ -31,6 +32,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chemins_aoi  # noqa: E402
 
 AOI = chemins_aoi.AOI
+# Consignes affichées aux utilisateurs : la mise à jour se lance hors de Claude Code
+RELANCER = "relancez upgrader-outils.cmd"
+LANCER_REGEN = "fermez Claude Code, puis lancez upgrader-outils.cmd (fourni par l'IT, à côté de installer-poste.cmd)"
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -93,7 +97,7 @@ def skills(plugin):
 def claude(*args, silencieux=False):
     exe = shutil.which("claude")
     if not exe:
-        raise SystemExit("Commande « claude » introuvable : lancez installer-poste.cmd.")
+        raise SystemExit("ÉCHEC : commande « claude » introuvable. Lancez installer-claude.cmd.")
     env = dict(os.environ, CLAUDE_CODE_PLUGIN_PREFER_HTTPS="1")
     # Une session par clé API ne reçoit pas les managed settings : la commande doit
     # passer par le compte claude.ai de l'atelier.
@@ -224,7 +228,7 @@ def application_incompatible(e):
         return f"version de {e['nom']} illisible ({m['registre']}), add-in non installé. Contactez l'IT."
     if en_nombres(v) < en_nombres(m["min"]):
         return (f"version {v} installée, l'add-in demande {m['min']} ou plus récente. "
-                f"Mettez {e['nom']} à jour, puis relancez /aoi:regen.")
+                f"Mettez {e['nom']} à jour, puis {RELANCER}.")
     return None
 
 
@@ -257,7 +261,7 @@ def addins(plugin, appliquer=False):
                 if not source.is_dir():
                     continue
             else:  # forme inconnue (fiche plus récente que ce script) : ignorée, sans planter
-                print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (mettez /regen à jour)")
+                print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (plugin trop ancien, contactez l'IT)")
                 continue
             liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
                           e.get("processus", ""), e.get("sauvegarder", []), version, None,
@@ -270,7 +274,7 @@ def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, p
         print(f"  {nom} : ÉCHEC : {refus}")
         return False
     if source is None:
-        print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
+        print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (upgrader-outils.cmd)"))
         return False
     if pointeur:
         ok = poser_pointeur(nom, source, dst, proc, pointeur, appliquer)
@@ -304,7 +308,7 @@ def copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer):
         print(f"  {nom} : add-in à recopier")
         return False
     if proc and processus_actifs(proc):
-        print(f"  {nom} : add-in à recopier, mais {proc} est ouvert. Fermez-le puis relancez /regen.")
+        print(f"  {nom} : add-in à recopier, mais {proc} est ouvert. Fermez-le, puis {RELANCER}.")
         return False
     dst.mkdir(parents=True, exist_ok=True)
     for rel in sauvegarder:
@@ -374,7 +378,7 @@ def poser_pointeur(nom, source, dst, proc, pointeur, appliquer):
         print(f"  {nom} : " + ("copie complète à remplacer par un pointeur" if restes else "pointeur à mettre à jour"))
         return False
     if proc and processus_actifs(proc):
-        print(f"  {nom} : pointeur à poser, mais {proc} est ouvert. Fermez-le puis relancez /regen.")
+        print(f"  {nom} : pointeur à poser, mais {proc} est ouvert. Fermez-le, puis {RELANCER}.")
         return False
     # Choix de l'utilisateur dans le registre : copie complète de l'hôte, ou version désignée
     ancien = dst if restes else dossier_pointe(dst, pointeur)
@@ -404,7 +408,7 @@ def anciennes_versions(garder):
 def nettoyer_cache(*garder):
     """Claude Code garde une copie complète de chaque version du plugin (~300 Mo chacune) et
     ne les efface jamais. On garde la version installée et celle dont tourne la session
-    en cours (ses serveurs et ce script en dépendent) : elle partira au /regen suivant."""
+    en cours (ses serveurs et ce script en dépendent) : elle partira à la mise à jour suivante."""
     garder = {Path(g["chemin"]).resolve() for g in garder if g}
     garder.add(Path(sys.executable).resolve().parents[2])  # .../<version>/controle/runtime/python.exe
     libere, echecs = 0, []
@@ -423,7 +427,7 @@ def nettoyer_cache(*garder):
     if libere:
         print(f"Anciennes versions effacées du cache : {libere / 2**20:,.0f} Mo libérés".replace(",", " "))
     if echecs:
-        print(f"Anciennes versions encore utilisées, à effacer au prochain /regen : {', '.join(echecs)}")
+        print(f"Anciennes versions encore utilisées, à effacer à la prochaine mise à jour : {', '.join(echecs)}")
 
 
 def controle(plugin, verifier):
@@ -457,7 +461,7 @@ def etape(nom, fonction, *args, **kwargs):
 def etat_dossiers():
     """Organisation des dossiers du poste (docs/organisation-dossiers.md), sans rien modifier.
     « a_jour » : chaque serveur est dans serveurs\\, aucune ancienne installation ne reste et chaque
-    add-in qui a une forme « pointeur » l'utilise. Sinon, le /regen suivant termine le passage."""
+    add-in qui a une forme « pointeur » l'utilise. Sinon, la mise à jour suivante termine le passage."""
     lignes, ecarts = [], 0
     # Sans plugin inscrit (poste en cours d'installation, essai) : celui de ce script
     plugin = plugin_installe() or {"version": None, "chemin": Path(__file__).resolve().parents[3]}
@@ -477,7 +481,7 @@ def etat_dossiers():
             ecarts += d is None
             lignes.append(f"add-in {x[0]} : " + (f"pointeur vers {d}" if d else f"copie complète dans {x[2]}"))
     lignes.append(f"journal : {chemins_aoi.JOURNAL}")
-    return {"a_jour": not ecarts, "resume": "à jour" if not ecarts else f"{ecarts} point(s) au prochain /regen",
+    return {"a_jour": not ecarts, "resume": "à jour" if not ecarts else f"{ecarts} point(s) à la prochaine mise à jour",
             "lignes": lignes}
 
 
@@ -503,11 +507,12 @@ def finir(avant, apres):
         except OSError as e:
             print(f"  ÉCHEC : témoin de fin non écrit ({e})")
     print(f"\nÉtat des dossiers : {etat_dossiers()['resume']}")
-    if avant is None or apres["version"] != avant["version"]:
-        print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
-    else:
-        print("\nDéjà à jour : aucun redémarrage nécessaire.")
-    return 0
+    # Pas de « déjà à jour, aucun redémarrage » : la session qui lançait /regen pouvait tourner
+    # avec une version plus ancienne que « avant » (constaté le 28.10.2026). Claude Code ne charge
+    # les serveurs qu'à son démarrage : la consigne vaut dans tous les cas.
+    print("\nRelancez Claude Code : il charge les serveurs à jour au démarrage.")
+    # Code non nul si une étape a échoué : upgrader-outils.ps1 le lit (passer_la_main le transmet)
+    return 1 if echecs else 0
 
 
 def passer_la_main(avant, apres):
@@ -597,7 +602,7 @@ def demarrage():
                   for l in lignes if l[0] != "Plugin aoi" and l[2] != "retiré"]
     retraits = [l[0] for l in lignes if l[2] == "retiré"]
     if imposee and inscrite != imposee:
-        suivi = f"mise à jour disponible ({imposee}) : tapez /aoi:regen"
+        suivi = f"mise à jour disponible ({imposee}) : {LANCER_REGEN}"
     elif nouveautes or retraits:
         suivi = " · ".join(([f"nouveaux outils : {', '.join(nouveautes)}"] if nouveautes else [])
                            + ([f"outils retirés : {', '.join(retraits)}"] if retraits else []))
@@ -606,14 +611,14 @@ def demarrage():
     texte = [f"Outils IA atelier oï, v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
              f" · {python_aoi()} · {suivi}"]
     if not controle_actif():
-        texte.append("ATTENTION : contrôle des imports Python inactif. Lancez /aoi:regen ou contactez l'IT.")
+        texte.append("ATTENTION : contrôle des imports Python inactif. Fermez Claude Code, puis lancez upgrader-outils.cmd, ou contactez l'IT.")
     if echec_controle:
         texte.append(f"ATTENTION : {echec_controle}. Contactez l'IT.")
     for x in addins(plugin) if plugin else ():
         if x[6]:
             texte.append(f"ATTENTION : add-in {x[0]} : {x[6]}")
     if finir_manque:
-        texte.append("ATTENTION : la dernière mise à jour n'est pas allée au bout. Tapez /aoi:regen.")
+        texte.append("ATTENTION : la dernière mise à jour n'est pas allée au bout. Fermez Claude Code, puis lancez upgrader-outils.cmd.")
     print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
     try:  # trace du crochet : qu'il tourne, sa durée, et l'organisation des dossiers (relevé de l'IT)
         dossiers = etat_dossiers()["resume"] if plugin else "?"
@@ -636,7 +641,7 @@ def python_aoi():
     dossier = AOI / "python"
     exe = dossier / "python.exe"
     if not exe.is_file():
-        return f"Python AOI absent ({dossier}) : lancez /aoi:regen"
+        return f"Python AOI absent ({dossier}) : {LANCER_REGEN}"
     try:
         r = subprocess.run([str(exe), "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"],
                            capture_output=True, text=True, timeout=10)
@@ -651,7 +656,7 @@ def main():
     ap.add_argument("--appliquer", action="store_true")
     ap.add_argument("--addins", action="store_true", help="seulement les add-ins (installeur)")
     ap.add_argument("--demarrage", action="store_true", help="crochet SessionStart : rapport des nouveautés")
-    ap.add_argument("--finir", action="store_true", help="étapes après installation, lancées par le /regen précédent")
+    ap.add_argument("--finir", action="store_true", help="étapes après installation, lancées par le maj.py précédent")
     ap.add_argument("--avant-chemin")
     ap.add_argument("--avant-version")
     ap.add_argument("--verifier-dossiers", action="store_true", help="organisation des dossiers, sans rien changer")
@@ -705,7 +710,7 @@ def main():
 
     verrou = prendre_verrou()
     if verrou is None:
-        print("\nUn autre /regen est en cours sur ce compte. Attendez sa fin, puis relancez /regen.")
+        print(f"\nUne autre mise à jour est en cours sur ce compte. Attendez sa fin, puis {RELANCER}.")
         return 4
     try:
         return appliquer(imposee, inscrite, avant)

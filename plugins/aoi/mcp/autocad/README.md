@@ -15,7 +15,7 @@ L'add-in (bundle `aoi-autocad-mcp.bundle`) **n'est pas dans le plugin** : il est
 
 1. Ouvrez AutoCAD 2027 une première fois sur ce compte : le dossier `%APPDATA%\Autodesk\AutoCAD 2027` doit exister.
 2. Fermez AutoCAD : il verrouille les fichiers de l'add-in.
-3. Tapez `/aoi:regen` dans Claude Code. L'add-in est copié dans `%APPDATA%\Autodesk\ApplicationPlugins\aoi-autocad-mcp.bundle`.
+3. Fermez Claude Code, puis lancez `upgrader-outils.cmd`. L'add-in est copié dans `%APPDATA%\Autodesk\ApplicationPlugins\aoi-autocad-mcp.bundle`.
 4. Ouvrez AutoCAD. Au premier chargement, AutoCAD peut demander s'il faut charger l'add-in : choisissez « Toujours charger ».
 5. Quittez et relancez Claude Code.
 
@@ -43,4 +43,4 @@ Fichier facultatif `%LOCALAPPDATA%\autocad-mcp\config.json` : `port` (1997), `al
 ## Pièges connus
 
 - Le dossier `%USERPROFILE%\.dotnet` ne doit pas exister : sinon AutoCAD 2027 ne démarre pas sur un poste où la variable `DOTNET_ROOT` y pointe.
-- AutoCAD verrouille l'add-in : `/aoi:regen` ne le met à jour que si AutoCAD est fermé.
+- AutoCAD verrouille l'add-in : `upgrader-outils.cmd` ne le met à jour que si AutoCAD est fermé.

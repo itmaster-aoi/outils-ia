@@ -15,9 +15,9 @@ Le serveur (environ 26 Mo) et l'add-in (environ 90 Mo) **ne sont plus dans le pl
 
 ## Installation sur un poste (une fois, par l'IT)
 
-1. Node : le **Node AOI** (Node.js 25.8.2, `%LOCALAPPDATA%\aoi\node`), publié à part et installé par `installer-poste.cmd` ou `/regen`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé : changer de version de Node impose de recompiler le serveur.
-2. **Add-in Revit** : `installer-poste.cmd` ou `/regen` téléchargent l'archive (seulement si sa version manque sur le poste, dans `%LOCALAPPDATA%\aoi\addins`), vérifient son empreinte et la copient dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, Revit fermé. Relancer ensuite Revit.
-3. **Serveur MCP** : `installer-poste.cmd` ou `/regen` téléchargent l'archive de la version validée (seulement si elle manque), vérifient son empreinte et l'installent à côté des versions précédentes, ce qui permet de mettre à jour pendant qu'une session utilise l'ancienne. Les anciennes versions sont effacées dès qu'elles ne servent plus.
+1. Node : le **Node AOI** (Node.js 25.8.2, `%LOCALAPPDATA%\aoi\node`), publié à part et installé par `installer-poste.cmd` ou `upgrader-outils.cmd`. C'est la version pour laquelle le module natif `better-sqlite3` est compilé : changer de version de Node impose de recompiler le serveur.
+2. **Add-in Revit** : `installer-poste.cmd` ou `upgrader-outils.cmd` téléchargent l'archive (seulement si sa version manque sur le poste, dans `%LOCALAPPDATA%\aoi\addins`), vérifient son empreinte et la copient dans `%APPDATA%\Autodesk\Revit\Addins\2025\`, Revit fermé. Relancer ensuite Revit.
+3. **Serveur MCP** : `installer-poste.cmd` ou `upgrader-outils.cmd` téléchargent l'archive de la version validée (seulement si elle manque), vérifient son empreinte et l'installent à côté des versions précédentes, ce qui permet de mettre à jour pendant qu'une session utilise l'ancienne. Les anciennes versions sont effacées dès qu'elles ne servent plus.
 
 L'add-in autonome **BIM KG** (`BimKg.addin`) n'est pas nécessaire. Le jeu de commandes KG embarque son propre moteur et fonctionne seul. S'il trouve l'add-in BIM KG, il cohabite avec lui.
 

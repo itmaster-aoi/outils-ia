@@ -9,7 +9,7 @@ sur une étiquette relue (git checkout vX.Y.Z), sans modification locale. Le scr
 Écrit plugins/aoi/mcp/keyshot/ (libs/ n'est pas touché) :
 
     run.py, server/, addin/Scripts/, LICENSE   repris tels quels : aucune adaptation du code
-    addin.json                                 fiche /regen, avec les scripts des versions précédentes à retirer
+    addin.json                                 fiche de l'add-in, lue par upgrader-outils.cmd, avec les scripts des versions précédentes à retirer
     README.md                                  mode d'emploi pour l'atelier
     VERSION-AOI.txt                            origine, étiquette, commit, empreinte SHA-256 de chaque fichier
 
@@ -39,7 +39,7 @@ REPRIS = ("run.py", "LICENSE", "server", "addin/Scripts")
 IGNORES = ("__pycache__", "*.pyc", "*.pyo")
 PONT = "addin/Scripts/MCP start.py"
 ARRET = "addin/Scripts/MCP stop.py"
-# Scripts KeyShot des versions précédentes, effacés de la destination par /regen avant la copie
+# Scripts KeyShot des versions précédentes, effacés de la destination par upgrader-outils.cmd avant la copie
 ANCIENS_SCRIPTS = ["aoi_keyshot_bridge.py", "aoi_keyshot_stop.py", "MCP server start.py", "MCP server stop.py"]
 
 ADDIN = {"add-ins": [{
@@ -47,6 +47,7 @@ ADDIN = {"add-ins": [{
     "si_existe": "%PUBLIC%/Documents/KeyShot Studio",
     "source": "addin/Scripts",
     "destination": "%PUBLIC%/Documents/KeyShot Studio/Scripts",
+    "processus": "keyshot.exe",  # upgrader-outils.ps1 demande de fermer KeyShot ; maj.py ne copie pas s'il est ouvert
     "retirer": ANCIENS_SCRIPTS,
 }]}
 
@@ -58,7 +59,7 @@ Serveur MCP qui permet à Claude de piloter KeyShot Studio 2026 (fenêtre ouvert
 |---|---|
 | `server/` | le serveur MCP `keyshotmcp` {version} : {outils} outils, prompts {prompts} |
 | `addin/Scripts/` | le pont `MCP start.py` {version} et son script d'arrêt `MCP stop.py`, qui tournent dans KeyShot (stdlib et `lux` seulement) |
-| `addin.json` | la fiche de l'add-in : `/regen` copie `addin/Scripts` dans `%PUBLIC%\\Documents\\KeyShot Studio\\Scripts` si KeyShot Studio a déjà été lancé sur le poste (dossier présent), après avoir effacé les scripts des versions précédentes (`MCP server start.py`, `MCP server stop.py`, `aoi_keyshot_*.py`) |
+| `addin.json` | la fiche de l'add-in : `upgrader-outils.cmd` copie `addin/Scripts` dans `%PUBLIC%\\Documents\\KeyShot Studio\\Scripts` si KeyShot Studio a déjà été lancé sur le poste (dossier présent), après avoir effacé les scripts des versions précédentes (`MCP server start.py`, `MCP server stop.py`, `aoi_keyshot_*.py`) |
 | `run.py` | le lanceur : il place `server/` et `libs/` (avec les dossiers de pywin32) en tête du chemin de recherche |
 | `LICENSE` | licence MIT du projet d'origine |
 
@@ -78,10 +79,10 @@ Le pont écrit son port, son jeton et le pid de KeyShot dans `%LOCALAPPDATA%\\ke
 
 ## Utilisation
 
-1. Après `/regen`, redémarrer KeyShot une fois (il ne relit le dossier Scripts qu'à son démarrage).
+1. Après `upgrader-outils.cmd`, redémarrer KeyShot une fois (il ne relit le dossier Scripts qu'à son démarrage).
 2. Dans KeyShot : *Window > Scripting Console > Scripts > MCP start > Run*.
 3. Dans Claude Code, `/mcp` montre `plugin:aoi:keyshot` ; l'outil `keyshot_status` doit répondre.
-4. Arrêt : script `MCP stop`, ou fermeture de KeyShot. Après une mise à jour du pont par `/regen`, l'outil `reload_bridge` recharge le pont sans Run.
+4. Arrêt : script `MCP stop`, ou fermeture de KeyShot. Après une mise à jour du pont par `upgrader-outils.cmd`, l'outil `reload_bridge` recharge le pont sans Run.
 
 Réglages facultatifs, par poste : `%LOCALAPPDATA%\\keyshot-mcp\\pont-config.json` (avant la 1.0.0 : `%LOCALAPPDATA%\\aoi\\keyshot\\`, plus lu).
 - `execute_python` : `false` par défaut ; seul `true` active l'outil (ou la variable `KEYSHOT_MCP_EXECUTE_PYTHON=1`).
