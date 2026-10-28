@@ -87,7 +87,7 @@ def main():
                "sha256": sha256(zip_), "taille": zip_.stat().st_size}
 
     if p["fiche"] == "racine":
-        # Installée dans un dossier <nom>-<version> (chemins_aoi.serveurs()). .mcp.json ne porte
+        # Installée dans un dossier <nom>-<version> (chemins_aoi.SERVEURS). .mcp.json ne porte
         # aucune version : lanceur/lancer.py lit celle de cette fiche. Ne pas réécrire .mcp.json ici.
         fiche = PLUGIN / f"{nom}-aoi.json"
         ecrire(fiche, {**archive, "versionne": True, "exe": p["temoin"],

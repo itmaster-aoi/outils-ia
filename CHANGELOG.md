@@ -4,15 +4,20 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
-## 2026-10-28.2 (plugin 2026.10.28.2)
+## 2026-10-28.3 (plugin 2026.10.28.3)
 
-- Nouvelle organisation des dossiers ([`docs/organisation-dossiers.md`](docs/organisation-dossiers.md)) : `%LOCALAPPDATA%\aoi\serveurs`, `donnees` et `journal`. Cette étiquette lit les deux organisations. Un poste reste sur l'ancienne tant que `migrer-dossiers.cmd` n'a pas été lancé.
-  - `.mcp.json` lance cortexdb et le serveur Revit par `lanceur/lancer.py`, sans numéro de version. Le lanceur choisit le dossier du serveur et, après migration, la base cortexdb (`CORTEXDB_PATH`). Le serveur s'arrête avec le lanceur (Job Object).
-  - `migrer-dossiers.cmd` (dossier du plugin, chemin complet donné par `maj.py --verifier-dossiers`) : à lancer une fois par compte Windows, Claude Code et logiciels hôtes fermés. Il copie les serveurs, la base cortexdb (copie contrôlée) et les journaux, sans rien effacer. `--annuler` revient à l'ancienne organisation.
-  - `/regen` et le démarrage de session affichent l'état des dossiers (« à migrer » ou « migré »).
+Nouvelle organisation des dossiers ([`docs/organisation-dossiers.md`](docs/organisation-dossiers.md), version 4), sans migration : `/aoi:regen` fait tout le passage. Geste des utilisateurs : `/aoi:regen` et redémarrage, comme d'habitude. L'étiquette `2026-10-28.2`, partielle, a été supprimée avant tout déploiement.
+
+- Serveurs cortexdb et Revit installés dans `%LOCALAPPDATA%\aoi\serveurs`. L'ancien dossier est effacé dès qu'il est libre (au `/regen` suivant s'il sert à la session en cours). `revit-data.db` est repris ; s'il change après la copie, l'ancien dossier est gardé et `/regen` le signale.
+- `.mcp.json` lance cortexdb et le serveur Revit par `lanceur/lancer.py`, sans numéro de version. Le serveur s'arrête avec le lanceur (Job Object).
+- La base cortexdb reste dans `~\.cortexdb`.
+- Journaux et état (`session.json`, `demarrage.log`, témoins de `/regen`) dans `%LOCALAPPDATA%\aoi\journal`.
+- Add-in Revit 2025 : `%APPDATA%\Autodesk\Revit\Addins\2025` garde seulement le manifeste `.addin`, qui désigne la version de `%LOCALAPPDATA%\aoi\addins`. Les commandes désactivées dans `commandRegistry.json` le restent à chaque nouvelle version. Revit doit être fermé pendant `/regen`.
+- KeyShot, AutoCAD et Rhino ne changent pas : copie complète, comme avant.
+- `maj.py --verifier-dossiers` : état des dossiers (code 0 si tout est passé).
 - Correction de `/regen` : un serveur de la même version, endommagé, est réinstallé sans perdre ses fichiers `conserver` (`revit-data.db`). Un dossier de serveur encore utilisé n'est plus effacé à moitié.
 - `archives/construire.py` ne réécrit plus `.mcp.json`.
-- Nouveau `tests/test_migration_dossiers.py` : 32 tests sur un poste simulé, avec le Python embarqué du plugin.
+- Nouveau `tests/test_dossiers_aoi.py` : 31 tests sur un poste simulé, avec le Python embarqué du plugin.
 
 ## 2026-10-28.1 (plugin 2026.10.28.1)
 

@@ -1,13 +1,15 @@
 """Dossiers des outils de l'atelier sur le poste : seule définition, pour tous les scripts du plugin.
 
-Deux organisations coexistent pendant la migration (docs/organisation-dossiers.md) :
+Organisation (docs/organisation-dossiers.md) :
 
-    ancienne   serveurs, journaux et état à la racine de %LOCALAPPDATA%\\aoi ; base cortexdb dans ~\\.cortexdb
-    nouvelle   %LOCALAPPDATA%\\aoi\\serveurs, \\donnees, \\journal
+    %LOCALAPPDATA%\\aoi\\serveurs\\<nom>-<version>   serveurs publiés à part (cortexdb, revit)
+    %LOCALAPPDATA%\\aoi\\journal                     journaux et état (session.json, demarrage.log...)
+    %LOCALAPPDATA%\\aoi\\addins\\<add-in>-<version>   add-ins publiés à part
 
-Le témoin journal\\migration-dossiers.json, écrit en dernier par migrer_dossiers.py, choisit la
-nouvelle. Sans lui, le poste garde l'ancienne et fonctionne comme avant : rien ne bascule à moitié.
-Python AOI, Node AOI, python-libs-<v> et addins\\ ne changent pas de place.
+Pas de migration : /regen installe à ces emplacements et efface les anciens dès qu'ils sont libres.
+Pendant la transition, un serveur ou un journal encore à l'ancien emplacement (racine de
+%LOCALAPPDATA%\\aoi) est lu là. La base cortexdb reste où cortexdb la met (~\\.cortexdb).
+Python AOI, Node AOI et python-libs-<v> ne changent pas de place.
 
 Le Python embarqué du plugin (fichier ._pth) n'ajoute pas le dossier du script à sys.path :
 chaque script qui importe ce module ajoute lui-même skills/regen/scripts à sys.path.
@@ -18,48 +20,25 @@ from pathlib import Path
 
 AOI = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
 ADDINS = AOI / "addins"
-SERVEURS_NOUVEAU = AOI / "serveurs"
-DONNEES = AOI / "donnees"
-JOURNAL_NOUVEAU = AOI / "journal"
-TEMOIN = JOURNAL_NOUVEAU / "migration-dossiers.json"
-TEMOIN_ANNULE = JOURNAL_NOUVEAU / "migration-dossiers.annule.json"
-BASE_CORTEXDB_ANCIENNE = Path.home() / ".cortexdb" / "cortexdb.db"
-BASE_CORTEXDB_NOUVELLE = DONNEES / "cortexdb" / "cortexdb.db"
-
-
-def migre():
-    return TEMOIN.is_file()
-
-
-def serveurs():
-    """Dossier où s'installent les serveurs versionnés (<nom>-<version>)."""
-    return SERVEURS_NOUVEAU if migre() else AOI
-
-
-def journal():
-    """Dossier des journaux et de l'état (session.json, demarrage.log, témoins de /regen)."""
-    return JOURNAL_NOUVEAU if migre() else AOI
+SERVEURS = AOI / "serveurs"
+JOURNAL = AOI / "journal"
+ANCIEN = AOI  # ancienne organisation : serveurs et journaux à la racine
 
 
 def dossier_serveur(nom, version):
-    """Dossier d'un serveur versionné : celui de l'organisation active, sinon l'autre (copie pas
-    encore faite, ou retour arrière). None si aucun n'est installé."""
-    for base in (serveurs(), AOI if migre() else SERVEURS_NOUVEAU):
+    """Dossier d'un serveur versionné : serveurs\\, sinon l'ancien emplacement (pas encore réinstallé,
+    ou retour à une ancienne étiquette). None si aucun n'est installé."""
+    for base in (SERVEURS, ANCIEN):
         d = base / f"{nom}-{version}"
         if (d / "aoi-version.txt").is_file():
             return d
     return None
 
 
-def base_cortexdb():
-    """Fichier de la base cortexdb, ou None pour laisser cortexdb choisir (~\\.cortexdb)."""
-    return BASE_CORTEXDB_NOUVELLE if migre() else None
-
-
 def lire_journal(nom):
-    """Fichier du journal dans l'organisation active ; à défaut, celui de l'autre organisation."""
-    f = journal() / nom
+    """Fichier du journal ; à défaut, celui de l'ancien emplacement."""
+    f = JOURNAL / nom
     if f.is_file():
         return f
-    autre = (AOI if migre() else JOURNAL_NOUVEAU) / nom
-    return autre if autre.is_file() else f
+    ancien = ANCIEN / nom
+    return ancien if ancien.is_file() else f
