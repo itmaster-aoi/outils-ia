@@ -71,7 +71,7 @@ def main():
         return 1
     dossier = chemins_aoi.dossier_serveur(nom, fiche["version"])
     if dossier is None:
-        dire(f"{nom} {fiche['version']} n'est pas installé sur ce poste : tapez /aoi:regen.")
+        dire(f"{nom} {fiche['version']} n'est pas installé sur ce poste : fermez Claude Code, puis lancez upgrader-outils.cmd.")
         return 1
     env = dict(os.environ)
     if serveur == "cortexdb":  # base dans ~\.cortexdb, l'emplacement par défaut de cortexdb

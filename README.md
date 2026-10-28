@@ -18,7 +18,7 @@ plugins/aoi/               le plugin de l'atelier
   commands/                       /aoi:remember et /aoi:recall (cortexdb, importées par amont/importer_cortexdb.py)
   controle/                       contrôle des imports Python (guard, liste blanche) et Python embarqué
   skills/
-    regen/                        /regen : met le poste à la version imposée par la console
+    regen/scripts/                maj.py, moteur de la mise à jour (ancienne skill /regen, chemin conservé)
     cortexdb/                     /cortexdb : mémoire durable de l'utilisateur (skill de l'atelier, serveur cortexdb)
     graphify/                     /graphify : graphe de connaissances d'un dossier (Graphify-Labs/graphify, Python AOI), généré par python-aoi/adapter_skill_graphify.py
   output-styles/
@@ -26,6 +26,8 @@ plugins/aoi/               le plugin de l'atelier
 amont/importer_keyshot.py         importe une étiquette de lfoletti/keyshot-mcp (clone fait hors de Claude Code) dans mcp/keyshot
 amont/importer_autocad.py         importe une étiquette de lfoletti/autocad-mcp (clone fait hors de Claude Code) dans mcp/autocad et vérifie le commit des DLL de l'archive
 amont/importer_cortexdb.py        importe /remember et /recall d'une étiquette de itmaster-aoi/cortexdb (clone fait hors de Claude Code)
+tests/                            tests du plugin sur un poste simulé (dossiers, messages)
+docs/upgrader-outils.md           mise à jour des postes : ce que maj.py fournit à upgrader-outils.cmd
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette
 ```
@@ -35,21 +37,16 @@ CHANGELOG.md                      journal des changements, une entrée par étiq
 - **Aucun secret** dans ce dépôt public : ni clé, ni mot de passe, ni configuration propre à un poste, ni donnée de projet.
 - **Seule l'IT écrit** dans le dépôt. Chaque validation reçoit une étiquette datée (`2026-10-12`).
 - **Pas de mise à jour automatique** : une nouvelle version d'un outil est relue, ajoutée, étiquetée, puis l'étiquette est mise à jour dans les managed settings. Augmenter aussi la version de `plugin.json`, sinon les postes ne voient pas la mise à jour.
-- **Sur les postes**, `/regen` dans Claude Code récupère la nouvelle version (catalogue, plugin, add-ins), sans relancer `installer-poste.ps1`. L'installeur reste nécessaire pour un poste neuf.
+- **Sur les postes**, `upgrader-outils.cmd`, lancé Claude Code fermé, récupère la nouvelle version (catalogue, plugin, add-ins), sans relancer l'installeur. L'installeur reste nécessaire pour un poste neuf. Voir [`docs/upgrader-outils.md`](docs/upgrader-outils.md).
 - Les licences des projets d'origine sont conservées dans chaque dossier.
 
 ## Préparer un poste
 
-Copier [`installer-poste.ps1`](installer-poste.ps1) et [`installer-poste.cmd`](installer-poste.cmd) dans un même dossier, puis **double-cliquer sur `installer-poste.cmd`**, sans élévation, une fois par utilisateur et par poste. Le lanceur contourne la politique d'exécution de PowerShell pour cette seule exécution. Pour un script téléchargé depuis GitHub, lever d'abord la marque « Internet » : `Unblock-File .\installer-poste.ps1`.
+Les scripts des postes (`installer-poste.cmd`, `installer-claude.cmd`, `upgrader-outils.cmd`) ne sont pas dans ce dépôt public depuis le 28.10.2026. L'IT les tient dans un dépôt interne, non publié, et les copie sur le partage de l'atelier. Lancer `installer-poste.cmd` par un double-clic, sans élévation, une fois par utilisateur et par poste.
 
-En ligne de commande :
+`installer-claude.cmd` installe Claude Code s'il manque, ajoute `%USERPROFILE%\.local\bin` en tête du PATH du compte (registre `HKCU\Environment`), puis vérifie que `claude` désigne bien ce fichier dans un nouveau terminal. `installer-poste.cmd` l'appelle à son étape 2.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1 -DryRun   # diagnostic seul, ne modifie rien
-powershell -ExecutionPolicy Bypass -File .\installer-poste.ps1           # installation
-```
-
-Le script installe ou vérifie Git for Windows et Claude Code, signale une éventuelle clé `ANTHROPIC_API_KEY`, ouvre la connexion à claude.ai à la première fois, retire les anciennes déclarations MCP, installe ou met à jour le plugin `aoi` et copie les add-ins Rhino et Revit (en sauvegardant le registre de commandes Revit existant). Il termine par un bilan. Il est rejouable sans risque.
+L'installeur installe ou vérifie Git for Windows et Claude Code, signale une éventuelle clé `ANTHROPIC_API_KEY`, ouvre la connexion à claude.ai à la première fois, retire les anciennes déclarations MCP, installe ou met à jour le plugin `aoi` et copie les add-ins Rhino et Revit (en sauvegardant le registre de commandes Revit existant). Il termine par un bilan. Il est rejouable sans risque.
 
 ## Prérequis sur les postes (installés une fois par l'IT)
 

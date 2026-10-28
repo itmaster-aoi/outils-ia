@@ -4,7 +4,7 @@
     nom : rhino-libs | revit-server | cortexdb-server | rhino-addin | revit-addin | autocad-addin
 
 Les parties lourdes (librairies, serveurs compilés, add-ins) ne sont plus dans le plugin : elles
-sont publiées comme versions GitHub du dépôt (<nom>-<version>) et /regen ou l'installeur ne les
+sont publiées comme versions GitHub du dépôt (<nom>-<version>) et upgrader-outils.cmd ou l'installeur ne les
 téléchargent que si leur version change. Leur empreinte SHA-256, écrite dans la fiche, est figée
 par l'étiquette du plugin : une archive modifiée est refusée.
 

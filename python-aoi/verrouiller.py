@@ -7,7 +7,7 @@ Lit ajouts.txt (une librairie par ligne, comme paquets.txt), résout ses dépend
 binaires Windows 64 bits pour Python 3.12, en gardant les versions déjà présentes dans le
 Python AOI (verrou.txt). Les roues absentes du Python AOI sont vérifiées contre PyPI
 (adresse et empreinte SHA-256) et inscrites dans plugins/aoi/python-libs.json. Les postes les
-installent avec /regen ou installer-poste.cmd (archives_aoi.py), sans pip.
+installent avec upgrader-outils.cmd ou installer-poste.cmd (archives_aoi.py), sans pip.
 
 Essai : les roues sont installées dans un dossier temporaire, puis le Python AOI de ce poste
 importe chaque librairie demandée avec la liste blanche du dépôt, contrôle des imports actif.

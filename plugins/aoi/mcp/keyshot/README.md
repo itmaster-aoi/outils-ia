@@ -6,7 +6,7 @@ Serveur MCP qui permet à Claude de piloter KeyShot Studio 2026 (fenêtre ouvert
 |---|---|
 | `server/` | le serveur MCP `keyshotmcp` 1.0.0 : 33 outils, prompts `keyshot_materiaux`, `keyshot_strategy` |
 | `addin/Scripts/` | le pont `MCP start.py` 1.0.0 et son script d'arrêt `MCP stop.py`, qui tournent dans KeyShot (stdlib et `lux` seulement) |
-| `addin.json` | la fiche de l'add-in : `/regen` copie `addin/Scripts` dans `%PUBLIC%\Documents\KeyShot Studio\Scripts` si KeyShot Studio a déjà été lancé sur le poste (dossier présent), après avoir effacé les scripts des versions précédentes (`MCP server start.py`, `MCP server stop.py`, `aoi_keyshot_*.py`) |
+| `addin.json` | la fiche de l'add-in : `upgrader-outils.cmd` copie `addin/Scripts` dans `%PUBLIC%\Documents\KeyShot Studio\Scripts` si KeyShot Studio a déjà été lancé sur le poste (dossier présent), après avoir effacé les scripts des versions précédentes (`MCP server start.py`, `MCP server stop.py`, `aoi_keyshot_*.py`) |
 | `run.py` | le lanceur : il place `server/` et `libs/` (avec les dossiers de pywin32) en tête du chemin de recherche |
 | `LICENSE` | licence MIT du projet d'origine |
 
@@ -26,10 +26,10 @@ Le pont écrit son port, son jeton et le pid de KeyShot dans `%LOCALAPPDATA%\key
 
 ## Utilisation
 
-1. Après `/regen`, redémarrer KeyShot une fois (il ne relit le dossier Scripts qu'à son démarrage).
+1. Après `upgrader-outils.cmd`, redémarrer KeyShot une fois (il ne relit le dossier Scripts qu'à son démarrage).
 2. Dans KeyShot : *Window > Scripting Console > Scripts > MCP start > Run*.
 3. Dans Claude Code, `/mcp` montre `plugin:aoi:keyshot` ; l'outil `keyshot_status` doit répondre.
-4. Arrêt : script `MCP stop`, ou fermeture de KeyShot. Après une mise à jour du pont par `/regen`, l'outil `reload_bridge` recharge le pont sans Run.
+4. Arrêt : script `MCP stop`, ou fermeture de KeyShot. Après une mise à jour du pont par `upgrader-outils.cmd`, l'outil `reload_bridge` recharge le pont sans Run.
 
 Réglages facultatifs, par poste : `%LOCALAPPDATA%\keyshot-mcp\pont-config.json` (avant la 1.0.0 : `%LOCALAPPDATA%\aoi\keyshot\`, plus lu).
 - `execute_python` : `false` par défaut ; seul `true` active l'outil (ou la variable `KEYSHOT_MCP_EXECUTE_PYTHON=1`).

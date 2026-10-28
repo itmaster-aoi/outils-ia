@@ -9,7 +9,7 @@
     {
       "name": "aoi",
       "source": "./plugins/aoi",
-      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad ; skills /aoi:regen, /aoi:adhd, /aoi:graphify, /aoi:cortexdb ; commandes /aoi:remember, /aoi:recall ; style de sortie aoi:ste."
+      "description": "Serveurs MCP de l'atelier : plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad ; mise à jour par upgrader-outils.cmd (Claude Code fermé) ; skills /aoi:adhd, /aoi:graphify, /aoi:cortexdb ; commandes /aoi:remember, /aoi:recall ; style de sortie aoi:ste."
     }
   ],
   "renames": {

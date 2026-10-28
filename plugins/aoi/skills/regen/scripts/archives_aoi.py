@@ -94,7 +94,7 @@ def retirer_ancienne(d, dest, conserver, nom):
     if effacer_si_libre(d):
         print(f"{nom} : ancienne installation effacée : {d}")
         return True
-    print(f"{nom} : ancienne installation encore utilisée, effacée au prochain /regen : {d}")
+    print(f"{nom} : ancienne installation encore utilisée, effacée au prochain upgrader-outils.cmd : {d}")
     return False
 
 
@@ -122,14 +122,14 @@ def installer_versionne(fiche, dossier, nom, verifier):
         print(f"{nom} : à jour ({voulue}, {dest})")
         for d in anciennes:
             if verifier:
-                print(f"{nom} : ancienne installation à effacer avec /regen : {d}")
+                print(f"{nom} : ancienne installation à effacer avec upgrader-outils.cmd : {d}")
             else:
                 retirer_ancienne(d, dest, conserver, nom)
         return True
     if verifier:
         actuel = chemins_aoi.dossier_serveur(dossier, voulue)
-        print(f"{nom} : version validée {voulue} à " + (f"réinstaller dans {racine} avec /regen (aujourd'hui : {actuel})"
-                                                       if actuel else "installer avec /regen"))
+        print(f"{nom} : version validée {voulue} à " + (f"réinstaller dans {racine} avec upgrader-outils.cmd (aujourd'hui : {actuel})"
+                                                       if actuel else "installer avec upgrader-outils.cmd"))
         return False
 
     racine.mkdir(parents=True, exist_ok=True)
@@ -155,7 +155,7 @@ def installer_versionne(fiche, dossier, nom, verifier):
         (neuf / "aoi-version.txt").write_text(voulue, encoding="utf-8")
         # Installation incomplète : ses fichiers « conserver » sont déjà copiés dans neuf.
         if dest.exists() and not effacer_si_libre(dest):
-            print(f"ÉCHEC : {nom} : {dest} est encore utilisé. Quittez Claude Code, puis relancez /regen.")
+            print(f"ÉCHEC : {nom} : {dest} est encore utilisé. Quittez Claude Code, puis relancez upgrader-outils.cmd.")
             return False
         neuf.rename(dest)
     except OSError as e:
@@ -184,7 +184,7 @@ def installer(fiche, dossier, nom, verifier):
         print(f"{nom} : à jour ({voulue}, {dest})")
         return True
     if verifier:
-        print(f"{nom} : {actuelle or 'absent'}, version validée {voulue} : à installer avec /regen")
+        print(f"{nom} : {actuelle or 'absent'}, version validée {voulue} : à installer avec upgrader-outils.cmd")
         return False
 
     BASE.mkdir(parents=True, exist_ok=True)
@@ -209,7 +209,7 @@ def installer(fiche, dossier, nom, verifier):
             try:
                 dest.rename(ancien)
             except OSError:
-                print(f"ÉCHEC : {dest} est en cours d'utilisation. Fermez Claude Code et les programmes qui l'utilisent, puis relancez /regen ou l'installeur.")
+                print(f"ÉCHEC : {dest} est en cours d'utilisation. Fermez Claude Code et les programmes qui l'utilisent, puis relancez upgrader-outils.cmd ou l'installeur.")
                 return False
         neuf.rename(dest)
         shutil.rmtree(ancien, ignore_errors=True)
@@ -284,10 +284,10 @@ def installer_libs(verifier):
         if verifier:
             ok = pth.is_file() and pth.read_text(encoding="utf-8") == ligne_pth(dest)
             print(f"{nom} : à jour ({voulue}, {len(roues)} paquets)" if ok
-                  else f"{nom} : {voulue} à rebrancher avec /regen")
+                  else f"{nom} : {voulue} à rebrancher avec upgrader-outils.cmd")
             return ok
     elif verifier:
-        print(f"{nom} : version validée {voulue} ({len(roues)} paquets) à installer avec /regen")
+        print(f"{nom} : version validée {voulue} ({len(roues)} paquets) à installer avec upgrader-outils.cmd")
         return False
     else:
         neuf = BASE / f"python-libs-{voulue}.tmp"

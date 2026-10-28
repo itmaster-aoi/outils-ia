@@ -55,12 +55,16 @@ def main():
     copie = copie_a_jour()
     print(f"Copie du contrôle ({GUARD}) : {'à jour' if copie else 'absente ou ancienne'}")
     if a.verifier:
-        # Seule une commande lancée par Claude Code voit le PYTHONPATH de la console.
+        # Seule une commande lancée par Claude Code voit le PYTHONPATH de la console. Hors de
+        # Claude Code (upgrader-outils.cmd), seule la copie se vérifie.
+        if not os.environ.get("CLAUDECODE"):
+            print("PYTHONPATH de la console : vérifié au démarrage de Claude Code, pas ici")
+            return 0 if copie else 1
         pp = os.environ.get("PYTHONPATH", "")
         actif = os.path.normcase(os.path.normpath(pp)) == os.path.normcase(str(GUARD)) if pp else False
         print(f"PYTHONPATH de cette commande : {pp or '(vide)'}")
         print("CONTRÔLE EN PLACE" if copie and actif else
-              "CONTRÔLE INACTIF : vérifier la clé env.PYTHONPATH des managed settings, puis lancer /regen")
+              "CONTRÔLE INACTIF : vérifier la clé env.PYTHONPATH des managed settings, puis lancer upgrader-outils.cmd")
         return 0 if copie and actif else 1
     return 0 if copie else 1
 

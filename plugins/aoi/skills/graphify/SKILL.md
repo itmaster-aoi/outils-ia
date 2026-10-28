@@ -71,9 +71,9 @@ Only when the path is one or more `https://github.com/...` URLs, or several loca
 # (ni uv, ni pipx, ni pip : le contrôle des librairies de l'atelier s'applique).
 New-Item -ItemType Directory -Force -Path graphify-out | Out-Null
 $GRAPHIFY_PYTHON = Join-Path $env:LOCALAPPDATA "aoi\python\python.exe"
-if (-not (Test-Path $GRAPHIFY_PYTHON)) { throw "Python AOI absent ($GRAPHIFY_PYTHON) : lancez /aoi:regen." }
+if (-not (Test-Path $GRAPHIFY_PYTHON)) { throw "Python AOI absent ($GRAPHIFY_PYTHON) : lancez upgrader-outils.cmd." }
 & $GRAPHIFY_PYTHON -c "import graphify" 2>$null
-if ($LASTEXITCODE -ne 0) { throw "graphify absent du Python AOI : lancez /aoi:regen (le Python AOI doit être à jour). Ne l'installez pas autrement." }
+if ($LASTEXITCODE -ne 0) { throw "graphify absent du Python AOI : lancez upgrader-outils.cmd (le Python AOI doit être à jour). Ne l'installez pas autrement." }
 $Utf8NoBom = New-Object Text.UTF8Encoding $false
 # Chemin de l'interpréteur, lu par toutes les étapes suivantes
 [IO.File]::WriteAllText((Join-Path $PWD 'graphify-out\.graphify_python'), $GRAPHIFY_PYTHON, $Utf8NoBom)

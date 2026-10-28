@@ -9,7 +9,7 @@ sur une étiquette relue (git checkout vX.Y.Z), sans modification locale. Le scr
 Écrit plugins/aoi/mcp/autocad/ :
 
     README.md, LICENSE   repris tels quels de integration/plugin/mcp/autocad/ du projet
-    addin.json           fiche /regen du projet ; l'entrée « archive » déjà écrite par construire.py est gardée
+    addin.json           fiche de l'add-in, lue par upgrader-outils.cmd ; l'entrée « archive » déjà écrite par construire.py est gardée
     VERSION-AOI.txt      origine, étiquette, commit, archive, empreinte SHA-256 de chaque fichier
 
 Le serveur ne vient pas d'ici : c'est l'add-in compilé (le serveur MCP tourne dans AutoCAD), livré par

@@ -6,7 +6,7 @@ Organisation (docs/organisation-dossiers.md) :
     %LOCALAPPDATA%\\aoi\\journal                     journaux et état (session.json, demarrage.log...)
     %LOCALAPPDATA%\\aoi\\addins\\<add-in>-<version>   add-ins publiés à part
 
-Pas de migration : /regen installe à ces emplacements et efface les anciens dès qu'ils sont libres.
+Pas de migration : la mise à jour (upgrader-outils.cmd) installe à ces emplacements et efface les anciens dès qu'ils sont libres.
 Pendant la transition, un serveur ou un journal encore à l'ancien emplacement (racine de
 %LOCALAPPDATA%\\aoi) est lu là. La base cortexdb reste où cortexdb la met (~\\.cortexdb).
 Python AOI, Node AOI et python-libs-<v> ne changent pas de place.
