@@ -1,15 +1,17 @@
 # Organisation des dossiers d'installation AOI
 
-Étude du 28.10.2026, version 2 : après des essais et une relecture adversariale. État : validée dans son principe. La migration n'a pas commencé.
+Étude du 28.10.2026, version 3. La version 2 intégrait des essais et une relecture adversariale. La version 3 remplace les 8 étiquettes de migration par une solution mixte : une étiquette qui lit les deux organisations, puis un script de migration lancé sur chaque poste. État : validée. La migration n'a pas commencé.
 
 ## Objectif
 
 Les outils de l'atelier s'installent aujourd'hui dans 14 emplacements (tableau ci-dessous). Aucune règle commune ne décide où va un fichier. Cette étude fixe une règle unique : **tout ce qui appartient à l'atelier va sous `%LOCALAPPDATA%\aoi`**. Les dossiers des logiciels hôtes reçoivent seulement un lanceur ou un manifeste.
 
-Décisions :
+Décisions de l'IT (28.10.2026) :
 1. Le Python AOI reste dans `%LOCALAPPDATA%\aoi\python`. Les managed settings et les instructions de Claude citent ce chemin. `node` et `python-libs-<v>` restent aussi à la racine.
 2. Le code des add-ins reste dans `%LOCALAPPDATA%\aoi\addins`. Les dossiers hôtes reçoivent un lanceur qui pointe vers ce dossier.
 3. La migration choisit le chemin le plus sûr pour les postes déjà installés.
+4. Solution mixte : le nouveau code arrive par une étiquette ; un script déplace les données sur chaque poste, Claude Code et logiciels hôtes fermés.
+5. Aucun poste de l'atelier n'utilise de profil itinérant.
 
 ## État actuel (28.10.2026)
 
@@ -54,159 +56,171 @@ C:\ProgramData\aoi\guard\, whitelist.txt  seule exception machine
 | `%APPDATA%\Autodesk\ApplicationPlugins\aoi-autocad-mcp.bundle` | AutoCAD n'accepte un bundle que dans `ApplicationPlugins` | `PackageContents.xml`, `AoiAutoCad.Boot.dll`, un pointeur |
 | `%PUBLIC%\Documents\KeyShot Studio\Scripts` | KeyShot | `MCP start.py` réduit à un lanceur, `MCP stop.py` |
 
+## Solution retenue : une étiquette, puis un script
+
+### Pourquoi le code passe quand même par une étiquette
+
+Les chemins utilisés sur un poste viennent du plugin (`.mcp.json`, `maj.py`, `archives_aoi.py`). Un script seul, sans nouveau plugin, casserait les serveurs : l'ancien `.mcp.json` pointerait vers des dossiers vides, et le `/regen` suivant réinstallerait tout aux anciens emplacements.
+
+### Principe
+
+1. **L'étiquette M (« bilingue ») lit les deux organisations.** Le module `chemins_aoi.py` lit le témoin de migration `journal\migration-dossiers.json`. Sans témoin, le poste utilise les anciens chemins. Avec le témoin, il utilise les nouveaux. Un poste non migré continue donc de fonctionner sans changement.
+2. **Le script `migrer-dossiers` fait la migration**, une fois par compte Windows, quand Claude Code et les logiciels hôtes sont fermés. Il écrit le témoin en dernier.
+3. **L'étiquette N (« nettoyage ») retire la lecture des anciens chemins**, quand tous les postes sont migrés. Le script de vérification le prouve poste par poste.
+
+Comparaison avec la version 2 de l'étude :
+
+| | Version 2 : étiquettes seules | Version 3 : étiquette, puis script |
+|---|---|---|
+| Étiquettes du plugin | 8 (A à H) | 2 (M et N), plus les étiquettes amont de keyshot-mcp et autocad-mcp |
+| Migration des données | au démarrage du serveur, avec verrou, témoins et détection de divergence | par le script, Claude Code fermé : pas de session simultanée, pas d'écriture pendant la copie |
+| Geste sur chaque poste | `/regen` et redémarrage, 8 fois | `/regen`, puis le script, puis le redémarrage |
+| Risque principal | logique de migration complexe dans le lanceur | un poste non migré ; il fonctionne, et la ligne de démarrage le signale |
+
+### Ce que contient l'étiquette M
+
+- **`plugins/aoi/skills/regen/scripts/chemins_aoi.py`** : seule définition des dossiers, ancienne et nouvelle organisation, choisie par le témoin. Chaque point d'entrée (`maj.py`, `archives_aoi.py`, `lancer.py`, `migrer_dossiers.py`) ajoute `skills/regen/scripts` à `sys.path`, car le Python embarqué ne le fait pas (essai du 28.10.2026).
+- **`plugins/aoi/lanceur/lancer.py`**, lancé par `controle/runtime/python.exe`, pour cortexdb et le serveur Revit. Il ne migre rien. Il choisit seulement le dossier du serveur et le chemin de la base selon `chemins_aoi`, pose les variables (`CORTEXDB_PATH`), et lance le serveur dans un Job Object (`KILL_ON_JOB_CLOSE`). Il n'écrit jamais sur la sortie standard et ignore Ctrl+C.
+- **`archives_aoi.py`** installe les serveurs dans `serveurs\` sur un poste migré, et à l'ancien emplacement sinon. `conserver` cherche dans les deux.
+- **`maj.py`** : `copier_addin` écrit la forme « lanceur » ou « pointeur » sur un poste migré, et la copie complète sinon. `--verifier-dossiers` affiche l'état. La ligne de démarrage affiche « dossiers à migrer : fermez Claude Code, puis lancez migrer-dossiers.cmd » sur un poste non migré.
+- **`archives/construire.py`** cesse de réécrire `.mcp.json` : retirer le dictionnaire `MCP` et la réécriture (`construire.py:46`, `:97-103`).
+- **Le script `migrer-dossiers.cmd`**, à la racine du plugin et du dépôt, à côté de `installer-poste.cmd`. Il lance `controle/runtime/python.exe` avec `migrer_dossiers.py` (le Python embarqué contient `sqlite3`, PowerShell non).
+- **Les corrections trouvées par la relecture** :
+  - `archive_addin` (`maj.py:171-173`) : passer par `effacer_si_libre` et ne jamais effacer la version désignée par un hôte ou un pointeur.
+  - `archive_addin` (`maj.py:153`) : `with_suffix` coupe une version qui contient un point.
+  - `finir()` (`maj.py:343-346`) : chaque étape est protégée ; un échec est affiché, la suite continue ; témoin `journal\finir-<version>.ok`.
+  - `controle_si_besoin()` (`maj.py:375`) : un échec est affiché au lieu d'être ignoré.
+  - `installer-poste.ps1` (lignes 423 et 449) : il appelle `--finir`.
+  - `skills/regen/SKILL.md`, étape 2 : « catalogue à jour » ne suffit plus ; il faut aussi `--verifier-dossiers` sans écart.
+  - Verrou `journal\regen.verrou` : un seul `/regen` à la fois.
+- **Les nouvelles versions des add-ins KeyShot et AutoCAD** qui acceptent un pointeur (étiquettes amont, voir plus bas). Si elles ne sont pas prêtes, M part sans elles : KeyShot et AutoCAD restent en copie complète, et une étiquette suivante les ajoute.
+
+### Ce que fait le script `migrer-dossiers`
+
+Le script travaille pour le compte Windows qui le lance. Il est idempotent : relancé, il reprend où il s'est arrêté.
+
+1. **Contrôles préalables.** Il refuse de continuer et dit pourquoi si :
+   - le plugin installé n'est pas au moins l'étiquette M ;
+   - un de ces processus tourne pour ce compte : `claude.exe`, `cortexdb-mcp.exe`, `node.exe` du serveur Revit, `Revit.exe`, `acad.exe`, `accoreconsole.exe`, `Rhino.exe`, `keyshot.exe` (filtre `tasklist /FI "USERNAME eq ..."`) ;
+   - l'espace libre est insuffisant pour les copies.
+2. **Mode simulation par défaut.** Sans option, il affiche ce qu'il ferait. Avec `--appliquer`, il agit.
+3. **Copies, jamais de déplacement :**
+   - `~\.cortexdb\cortexdb.db` vers `donnees\cortexdb\` : copie par l'API `backup` de `sqlite3`, source ouverte en lecture seule, puis `PRAGMA integrity_check` et comparaison du nombre de lignes de chaque table ;
+   - `revit-data.db` de la dernière version du serveur Revit vers `donnees\revit\`, avec le même contrôle ;
+   - `pont-config.json` de `%LOCALAPPDATA%\keyshot-mcp`, `config.json` de `%LOCALAPPDATA%\autocad-mcp` ;
+   - `imports.jsonl`, `demarrage.log`, `session.json` vers `journal\` ;
+   - dossiers des serveurs `aoi\<nom>-<v>` vers `serveurs\<nom>-<v>`.
+4. **Dossiers hôtes.** Il écrit les lanceurs et les pointeurs, et retire les copies complètes devenues inutiles. Avant de retirer un fichier, il en garde une copie dans `journal\avant-migration\`.
+5. **Témoin.** Il écrit `journal\migration-dossiers.json` en dernier : date, compte, version du plugin, liste des copies, taille et date de modification de chaque source.
+6. **Témoins dans les anciens dossiers.** Il écrit `MIGRE-VERS-AOI.txt` dans chaque ancien dossier de données. Il n'efface aucune donnée.
+7. **Bilan.** Il affiche ce qui est fait, ce qui reste, et la consigne de redémarrer Claude Code.
+
+Option `--annuler` : le script retire le témoin et remet les dossiers hôtes dans leur forme d'avant, depuis `journal\avant-migration\`. Le poste revient aux anciens chemins. **Attention** : les données écrites après la migration restent dans `donnees\` et ne sont pas recopiées vers les anciens dossiers. Le script le dit et donne la liste des fichiers concernés.
+
+### Retour arrière de la console
+
+Si la console revient à une étiquette antérieure à M, l'ancien plugin lit les anciens chemins. Les données écrites depuis la migration ne sont pas visibles.
+
+1. Lancez `migrer-dossiers.cmd --annuler` avant de changer l'étiquette, si possible.
+2. Si les anciennes données ont été modifiées après la migration, le script le détecte à la relance (date de modification comparée au témoin). Il s'arrête et demande une décision de l'IT. Il ne choisit jamais en silence.
+
+## Détails par add-in
+
+**KeyShot (étiquette amont keyshot-mcp)**
+- Le lanceur dans `Scripts` calcule `%LOCALAPPDATA%` au moment de l'exécution et lit le pointeur dans le profil de l'utilisateur, car `%PUBLIC%` est commun à tous les comptes.
+- `MSG_LANCER` exécute le script sans `__file__` (`server.py:33-36`). Le lanceur ne dépend donc pas de `__file__`. Il exécute le vrai pont avec `__file__` réglé (essai E5). `_chemin_source()` (`MCP start.py:1495-1503`) lit le pointeur, pour que `reload_bridge` recharge le vrai pont et non le lanceur.
+- Le serveur lit `donnees\keyshot\pont-actif.json`, puis l'ancien chemin s'il manque. `.mcp.json` donne `KEYSHOT_MCP_FICHE` dans `env`.
+- Le lanceur et le serveur vérifient la même version (`VERSION_PONT_ATTENDUE`), avec un message clair si elles diffèrent.
+- `addin.json` reçoit `processus` (KeyShot).
+- Les captures restent dans l'ancien dossier, signalées par `--verifier-dossiers`.
+
+**AutoCAD (étiquette amont autocad-mcp)**
+- `Extension.cs:84` lit le dossier du code dans le pointeur. Les 4 chemins `%LOCALAPPDATA%\autocad-mcp` (`Extension.cs:30`, `Job.cs:34`, `OutilsLot.cs:35`, `Config.cs:67`) passent par une seule fonction.
+- Le pointeur porte une version de contrat. Si `Boot.dll` et le serveur ne correspondent pas, AutoCAD affiche un message dans sa ligne de commande.
+- `processus` contrôle aussi `accoreconsole.exe`.
+- À essayer avant publication : chargement depuis `%LOCALAPPDATA%` avec SECURELOAD à 1 et à 2.
+
+**Revit (sans projet amont)**
+- Le registre des commandes (`commandRegistry.json`) va dans `donnees\revit`, fusionné avec celui de la nouvelle version à chaque mise à jour. Reprendre l'ancien registre tel quel masquerait les commandes ajoutées.
+- À essayer avant publication : l'avertissement de Revit sur les add-ins non signés réapparaît-il quand le chemin `<Assembly>` change à chaque version ?
+
+**Rhino** : inchangé, copie complète.
+
 ## Essais du 28.10.2026
 
-Tous les essais utilisent le Python embarqué `controle/runtime` (Python 3.12, sans `site`). Script : hors dépôt, dans le dossier de travail de la session.
+Tous les essais utilisent le Python embarqué `controle/runtime` (Python 3.12, sans `site`).
 
-| Essai | Résultat | Conséquence pour l'étude |
+| Essai | Résultat | Conséquence |
 |---|---|---|
-| `CORTEXDB_PATH` avec un dossier personnel de test | la base est créée au chemin donné ; rien dans `.cortexdb` ; la vraie base est inchangée | la variable convient |
+| `CORTEXDB_PATH` avec un dossier personnel de test | la base est créée au chemin donné ; la vraie base est inchangée | la variable convient |
 | `sqlite3` dans le Python embarqué | 3.49.1, API `backup` présente | copie possible sans librairie |
-| E1 : lanceur Python qui enveloppe un serveur stdio (JSON UTF-8, message de 200 Ko) | octets identiques, 0,08 s pour 4 messages | le lanceur est possible ; les tubes sont hérités sans redirection explicite |
+| E1 : lanceur Python qui enveloppe un serveur stdio (JSON UTF-8, message de 200 Ko) | octets identiques, 0,08 s pour 4 messages | lanceur possible |
 | E2 : lanceur tué, comme quand Claude Code ferme | **le serveur reste orphelin** | Job Object obligatoire |
 | E2b : même essai avec un Job Object (`KILL_ON_JOB_CLOSE`, `ctypes`) | le serveur s'arrête avec le lanceur | solution retenue |
-| E3 : `backup` d'une base WAL pendant qu'un autre processus écrit | copie intègre, mais 70 lignes sur 400 : les écritures suivantes sont perdues | copier seulement si aucun processus n'utilise la base |
-| E4 : verrou `O_EXCL`, 20 démarrages simultanés | 1 seul gagnant | verrou retenu |
+| E3 : `backup` d'une base WAL pendant qu'un autre processus écrit | copie intègre, mais 70 lignes sur 400 | copier seulement quand aucun processus n'utilise la base ; d'où le script, Claude Code fermé |
+| E4 : verrou `O_EXCL`, 20 démarrages simultanés | 1 seul gagnant | verrou de `/regen` |
 | E5 : `exec` du pont KeyShot avec `__file__` réglé | le code voit le vrai chemin | lanceur KeyShot possible |
-| E6 : processus `cortexdb-mcp.exe` sur ce poste | 2 en cours : une session ouverte depuis le 27.10 et la session actuelle | plusieurs sessions simultanées : cas réel |
-| Import d'un module voisin avec le Python embarqué | **échec** : le dossier du script n'est pas dans `sys.path` | chaque point d'entrée ajoute son dossier, comme `maj.py:30` |
-| Profils Windows de ce poste | 4 comptes, aucun profil itinérant | plusieurs comptes : cas réel ; itinérance à confirmer sur les autres postes |
-| Droits de `C:\ProgramData\aoi\guard\sitecustomize.py` | écriture : Système, Administrateurs, lauro ; les autres comptes ont seulement la lecture | un autre compte ne peut pas mettre le contrôle à jour (défaut actuel, indépendant de la migration) |
+| E6 : processus `cortexdb-mcp.exe` sur ce poste | 2 en cours : une session ouverte depuis le 27.10 et la session actuelle | le script doit refuser tant qu'une session tourne |
+| Import d'un module voisin avec le Python embarqué | **échec** : le dossier du script n'est pas dans `sys.path` | chaque point d'entrée ajoute son dossier |
+| Profils Windows de ce poste | 4 comptes, aucun profil itinérant | le script tourne une fois par compte |
+| Droits de `C:\ProgramData\aoi\guard\sitecustomize.py` | écriture : Système, Administrateurs, lauro seulement | défaut actuel, hors migration (voir plus bas) |
 
 **Attention** : `cortexdb-mcp.exe` n'a pas d'option `--help`. Lancé sans variable, il ouvre et modifie la vraie base `~/.cortexdb` (constaté le 28.10.2026). Tout essai doit fixer `CORTEXDB_PATH` et un dossier personnel de test.
 
-## Principes de sûreté
-
-1. **Ajouter avant de retirer.** Une étiquette installe le nouvel emplacement à côté de l'ancien. Elle n'efface jamais un dossier qu'une session en cours, un hôte ouvert ou une ancienne étiquette peut encore utiliser. Le code actuel ne respecte pas ce principe : `archive_addin` efface les autres versions d'un add-in sans contrôler l'hôte (`maj.py:171-173`). L'étiquette A corrige ce défaut.
-2. **Copier les données, ne jamais les déplacer.** L'ancienne base reste en place. Elle est ouverte en lecture seule pour la copie (`?mode=ro`). Un témoin `MIGRE-VERS-AOI.txt` y indique la date, la destination, la taille et la date de modification de la source au moment de la copie.
-3. **Migrer une base par une règle unique, au démarrage du serveur :**
-   1. Si la nouvelle base a son témoin « migration terminée », le lanceur l'utilise toujours, même si d'autres processus tournent.
-   2. Sinon, il prend le verrou `donnees\<serveur>\migration.verrou` (`O_EXCL`). S'il ne l'obtient pas, il démarre sur l'ancienne base.
-   3. Avec le verrou, il revérifie le témoin. Il contrôle ensuite qu'aucun processus du même serveur ne tourne pour le même compte (`tasklist /FI "USERNAME eq ..."`). Si un processus tourne, il démarre sur l'ancienne base et réessaie au démarrage suivant.
-   4. Sinon, il copie vers `<base>.tmp`, contrôle `PRAGMA integrity_check` et le nombre de lignes, fait `os.replace`, puis écrit le témoin. Il libère le verrou.
-4. **Détecter une divergence, ne jamais choisir en silence.** Si l'ancienne base a été modifiée après la copie (retour arrière de la console, puis nouvel aller), le lanceur garde la nouvelle base. Il note l'écart dans `journal\` et la ligne de démarrage l'affiche. L'IT décide de la reprise.
-5. **Un composant par étiquette.** Seule l'étiquette A, qui ne change rien de visible, peut partir avec B. En cas de problème, la console revient à l'étiquette précédente.
-6. **Retour arrière possible jusqu'au nettoyage.** Les anciens dossiers de programmes restent en place jusqu'à l'étiquette H. Un `/regen` vers une ancienne étiquette retrouve donc ses chemins.
-7. **Respecter la règle de `/regen`.** `skills/regen/scripts/maj.py`, `controle/runtime/python.exe` et `--finir` ne bougent pas. Chaque nouvelle forme d'`addin.json` reste lisible par le plus ancien `maj.py` en service : une fiche « pointeur » garde `archive` et `destination`, et un ancien `maj.py` fait alors une copie complète, qui fonctionne.
-8. **Prouver que la nouvelle version a fini.** `finir()` écrit le témoin `journal\finir-<version>.ok`. S'il manque, `--demarrage` affiche « relancez /aoi:regen ». C'est le cas d'un poste antérieur à 2026.10.15.2 (sans `--finir`) ou d'un `/regen` interrompu.
-9. **Effacer seulement ce qui est libre.** Toute suppression passe par `effacer_si_libre()` (`archives_aoi.py:64-73`). Un dossier sans fichier ouvert (par exemple le pont KeyShot en `.py`) n'est pas protégé par ce test : il est effacé seulement si aucun pointeur ne le désigne.
-10. **Un seul `/regen` à la fois.** Verrou `journal\regen.verrou`. Un second `/regen` s'arrête avec un message.
-
-## Pièce centrale : module de chemins et lanceur de serveurs
-
-- **`plugins/aoi/skills/regen/scripts/chemins_aoi.py`** : seule définition des dossiers (`AOI`, `SERVEURS`, `ADDINS`, `DONNEES`, `JOURNAL`) et des anciens chemins connus. Chaque point d'entrée (`maj.py`, `archives_aoi.py`, `lancer.py`) ajoute `skills/regen/scripts` à `sys.path` avant de l'importer. Un test lance chaque script avec `controle/runtime/python.exe`.
-- **`plugins/aoi/lanceur/lancer.py`**, lancé par `${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe`, pour cortexdb et le serveur Revit :
-  1. Il lit la fiche du serveur et trouve `serveurs\<nom>-<v>`. Si ce dossier manque, il prend l'ancien `aoi\<nom>-<v>`.
-  2. Il migre la base selon le principe 3.
-  3. Il pose les variables du serveur (`CORTEXDB_PATH` ; pour Revit, la variable de sa base quand le serveur la lira).
-  4. Il lance le serveur dans un Job Object (`KILL_ON_JOB_CLOSE`), avec les flux standard hérités, et renvoie son code de sortie.
-  5. Il n'écrit jamais sur la sortie standard. Ses messages vont dans `journal\lanceur.log`.
-  6. Il ignore Ctrl+C et laisse le serveur s'arrêter.
-- Le serveur keyshot n'utilise pas ce lanceur : il est lancé par le Python AOI avec `-I -S`. `.mcp.json` lui donne `KEYSHOT_MCP_FICHE` dans `env`.
-- **`archives/construire.py` doit cesser de réécrire `.mcp.json`** : retirer le dictionnaire `MCP` et la réécriture (`construire.py:46`, `:97-103`). Sinon, la construction suivante remplace le lanceur par le chemin de l'exécutable. Un test vérifie la forme de `.mcp.json`.
-
-## Étapes de migration
-
-| Étiquette | Contenu | Projet amont |
-|---|---|---|
-| A, socle | `chemins_aoi.py` ; `finir()` crée `serveurs\`, `donnees\`, `journal\` et écrit son témoin ; `--demarrage` lit le témoin ; `session.json` et `demarrage.log` dans `journal\`, avec lecture de l'ancien emplacement ; `maj.py --verifier-dossiers` ; verrou de `/regen` ; corrections ci-dessous | non |
-| B, cortexdb | serveur dans `serveurs\` ; `.mcp.json` passe par `lancer.py cortexdb` ; migration de la base (principe 3) ; textes `skills/cortexdb/SKILL.md` et `mcp/cortexdb/README.md` à jour | non |
-| C, serveur Revit | serveur dans `serveurs\`, par le lanceur ; `conserver` cherche aussi dans les anciens chemins ; la base est reprise au démarrage par le lanceur, et non pendant `/regen` (la session en cours l'utilise) | non ; plus tard, une variable pour la base dans le serveur Revit |
-| D, KeyShot | code du pont dans `addins\keyshot-<v>\` ; lanceur dans `Scripts` ; données dans `donnees\keyshot` ; `processus` ajouté à `addin.json` | keyshot-mcp, nouvelle étiquette |
-| E, AutoCAD | bundle réduit à `Boot.dll`, `PackageContents.xml` et un pointeur ; liste `retirer` pour l'ancienne copie complète ; données dans `donnees\autocad` | autocad-mcp, nouvelle étiquette |
-| F, add-in Revit | `.addin` seul, avec un chemin absolu vers `addins\revit-2025-<v>` ; registre des commandes dans `donnees\revit` | non |
-| G, journal des imports | le contrôle écrit `journal\imports.jsonl` ; copie atomique du contrôle (`.tmp`, puis `os.replace`) | non |
-| H, nettoyage | effacement des anciens dossiers de programmes libres et non désignés par un pointeur ; les anciennes données sont signalées, jamais effacées automatiquement ; déclenché aussi quand le catalogue est à jour | non |
-
-Corrections incluses dans l'étiquette A :
-- `archive_addin` (`maj.py:171-173`) : passer par `effacer_si_libre` et ne jamais effacer la version désignée par l'hôte ou par un pointeur.
-- `archive_addin` (`maj.py:153`) : `with_suffix` coupe une version qui contient un point.
-- `finir()` (`maj.py:343-346`) : une exception dans `copier_addin` (fichier verrouillé) arrête la suite. Chaque étape est protégée, et un échec est affiché.
-- `controle_si_besoin()` (`maj.py:375`) : un échec est affiché dans la ligne de démarrage, au lieu d'être ignoré.
-- `installer-poste.ps1` (lignes 423 et 449) : il appelle `--finir`, sinon un poste neuf n'a ni dossiers, ni pointeurs, ni témoin.
-- Étape 2 de `skills/regen/SKILL.md` : « catalogue à jour » ne suffit plus ; il faut aussi `--verifier-dossiers` sans écart.
-
-### Détails par add-in (D, E, F)
-
-**KeyShot (D)**
-- Le lanceur dans `Scripts` calcule `%LOCALAPPDATA%` au moment de l'exécution. Il lit le pointeur dans le profil de l'utilisateur, car `%PUBLIC%` est commun à tous les comptes.
-- `MSG_LANCER` exécute le script sans `__file__` (`server.py:33-36`). Le lanceur ne dépend donc pas de `__file__`. Il exécute le vrai pont avec `__file__` réglé (essai E5). `_chemin_source()` (`MCP start.py:1495-1503`) lit le pointeur, pour que `reload_bridge` recharge le vrai pont et non le lanceur.
-- Le serveur lit `donnees\keyshot\pont-actif.json`, puis l'ancien chemin s'il manque : un pont lancé avant la mise à jour reste joignable.
-- Le lanceur et le serveur vérifient la même version (`VERSION_PONT_ATTENDUE`), avec un message clair si elles diffèrent.
-- Reprise : `pont-config.json` est copié. Les captures restent dans l'ancien dossier, signalées par `--verifier-dossiers`.
-
-**AutoCAD (E)**
-- `Extension.cs:84` lit le dossier du code dans le pointeur. Les 4 chemins `%LOCALAPPDATA%\autocad-mcp` (`Extension.cs:30`, `Job.cs:34`, `OutilsLot.cs:35`, `Config.cs:67`) passent par une seule fonction.
-- Le pointeur porte une version de contrat. Si `Boot.dll` et le serveur ne correspondent pas, AutoCAD affiche un message dans sa ligne de commande, et pas seulement dans `serveur.log`.
-- `processus` contrôle aussi `accoreconsole.exe`, qui peut verrouiller les DLL.
-- À essayer avant publication : chargement depuis `%LOCALAPPDATA%` avec SECURELOAD à 1 et à 2.
-
-**Revit (F)**
-- Le registre des commandes (`commandRegistry.json`) va dans `donnees\revit`. Aujourd'hui, la copie de l'archive l'écrase et le nouveau registre gagne (`maj.py:278-282`). Reprendre l'ancien registre tel quel masquerait les commandes ajoutées : il faut le fusionner.
-- L'ancienne copie complète `Addins\2025\revit_mcp_plugin` est retirée par une liste `retirer`.
-- À essayer avant publication : l'avertissement de Revit sur les add-ins non signés réapparaît-il quand le chemin `<Assembly>` change à chaque version ?
-
 ## Plusieurs comptes Windows sur un poste
 
-- Chaque compte a son propre `%LOCALAPPDATA%\aoi`. Le seul dossier partagé est `C:\ProgramData\aoi`, et `%PUBLIC%\Documents\KeyShot Studio\Scripts`.
-- La détection des processus filtre par compte. Sinon, le cortexdb d'un autre compte bloque la migration indéfiniment.
-- Défaut actuel, pris en compte par l'IT le 28.10.2026 et à traiter hors de cette migration : seul le compte qui a installé le contrôle peut le mettre à jour dans `C:\ProgramData\aoi`. Les droits du dossier doivent permettre la mise à jour, ou l'installation doit passer par un compte administrateur.
+- Chaque compte a son propre `%LOCALAPPDATA%\aoi` et lance le script pour lui-même. Le témoin est propre à chaque compte.
+- Le contrôle des processus filtre par compte. Sinon, une session d'un autre compte bloquerait la migration.
+- `%PUBLIC%\Documents\KeyShot Studio\Scripts` est commun : le lanceur KeyShot ne contient aucun chemin propre à un compte.
+- Défaut actuel, pris en compte par l'IT le 28.10.2026 et traité hors de cette migration : seul le compte qui a installé le contrôle peut le mettre à jour dans `C:\ProgramData\aoi`.
 
 ## Profils itinérants
 
-L'IT confirme le 28.10.2026 qu'aucun poste de l'atelier n'utilise de profil itinérant. Les décisions 2 et B restent donc valables.
-
-Si l'atelier introduit un jour des profils itinérants, ces décisions sont à revoir : les pointeurs de `%APPDATA%` (Revit, AutoCAD) voyageraient vers un poste où `%LOCALAPPDATA%\aoi\addins` n'a pas la même version, et la mémoire cortexdb ne suivrait plus l'utilisateur.
+L'IT confirme le 28.10.2026 qu'aucun poste de l'atelier n'utilise de profil itinérant. Si l'atelier en introduit un jour, les décisions 2 et la place de la base cortexdb sont à revoir : les pointeurs de `%APPDATA%` voyageraient vers un poste où `%LOCALAPPDATA%\aoi\addins` diffère.
 
 ## Qui fait quoi
-
-Règle : un geste reste humain seulement si Claude ou un script ne peut pas le faire, ou si une règle de l'atelier l'interdit.
 
 ### Gestes humains
 
 | Geste | Qui | Pourquoi |
 |---|---|---|
-| Mettre l'étiquette dans la console | IT | Claude n'a pas accès à la console ; c'est la décision de publier |
-| Cloner un projet amont sur son étiquette et compiler l'add-in (D, E) | IT | `importer_*.py` exige un clone fait hors de Claude Code |
-| Fermer KeyShot, Revit, AutoCAD ou Rhino avant `/aoi:regen` | chaque utilisateur | un hôte ouvert verrouille ses fichiers ; le script met l'add-in « en attente » et ne ferme jamais l'application |
+| Mettre l'étiquette M, puis N, dans la console | IT | Claude n'a pas accès à la console ; c'est la décision de publier |
+| Cloner keyshot-mcp et autocad-mcp sur leur étiquette et compiler l'add-in AutoCAD | IT | `importer_*.py` exige un clone fait hors de Claude Code |
 | Taper `/aoi:regen` | chaque utilisateur | le crochet de démarrage ne met rien à jour lui-même |
-| Redémarrer Claude Code | chaque utilisateur | les serveurs se chargent seulement au démarrage |
-| Ouvrir l'hôte une fois après D, E, F | IT, sur le poste de test | Claude ne lance pas les logiciels hôtes ; il appelle ensuite lui-même l'outil d'état |
-| Décider d'une reprise après une divergence de base (principe 4) | IT | choix entre deux versions de données |
-| Décider d'effacer les anciennes données (H) | chaque utilisateur | ces données lui appartiennent |
+| Fermer Claude Code et les logiciels hôtes, puis lancer `migrer-dossiers.cmd --appliquer` | chaque utilisateur, une fois par compte | le script exige que rien ne tourne ; une session Claude Code ne peut pas migrer sa propre base |
+| Relancer Claude Code | chaque utilisateur | les serveurs se chargent seulement au démarrage |
+| Ouvrir KeyShot, AutoCAD et Revit une fois après la migration | IT, sur le poste de test | Claude ne lance pas les logiciels hôtes ; il appelle ensuite lui-même l'outil d'état |
+| Décider après une divergence de données | IT | choix entre deux versions de données |
 
-Pour un designer, une étiquette demande au plus : fermer ses logiciels hôtes, taper `/aoi:regen`, redémarrer Claude Code.
+Pour un designer : taper `/aoi:regen`, fermer Claude Code et ses logiciels, lancer `migrer-dossiers.cmd --appliquer`, relancer Claude Code. Une seule fois.
 
 ### Délégué à Claude, avec l'accord de l'IT pour chaque publication
 
-- Écrire le code, les tests et la documentation.
+- Écrire le code, le script, les tests et la documentation.
 - Commiter, créer les étiquettes, publier les archives, pousser vers `lfoletti/*` et `itmaster-aoi/outils-ia`.
-- Lancer `/aoi:regen` et `maj.py --verifier-dossiers` sur le poste de test, puis lire le résultat.
+- Lancer `migrer-dossiers.cmd` en simulation et `maj.py --verifier-dossiers` sur le poste de test, puis lire le résultat.
 - Après le redémarrage, appeler les outils MCP de contrôle (`memory_list_all`, `keyshot_status`, outil d'état AutoCAD).
-- Faire les essais de sessions simultanées et de retour arrière sur le poste de test.
 
-### Délégué aux scripts, sans geste sur les postes
+### Délégué aux scripts
 
-- Créer `serveurs\`, `donnees\`, `journal\` et les témoins.
-- Installer chaque serveur et chaque add-in au nouvel emplacement, sans effacer l'ancien.
-- Migrer les bases au premier démarrage sûr, et signaler une divergence.
-- Écrire les lanceurs et les pointeurs dans les dossiers hôtes.
-- Afficher l'état des dossiers à la fin de `/aoi:regen` et dans la ligne de démarrage.
-- Effacer les anciens dossiers de programmes libres (H).
+- `/regen` : installer le code de l'étiquette M, sans rien déplacer.
+- `migrer-dossiers` : contrôler, copier, vérifier, écrire les lanceurs et le témoin.
+- Ligne de démarrage : signaler un poste non migré, ou un `finir()` incomplet.
+- `--verifier-dossiers` : donner l'état de chaque composant ; c'est la preuve avant l'étiquette N.
 
-## Vérification de chaque étiquette
+## Vérification
 
-Socle commun :
-1. Lancez `/aoi:regen`. Le bilan se termine par l'état des dossiers (`--verifier-dossiers`).
-2. Redémarrez Claude Code.
-3. Tapez `/mcp`. Résultat attendu : le serveur de l'étiquette est connecté.
+Sur le poste de test, avant de mettre M dans la console pour tous :
 
-Essais en plus, une seule fois, sur le poste de test :
+1. Installez M (`/aoi:regen`), sans migrer. Résultat attendu : tous les serveurs démarrent sur les anciens chemins ; la ligne de démarrage dit « dossiers à migrer ».
+2. Lancez `migrer-dossiers.cmd` sans option. Résultat attendu : la liste des actions, rien n'est modifié.
+3. Lancez-le avec `--appliquer`, une session Claude Code ouverte. Résultat attendu : refus, avec le nom du processus.
+4. Fermez tout, puis lancez-le avec `--appliquer`. Résultat attendu : bilan sans échec ; `integrity_check` « ok » ; même nombre de lignes dans chaque table.
+5. Relancez Claude Code. Résultat attendu : `/mcp` montre tous les serveurs connectés ; `memory_list_all` donne les mêmes souvenirs qu'avant ; `--verifier-dossiers` sans écart.
+6. Ouvrez KeyShot, AutoCAD et Revit. Résultat attendu : leur outil d'état répond ; le code chargé vient de `aoi\addins`.
+7. Fermez Claude Code et lancez `--annuler`, puis relancez Claude Code. Résultat attendu : retour aux anciens chemins, avec la liste des données écrites depuis la migration.
+8. Relancez `--appliquer`. Résultat attendu : migration refaite, ou arrêt avec une demande de décision si les anciennes données ont changé.
+9. Vérifiez qu'un Claude Code fermé ne laisse aucun `cortexdb-mcp.exe` orphelin.
+10. Avec un second compte Windows du poste, refaites les étapes 4 et 5.
 
-| Étiquette | Essai |
-|---|---|
-| A | chaque script lancé avec `controle/runtime/python.exe` importe `chemins_aoi` ; `construire.py` laisse `.mcp.json` intact |
-| B | `memory_list_all` donne les mêmes souvenirs qu'avant ; 2 sessions démarrées au même moment ne migrent qu'une fois ; une session ouverte après la migration voit un souvenir écrit par la première ; le lanceur tué ne laisse pas de `cortexdb-mcp.exe` orphelin ; mesure du temps de démarrage avec la vraie base ; retour arrière, écriture d'un souvenir, nouvel aller : la divergence est signalée |
-| C | la base Revit est la même avant et après ; le lanceur tué ne laisse pas de processus orphelin |
-| D, E, F | ouvrir l'hôte et appeler son outil d'état ; le code chargé vient de `aoi\addins` ; `/regen` avec l'hôte ouvert ne casse pas l'add-in chargé ; E : SECURELOAD 1 et 2 ; F : avertissement de signature |
-| G, H | un ancien dossier encore désigné par un pointeur n'est pas effacé |
+Avant l'étiquette N : `--verifier-dossiers` montre « migré » sur chaque compte de chaque poste. La ligne de démarrage note cet état dans `journal\demarrage.log`, que l'IT peut relever.
