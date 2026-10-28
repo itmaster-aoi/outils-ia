@@ -29,8 +29,12 @@ import zipfile
 from pathlib import Path
 
 PLUGIN = Path(__file__).resolve().parents[3]
-BASE = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
-NOMS = {"python": "Python AOI", "node": "Node AOI", "rhino-libs": "Librairies du serveur Rhino",
+# Python embarqué (._pth) : le dossier du script n'est pas dans sys.path (voir maj.py)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import chemins_aoi  # noqa: E402
+
+BASE = chemins_aoi.AOI
+NOMS = {"python": "Python AOI", "node": "Node AOI",
         "revit-server": "Serveur MCP Revit", "cortexdb-server": "Serveur MCP CortexDB"}
 
 try:
@@ -74,16 +78,26 @@ def effacer_si_libre(d):
 
 
 def installer_versionne(fiche, dossier, nom, verifier):
-    """Partie installée dans un dossier par version (%LOCALAPPDATA%\\aoi\\<nom>-<version>) :
+    """Partie installée dans un dossier par version (<serveurs>\\<nom>-<version>, voir chemins_aoi) :
     la nouvelle version s'installe à côté de celle qu'utilise peut-être la session en cours.
-    Le plugin (.mcp.json, run.py) désigne la version de sa fiche. Les fichiers « conserver »
-    (données locales) sont repris de la version précédente ; les anciennes versions sont
-    effacées dès qu'elles ne sont plus utilisées."""
+    lanceur/lancer.py désigne la version de la fiche. Les fichiers « conserver » (données locales)
+    sont repris de la version précédente, cherchée dans les deux organisations ; seules les
+    anciennes versions de l'organisation active sont effacées, dès qu'elles ne sont plus utilisées.
+    Celles de l'ancienne organisation restent pour un retour arrière de la console."""
     voulue = fiche["version"]
-    dest = BASE / f"{dossier}-{voulue}"
-    anciennes = sorted((d for d in BASE.glob(f"{dossier}-*")
-                        if d.is_dir() and d != dest and not d.name.endswith((".tmp", ".a-effacer"))),
-                       key=lambda d: d.stat().st_mtime, reverse=True)
+    racine = chemins_aoi.serveurs()
+    dest = racine / f"{dossier}-{voulue}"
+
+    def versions(base):
+        return [d for d in base.glob(f"{dossier}-*")
+                if d.is_dir() and d != dest and not d.name.endswith((".tmp", ".a-effacer"))]
+    anciennes = sorted(versions(racine), key=lambda d: d.stat().st_mtime, reverse=True)
+    autre = chemins_aoi.AOI if racine != chemins_aoi.AOI else chemins_aoi.SERVEURS_NOUVEAU
+    sources = sorted(anciennes + versions(autre), key=lambda d: d.stat().st_mtime, reverse=True)
+    if dest.is_dir():
+        # Installation incomplète de cette version (interrompue, ou fichiers retirés par l'antivirus) :
+        # ses données sont les plus récentes et le dossier sera remplacé (revit-data.db perdu le 28.10.2026).
+        sources.insert(0, dest)
     if (dest / "aoi-version.txt").is_file() and (dest / fiche["exe"]).is_file():
         print(f"{nom} : à jour ({voulue}, {dest})")
         for d in anciennes:
@@ -94,8 +108,8 @@ def installer_versionne(fiche, dossier, nom, verifier):
         print(f"{nom} : version validée {voulue} à installer avec /regen")
         return False
 
-    BASE.mkdir(parents=True, exist_ok=True)
-    zip_, neuf = BASE / f"{dossier}-{voulue}.zip", BASE / f"{dossier}-{voulue}.tmp"
+    racine.mkdir(parents=True, exist_ok=True)
+    zip_, neuf = racine / f"{dossier}-{voulue}.zip", racine / f"{dossier}-{voulue}.tmp"
     print(f"{nom} : téléchargement de la version {voulue} ({fiche.get('taille', 0) >> 20} Mo)")
     try:
         telecharger(fiche["url"], zip_, fiche.get("taille"))
@@ -109,13 +123,16 @@ def installer_versionne(fiche, dossier, nom, verifier):
             print(f"ÉCHEC : archive {nom} incomplète ({fiche['exe']} absent).")
             return False
         for rel in fiche.get("conserver", []):
-            precedent = next((d for d in anciennes if (d / rel).is_file()), None)
+            precedent = next((d for d in sources if (d / rel).is_file()), None)
             if precedent:
                 (neuf / rel).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(precedent / rel, neuf / rel)
                 print(f"{nom} : {rel} repris de {precedent.name}")
         (neuf / "aoi-version.txt").write_text(voulue, encoding="utf-8")
-        shutil.rmtree(dest, ignore_errors=True)  # installation interrompue la fois précédente
+        # Installation incomplète : ses fichiers « conserver » sont déjà copiés dans neuf.
+        if dest.exists() and not effacer_si_libre(dest):
+            print(f"ÉCHEC : {nom} : {dest} est encore utilisé. Quittez Claude Code, puis relancez /regen.")
+            return False
         neuf.rename(dest)
     except OSError as e:
         print(f"ÉCHEC : {nom} : {e}")

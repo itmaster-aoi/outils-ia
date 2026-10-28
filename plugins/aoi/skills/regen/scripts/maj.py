@@ -24,10 +24,12 @@ from pathlib import Path
 DEPOT = "itmaster-aoi/outils-ia"
 PLUGIN = "aoi@aoi"
 CLAUDE = Path.home() / ".claude"
-AOI = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "aoi"
 # Le Python « embeddable » du plugin (fichier ._pth) n'ajoute pas le dossier du script à sys.path :
 # sans cette ligne, « import archives_aoi » échoue alors qu'il marche avec un Python complet.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import chemins_aoi  # noqa: E402
+
+AOI = chemins_aoi.AOI
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -148,9 +150,10 @@ def archive_addin(nom, fiche, appliquer):
         return dossier
     if not appliquer:
         return None
-    from archives_aoi import sha256, telecharger  # même dossier que ce script
+    from archives_aoi import effacer_si_libre, sha256, telecharger  # même dossier que ce script
     dossier.parent.mkdir(parents=True, exist_ok=True)
-    zip_, neuf = dossier.with_suffix(".zip"), dossier.with_suffix(".tmp")
+    # Pas de with_suffix : une version « 2026-10-14.2 » perdrait son « .2 »
+    zip_, neuf = dossier.with_name(dossier.name + ".zip"), dossier.with_name(dossier.name + ".tmp")
     print(f"  {nom} : téléchargement de l'add-in {fiche['version']} ({fiche.get('taille', 0) >> 20} Mo)")
     try:
         telecharger(fiche["url"], zip_, fiche.get("taille"))
@@ -168,9 +171,11 @@ def archive_addin(nom, fiche, appliquer):
     finally:
         zip_.unlink(missing_ok=True)
         shutil.rmtree(neuf, ignore_errors=True)
-    for ancien in dossier.parent.glob(f"{slug}-*"):  # versions précédentes de cet add-in
-        if ancien != dossier and ancien.is_dir():
-            shutil.rmtree(ancien, ignore_errors=True)
+    # Versions précédentes de cet add-in : effacées seulement si aucun fichier n'est ouvert
+    # (un hôte qui chargerait l'add-in depuis ce dossier le verrouille).
+    for ancien in dossier.parent.glob(f"{slug}-*"):
+        if ancien != dossier and ancien.is_dir() and not ancien.name.endswith((".tmp", ".zip", ".a-effacer")):
+            effacer_si_libre(ancien)
     return dossier
 
 
@@ -336,14 +341,69 @@ def controle(plugin, verifier):
         print(f"  ÉCHEC : Python AOI et Node AOI non traités, {script} introuvable dans le plugin {plugin['version']}. Contactez l'IT.")
 
 
+def etape(nom, fonction, *args, **kwargs):
+    """Lance une étape de finir() ; une exception devient un échec affiché. Vrai si elle a réussi
+    (une fonction qui ne renvoie rien a réussi)."""
+    try:
+        return fonction(*args, **kwargs) is not False
+    except Exception as e:  # noqa: BLE001 : une étape ne doit jamais arrêter les suivantes
+        print(f"  ÉCHEC : {nom} : {type(e).__name__} : {e}")
+        return False
+
+
+def etat_dossiers():
+    """Organisation des dossiers du poste (docs/organisation-dossiers.md), sans rien modifier."""
+    lignes = []
+    if chemins_aoi.migre():
+        t = lire_json(chemins_aoi.TEMOIN) or {}
+        lignes.append(f"organisation : nouvelle (migrée le {t.get('date', '?')} par {t.get('compte', '?')})")
+        resume = "migré"
+    else:
+        lignes.append("organisation : ancienne, migration à faire : fermez Claude Code et vos logiciels, "
+                      f"puis lancez {commande_migration()}")
+        resume = "à migrer"
+    plugin = plugin_installe()
+    for f in sorted(plugin["chemin"].glob("*-aoi.json")) if plugin else ():
+        fiche = lire_json(f) or {}
+        if fiche.get("versionne"):
+            nom = f.name[:-len("-aoi.json")]
+            d = chemins_aoi.dossier_serveur(nom, fiche.get("version"))
+            lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}")
+    base = chemins_aoi.base_cortexdb() or chemins_aoi.BASE_CORTEXDB_ANCIENNE
+    lignes.append(f"base cortexdb : {base}" + ("" if base.is_file() else " (absente)"))
+    if chemins_aoi.migre() and chemins_aoi.BASE_CORTEXDB_ANCIENNE.is_file():
+        lignes.append(f"ancienne base gardée : {chemins_aoi.BASE_CORTEXDB_ANCIENNE}")
+    return {"migre": chemins_aoi.migre(), "resume": resume, "lignes": lignes}
+
+
+def commande_migration():
+    plugin = plugin_installe()
+    racine = plugin["chemin"] if plugin else Path(__file__).resolve().parents[3]
+    return f'"{racine / "migrer-dossiers.cmd"}"'
+
+
 def finir(avant, apres):
     """Étapes qui suivent l'installation du plugin : add-ins, contrôle des imports, archives, cache.
     Lancées par le maj.py de la NOUVELLE version (voir main) : chaque version prépare le poste
-    avec ses propres chemins, si bien qu'un fichier peut changer de place d'une version à l'autre."""
+    avec ses propres chemins, si bien qu'un fichier peut changer de place d'une version à l'autre.
+    Une étape qui échoue (fichier verrouillé...) est signalée et n'empêche pas les suivantes.
+    Le témoin finir-<version>.ok, écrit à la fin, prouve au crochet de démarrage que tout a tourné."""
+    echecs = 0
     for x in addins(apres, appliquer=True):
-        copier_addin(*x, appliquer=True)
-    controle(apres, verifier=False)
-    nettoyer_cache(avant, apres)
+        # Application trop ancienne (x[6]) : refus durable, déjà signalé à chaque démarrage
+        echecs += not etape(f"add-in {x[0]}", copier_addin, *x, appliquer=True) and not x[6]
+    echecs += not etape("contrôle des imports et archives", controle, apres, verifier=False)
+    echecs += not etape("nettoyage du cache", nettoyer_cache, avant, apres)
+    if not echecs:
+        try:
+            for vieux in chemins_aoi.journal().glob("finir-*.ok"):
+                vieux.unlink()
+            chemins_aoi.journal().mkdir(parents=True, exist_ok=True)
+            (chemins_aoi.journal() / f"finir-{apres['version']}.ok").write_text(
+                time.strftime("%Y-%m-%dT%H:%M:%S"), encoding="utf-8")
+        except OSError as e:
+            print(f"  ÉCHEC : témoin de fin non écrit ({e})")
+    print(f"\nÉtat des dossiers : {etat_dossiers()['resume']}")
     if avant is None or apres["version"] != avant["version"]:
         print("\nREDÉMARRAGE REQUIS : quittez Claude Code et relancez-le pour charger les serveurs à jour.")
     else:
@@ -367,14 +427,20 @@ def passer_la_main(avant, apres):
 
 def controle_si_besoin():
     """Crochet de démarrage : recopie le contrôle des imports s'il diffère de celui de ce plugin.
-    Rattrape une mise à jour faite par un /regen plus ancien, qui ne connaissait pas ce chemin."""
+    Rattrape une mise à jour faite par un /regen plus ancien, qui ne connaissait pas ce chemin.
+    Renvoie le motif d'un échec (affiché dans la ligne de démarrage), sinon None."""
     script = Path(__file__).resolve().parents[3] / "controle" / "scripts" / "activer_controle.py"
     if not script.is_file():
-        return
+        return None
     try:
-        subprocess.run([sys.executable, str(script), "--si-besoin"], capture_output=True, timeout=20)
-    except (OSError, subprocess.SubprocessError):
-        pass
+        r = subprocess.run([sys.executable, str(script), "--si-besoin"], capture_output=True, timeout=20,
+                           text=True, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError) as e:
+        return f"mise à jour du contrôle des imports impossible ({e})"
+    if r.returncode:
+        detail = (r.stdout + r.stderr).strip().splitlines()
+        return f"mise à jour du contrôle des imports impossible ({detail[-1] if detail else r.returncode})"
+    return None
 
 
 def etat_session(plugin):
@@ -390,18 +456,18 @@ def etat_session(plugin):
 def demarrage():
     """Crochet SessionStart : bilan d'une ligne à chaque session (version, serveurs, contrôle des
     imports, refus récents), puis tableau des nouveautés par rapport à la session précédente
-    (%LOCALAPPDATA%\\aoi\\session.json) et mise à jour imposée par la console, s'il y en a.
-    Ne modifie rien d'autre que ce fichier."""
+    (session.json du journal, voir chemins_aoi) et mise à jour imposée par la console, s'il y en a.
+    Ne modifie rien d'autre que ce fichier et demarrage.log."""
     debut = time.time()
     sys.stdout = open(os.devnull, "w", encoding="utf-8")  # silence des fonctions d'état
     try:
         # Pas de rafraichir_regles() ici : Claude Code vient de relire les règles en démarrant,
         # et un « claude » imbriqué pendant son démarrage peut bloquer jusqu'au délai du crochet.
-        controle_si_besoin()
+        echec_controle = controle_si_besoin()
         imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
         etat = etat_session(plugin)
-        f = AOI / "session.json"
-        avant = lire_json(f) or {}
+        avant = lire_json(chemins_aoi.lire_journal("session.json")) or {}
+        f = chemins_aoi.journal() / "session.json"
         lignes = []
         if avant and avant.get("version") != etat["version"]:
             lignes.append(("Plugin aoi", avant.get("version") or "-", etat["version"] or "-"))
@@ -416,8 +482,13 @@ def demarrage():
             for nom, v in etat["archives"].items() if "archives" in avant else ():  # ancien format : pas de comparaison
                 if avant.get("archives", {}).get(nom) != v:
                     lignes.append((f"Archive {nom}", avant.get("archives", {}).get(nom) or "-", v or "-"))
-        AOI.mkdir(parents=True, exist_ok=True)
+        f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
+        # finir() d'une version écrit son témoin à la fin. Un témoin d'une autre version sans
+        # celui de la version installée : /regen interrompu, ou /regen trop ancien pour --finir.
+        temoins = list(chemins_aoi.journal().glob("finir-*.ok"))
+        finir_manque = bool(plugin and temoins
+                            and not (chemins_aoi.journal() / f"finir-{plugin['version']}.ok").is_file())
     finally:
         sys.stdout = sys.__stdout__
     # Bilan affiché à l'utilisateur à chaque session (systemMessage). Il n'est pas transmis à
@@ -437,14 +508,22 @@ def demarrage():
              f" · {python_aoi()} · {suivi}"]
     if not controle_actif():
         texte.append("ATTENTION : contrôle des imports Python inactif. Lancez /aoi:regen ou contactez l'IT.")
+    if echec_controle:
+        texte.append(f"ATTENTION : {echec_controle}. Contactez l'IT.")
     for x in addins(plugin) if plugin else ():
         if x[6]:
             texte.append(f"ATTENTION : add-in {x[0]} : {x[6]}")
+    if finir_manque:
+        texte.append("ATTENTION : la dernière mise à jour n'est pas allée au bout. Tapez /aoi:regen.")
+    migre = chemins_aoi.migre()
+    if plugin and not migre and (plugin["chemin"] / "migrer-dossiers.cmd").is_file():
+        texte.append("Dossiers des outils à migrer (une seule fois) : fermez Claude Code et vos logiciels, "
+                     f"puis lancez {commande_migration()}")
     print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
-    try:  # trace du crochet, pour vérifier qu'il tourne et combien de temps il prend
-        with open(AOI / "demarrage.log", "a", encoding="utf-8") as f:
+    try:  # trace du crochet : qu'il tourne, sa durée, et l'organisation des dossiers (relevé de l'IT)
+        with open(chemins_aoi.journal() / "demarrage.log", "a", encoding="utf-8") as f:
             f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')}  {etat['version']}  {time.time() - debut:.1f} s"
-                    f"  nouveautés : {len(lignes)}\n")
+                    f"  nouveautés : {len(lignes)}  dossiers : {'migré' if migre else 'à migrer'}\n")
     except OSError:
         pass
     return 0
@@ -479,9 +558,14 @@ def main():
     ap.add_argument("--finir", action="store_true", help="étapes après installation, lancées par le /regen précédent")
     ap.add_argument("--avant-chemin")
     ap.add_argument("--avant-version")
+    ap.add_argument("--verifier-dossiers", action="store_true", help="organisation des dossiers, sans rien changer")
     a = ap.parse_args()
     if a.demarrage:
         return demarrage()
+    if a.verifier_dossiers:
+        etat = etat_dossiers()
+        print("\n".join(etat["lignes"]))
+        return 0 if etat["migre"] else 3
     if a.finir:
         apres = plugin_installe()
         if not apres:
@@ -520,8 +604,45 @@ def main():
             for x in addins(avant):
                 copier_addin(*x, appliquer=False)
             controle(avant, verifier=True)
+            print("Dossiers : " + "\n  ".join(etat_dossiers()["lignes"]))
         return 0
 
+    verrou = prendre_verrou()
+    if verrou is None:
+        print("\nUn autre /regen est en cours sur ce compte. Attendez sa fin, puis relancez /regen.")
+        return 4
+    try:
+        return appliquer(imposee, inscrite, avant)
+    finally:
+        verrou.unlink(missing_ok=True)
+
+
+def prendre_verrou():
+    """Verrou de /regen pour ce compte (deux sessions qui lancent /regen ensemble se
+    marcheraient dessus : catalogue, archives .zip et .tmp). Un verrou laissé par un /regen
+    arrêté net (processus disparu) est repris. Renvoie le fichier, ou None s'il est pris."""
+    f = chemins_aoi.journal() / "regen.verrou"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(2):
+        try:
+            fd = os.open(f, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                pid = f.read_text(encoding="utf-8").strip()
+            except OSError:
+                pid = ""
+            r = subprocess.run(["tasklist", "/FI", f"PID eq {pid or 0}", "/NH"], capture_output=True, text=True)
+            if pid and pid in r.stdout:
+                return None
+            f.unlink(missing_ok=True)
+            continue
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        return f
+    return None
+
+
+def appliquer(imposee, inscrite, avant):
     print()
     if inscrite != imposee:
         if inscrite:
