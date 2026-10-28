@@ -1,6 +1,6 @@
 # Organisation des dossiers d'installation AOI
 
-Étude du 28.10.2026, version 3. La version 2 intégrait des essais et une relecture adversariale. La version 3 remplace les 8 étiquettes de migration par une solution mixte : une étiquette qui lit les deux organisations, puis un script de migration lancé sur chaque poste. État : validée. La migration n'a pas commencé.
+Étude du 28.10.2026, version 3. La version 2 intégrait des essais et une relecture adversariale. La version 3 remplace les 8 étiquettes de migration par une solution mixte : une étiquette qui lit les deux organisations, puis un script de migration lancé sur chaque poste. État : validée. Étiquette M réalisée (plugin 2026.10.28.3, voir « Réalisation de l'étiquette M ») ; aucun poste n'est migré.
 
 ## Objectif
 
@@ -94,6 +94,26 @@ Comparaison avec la version 2 de l'étude :
   - `skills/regen/SKILL.md`, étape 2 : « catalogue à jour » ne suffit plus ; il faut aussi `--verifier-dossiers` sans écart.
   - Verrou `journal\regen.verrou` : un seul `/regen` à la fois.
 - **Les nouvelles versions des add-ins KeyShot et AutoCAD** qui acceptent un pointeur (étiquettes amont, voir plus bas). Si elles ne sont pas prêtes, M part sans elles : KeyShot et AutoCAD restent en copie complète, et une étiquette suivante les ajoute.
+
+### Réalisation de l'étiquette M (plugin 2026.10.28.3)
+
+Décisions de l'IT du 28.10.2026 : M part sans KeyShot ni AutoCAD, et la base du serveur Revit reste en place.
+
+| Point de M | État |
+|---|---|
+| `chemins_aoi.py`, `lancer.py`, `migrer-dossiers.cmd`, témoin, `--annuler`, détection de divergence | fait |
+| Copie des serveurs, de la base cortexdb (contrôlée) et des journaux | fait |
+| Add-in Revit en forme « pointeur » : manifeste `.addin` avec chemin absolu vers `aoi\addins`, copie complète gardée dans `journal\avant-migration\revit-2025`, choix `enabled` de `commandRegistry.json` repris à chaque version, remise en place par `--annuler` | fait ; le registre reste dans le dossier de la version, pas dans `donnees\revit` |
+| Refus si `Revit.exe` est ouvert ; contrôle de l'espace libre | fait |
+| Corrections de la relecture : `with_suffix`, `finir()` protégé et témoin, verrou de `/regen`, `controle_si_besoin()` | fait |
+| Effacement d'une ancienne version d'add-in seulement après le passage de l'hôte à la nouvelle | fait |
+| `revit-data.db` dans `donnees\revit` | reporté : le chemin est fixé dans le serveur compilé (`build/database/db.js:8`). Demande une nouvelle version de `lfoletti/mcp-servers-for-revit` |
+| KeyShot et AutoCAD en forme « lanceur » ou « pointeur » ; copie de leurs réglages | reporté : demande des étiquettes amont de `keyshot-mcp` et `autocad-mcp` |
+| `installer-poste.ps1` appelle `--finir` | non fait : `finir()` renvoie toujours 0 et l'installeur perdrait les échecs de son bilan. `--addins` couvre les add-ins |
+
+L'étiquette `2026-10-28.2` contenait une partie de M sans ces ajouts. Elle a été supprimée avant tout déploiement.
+
+À essayer sur le poste de test : l'avertissement de Revit sur les add-ins non signés quand `<Assembly>` change de chemin.
 
 ### Ce que fait le script `migrer-dossiers`
 

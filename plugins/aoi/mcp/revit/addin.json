@@ -13,7 +13,12 @@
       "processus": "Revit.exe",
       "sauvegarder": [
         "revit_mcp_plugin/Commands/commandRegistry.json"
-      ]
+      ],
+      "pointeur": {
+        "manifeste": "mcp-servers-for-revit.addin",
+        "retirer": ["revit_mcp_plugin"],
+        "fusionner": ["revit_mcp_plugin/Commands/commandRegistry.json"]
+      }
     }
   ]
 }

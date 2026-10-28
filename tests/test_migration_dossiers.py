@@ -59,8 +59,43 @@ def poste():
     c.close()
     (aoi / "session.json").write_text('{"version": "2026.10.28.1"}', encoding="utf-8")
     (aoi / "demarrage.log").write_text("ligne\n", encoding="utf-8")
-    env = dict(os.environ, LOCALAPPDATA=str(local), USERPROFILE=str(home), HOME=str(home))
+    # APPDATA et PUBLIC aussi : les add-ins (Revit, KeyShot...) ne doivent jamais toucher ceux du poste
+    env = dict(os.environ, LOCALAPPDATA=str(local), USERPROFILE=str(home), HOME=str(home),
+               APPDATA=str(t / "roaming"), PUBLIC=str(t / "public"))
     return t, aoi, base, env
+
+
+MANIFESTE = ('<?xml version="1.0" encoding="utf-8"?>\n<RevitAddIns>\n  <AddIn Type="Application">\n'
+             "    <Assembly>revit_mcp_plugin/RevitMCPPlugin.dll</Assembly>\n  </AddIn>\n</RevitAddIns>\n")
+REGISTRE = Path("revit_mcp_plugin") / "Commands" / "commandRegistry.json"
+
+
+def revit_simule(env, version=None, commande_a=True):
+    """Add-in Revit 2025 simulé : une version dans aoi\\addins et l'hôte Revit en copie complète,
+    où l'utilisateur a désactivé la commande « a »."""
+    fiche = json.loads((PLUGIN / "mcp" / "revit" / "addin.json").read_text(encoding="utf-8"))["add-ins"][0]
+    src = Path(env["LOCALAPPDATA"]) / "aoi" / "addins" / f"revit-2025-{version or fiche['archive']['version']}"
+    hote = Path(env["APPDATA"]) / "Autodesk" / "Revit" / "Addins" / "2025"
+    for d, actif in ((src, commande_a), (hote, False)):
+        if d == hote and version:
+            continue
+        (d / REGISTRE).parent.mkdir(parents=True)
+        (d / "revit_mcp_plugin" / "RevitMCPPlugin.dll").write_bytes(b"dll")
+        (d / "mcp-servers-for-revit.addin").write_text(MANIFESTE, encoding="utf-8")
+        (d / REGISTRE).write_text(json.dumps({"Commands": [{"commandName": "a", "enabled": actif},
+                                                           {"commandName": "b", "enabled": True}]}), encoding="utf-8")
+    (src / "aoi-version.txt").write_text(src.name, encoding="utf-8")
+    return src, hote, fiche["pointeur"]
+
+
+def commande_a(dossier):
+    donnees = json.loads((dossier / REGISTRE).read_text(encoding="utf-8"))
+    return next(c["enabled"] for c in donnees["Commands"] if c["commandName"] == "a")
+
+
+def assembly(hote):
+    texte = (hote / "mcp-servers-for-revit.addin").read_text(encoding="utf-8")
+    return texte.split("<Assembly>")[1].split("</Assembly>")[0]
 
 
 def compter(base):
@@ -291,6 +326,67 @@ def test_reparation():
         shutil.rmtree(t, ignore_errors=True)
 
 
+def test_pointeur_revit():
+    """Add-in Revit : copie complète de l'hôte remplacée par un pointeur à la migration, registre
+    repris, mise à jour vers une nouvelle version, retour arrière."""
+    t, aoi, base, env = poste()
+    try:
+        src, hote, pointeur = revit_simule(env)
+        r = migrer(env, "--simuler")
+        verifier("pointeur Revit : annoncé en simulation, rien modifié",
+                 "pointeur vers" in r.stdout and (hote / "revit_mcp_plugin").is_dir(), r.stdout + r.stderr)
+
+        r = migrer(env, "--appliquer")
+        dll = (src / "revit_mcp_plugin" / "RevitMCPPlugin.dll").resolve()
+        verifier("pointeur Revit : migration, code 0", r.returncode == 0, r.stdout + r.stderr)
+        verifier("pointeur Revit : l'hôte ne garde que le manifeste, chemin absolu vers aoi\\addins",
+                 not (hote / "revit_mcp_plugin").exists() and assembly(hote) == str(dll), assembly(hote))
+        garde = aoi / "journal" / "avant-migration" / "revit-2025"
+        verifier("pointeur Revit : copie complète gardée dans journal\\avant-migration",
+                 (garde / REGISTRE).is_file() and (garde / "destination.txt").is_file())
+        verifier("pointeur Revit : commande désactivée par l'utilisateur reprise", commande_a(src) is False)
+
+        code = (f"import sys; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"p = {{'chemin': __import__('pathlib').Path(r'{PLUGIN}'), 'version': None}}; "
+                "print([maj.copier_addin(*x, appliquer=True) for x in maj.addins(p, appliquer=True)])")
+        r = lancer(["-c", code], env)
+        verifier("pointeur Revit : /regen suivant, add-in à jour", "[True]" in r.stdout and "à jour (pointeur" in r.stdout,
+                 r.stdout + r.stderr)
+        r = lancer(["-c", f"import sys; sys.path.insert(0, r'{SCRIPTS}'); import maj; sys.argv=['maj.py','--verifier-dossiers']; sys.exit(maj.main())"], env)
+        verifier("pointeur Revit : --verifier-dossiers le montre", "add-in Revit 2025 : pointeur vers" in r.stdout, r.stdout)
+
+        neuf, _, _ = revit_simule(env, version="2099-01-01")
+        code = (f"import sys, json; from pathlib import Path; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"ok = maj.poser_pointeur('Revit 2025', Path(r'{neuf}'), Path(r'{hote}'), '', {pointeur!r}, True); "
+                f"maj.nettoyer_addin('Revit 2025', Path(r'{neuf}')); print(ok)")
+        r = lancer(["-c", code], env)
+        verifier("pointeur Revit : nouvelle version, pointeur déplacé et choix repris",
+                 r.stdout.strip().endswith("True") and assembly(hote).startswith(str(neuf.resolve()))
+                 and commande_a(neuf) is False, r.stdout + r.stderr)
+        verifier("pointeur Revit : ancienne version effacée après le passage", not src.exists())
+
+        r = migrer(env, "--annuler")
+        verifier("pointeur Revit : --annuler remet la copie complète",
+                 r.returncode == 0 and (hote / REGISTRE).is_file() and assembly(hote) == "revit_mcp_plugin/RevitMCPPlugin.dll"
+                 and commande_a(hote) is False and not garde.exists(), r.stdout + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
+def test_espace_libre():
+    t, aoi, base, env = poste()
+    try:
+        code = (f"import sys, types; sys.path.insert(0, r'{SCRIPTS}'); import migrer_dossiers as m; "
+                "m.processus_du_compte = lambda: []; m.shutil.disk_usage = lambda p: types.SimpleNamespace(free=0); "
+                "sys.argv = ['migrer_dossiers.py', '--appliquer']; sys.exit(m.main())")
+        r = lancer(["-c", code], env)
+        verifier("espace disque insuffisant : refus, code 2, rien écrit",
+                 r.returncode == 2 and "espace disque insuffisant" in r.stdout and not (aoi / "journal").exists(),
+                 r.stdout + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
 def lignes_revit(dossier):
     f = dossier / "revit-data.db"
     if not f.is_file():
@@ -314,6 +410,8 @@ if __name__ == "__main__":
     test_demarrage()
     test_archives_versionne()
     test_reparation()
+    test_pointeur_revit()
+    test_espace_libre()
     echecs = [n for n, ok in resultats if not ok]
     print(f"\n{len(resultats) - len(echecs)} réussis, {len(echecs)} en échec")
     sys.exit(1 if echecs else 0)

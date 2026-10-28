@@ -26,17 +26,19 @@ from pathlib import Path
 PLUGIN = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chemins_aoi as C  # noqa: E402
+import maj  # noqa: E402
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
     pass
 
-# Processus qui utilisent les dossiers migrés, pour ce compte. Les logiciels hôtes (Revit, AutoCAD,
-# KeyShot, Rhino) n'y sont pas : cette version ne touche pas à leurs dossiers. Le serveur Revit
-# (node.exe) n'y est pas non plus : d'autres programmes s'appellent node.exe. Le test
-# d'ouverture exclusive (bases_ouvertes) attrape toute base ouverte, même par un serveur orphelin.
-PROCESSUS = ["claude.exe", "cortexdb-mcp.exe"]
+# Processus qui utilisent les dossiers migrés, pour ce compte. Revit : son add-in passe en forme
+# « pointeur ». AutoCAD, KeyShot et Rhino n'y sont pas : cette version ne touche pas à leurs dossiers.
+# Le serveur Revit (node.exe) n'y est pas non plus : d'autres programmes s'appellent node.exe. Le
+# test d'ouverture exclusive (bases_ouvertes) attrape toute base ouverte, même par un serveur orphelin.
+PROCESSUS = ["claude.exe", "cortexdb-mcp.exe", "Revit.exe"]
+MARGE = 100 * 2**20  # espace libre gardé en plus des copies
 JOURNAUX = ["session.json", "demarrage.log"]
 NOTE = "MIGRE-VERS-AOI.txt"
 
@@ -145,7 +147,7 @@ def plan():
         actions.append((f"base cortexdb : déjà dans {dst}", None))
     elif src.is_file():
         actions.append((f"base cortexdb : copie contrôlée de {src} vers {dst}",
-                        lambda: f"{copier_base(src, dst)} lignes copiées"))
+                        lambda s=src, d=dst: f"{copier_base(s, d)} lignes copiées"))
     else:
         actions.append(("base cortexdb : aucune base à copier, cortexdb en créera une", None))
     for nom in JOURNAUX:
@@ -153,7 +155,52 @@ def plan():
         if s.is_file() and not d.is_file():
             actions.append((f"journal : copie de {nom} vers {C.JOURNAL_NOUVEAU}",
                             lambda s=s, d=d: copier_fichier(s, d)))
+    # Add-ins en dernier : un échec avant laisse l'hôte intact. Un pointeur posé sans témoin est
+    # remplacé par la copie complète au /regen suivant (ancienne organisation).
+    # Chaque action fige ses valeurs (arguments par défaut) : une variable reprise dans une boucle
+    # suivante changerait sinon la cible au moment de l'exécution.
+    for x in maj.addins({"chemin": PLUGIN, "version": None}):
+        nom, source, hote, pointeur = x[0], x[1], x[2], x[8]
+        if not pointeur or x[6] or not (hote / pointeur["manifeste"]).is_file():
+            continue
+        if source is None:
+            actions.append((f"add-in {nom} : version {x[5]} absente de {C.ADDINS}, "
+                            "/aoi:regen posera le pointeur après la migration", None))
+        elif maj.dossier_pointe(hote, pointeur) == source:
+            actions.append((f"add-in {nom} : pointeur déjà posé vers {source}", None))
+        else:
+            actions.append((f"add-in {nom} : copie complète de {hote} gardée dans {C.JOURNAL_NOUVEAU}"
+                            f"\\avant-migration, puis pointeur vers {source}",
+                            lambda x=x: poser_pointeur(x)))
     return actions
+
+
+def poser_pointeur(x):
+    if not maj.poser_pointeur(x[0], x[1], x[2], "", x[8], appliquer=True):
+        raise RuntimeError("pointeur non posé")
+
+
+def taille(chemin):
+    if chemin.is_file():
+        return chemin.stat().st_size
+    return sum(f.stat().st_size for f in chemin.rglob("*") if f.is_file()) if chemin.is_dir() else 0
+
+
+def espace_manquant():
+    """Octets qui manquent pour les copies (serveurs, base cortexdb, add-ins gardés), ou 0."""
+    besoin = MARGE
+    for nom, version in fiches_serveurs():
+        if not (C.SERVEURS_NOUVEAU / f"{nom}-{version}").is_dir():
+            besoin += taille(C.AOI / f"{nom}-{version}")
+    if not C.BASE_CORTEXDB_NOUVELLE.is_file():
+        besoin += sum(taille(C.BASE_CORTEXDB_ANCIENNE.with_name(C.BASE_CORTEXDB_ANCIENNE.name + s))
+                      for s in ("", "-wal"))
+    for x in maj.addins({"chemin": PLUGIN, "version": None}):
+        if x[8]:
+            besoin += sum(taille(x[2] / rel) for rel in x[8].get("retirer", []))
+    racine = C.AOI if C.AOI.is_dir() else C.AOI.parent
+    libre = shutil.disk_usage(racine).free
+    return max(0, besoin - libre)
 
 
 def copier_dossier(src, dst):
@@ -209,6 +256,15 @@ def annuler():
     os.replace(C.TEMOIN, C.TEMOIN_ANNULE)
     (C.BASE_CORTEXDB_ANCIENNE.parent / NOTE).unlink(missing_ok=True)
     print(f"Migration du {t.get('date')} annulée : le plugin reprend l'ancienne organisation au prochain démarrage.")
+    for garde in sorted((C.JOURNAL_NOUVEAU / "avant-migration").glob("*")):
+        if not (garde / "destination.txt").is_file():
+            continue
+        dst = Path((garde / "destination.txt").read_text(encoding="utf-8").strip())
+        for g in garde.iterdir():
+            if g.name != "destination.txt":
+                (shutil.copytree(g, dst / g.name, dirs_exist_ok=True) if g.is_dir() else shutil.copy2(g, dst / g.name))
+        shutil.rmtree(garde)
+        print(f"Add-in {garde.name} : copie complète d'avant la migration remise dans {dst}.")
     nouveau = C.BASE_CORTEXDB_NOUVELLE
     note = (t.get("copies") or {}).get("base cortexdb")
     if nouveau.is_file() and note and nouveau.stat().st_mtime > time.mktime(time.strptime(t["date"], "%Y-%m-%d %H:%M")) + 60:
@@ -253,6 +309,12 @@ def main():
     print("\nActions :")
     for texte, _ in actions:
         print(f"  - {texte}")
+    manque = espace_manquant()
+    if manque:
+        print(f"\n{'ATTENTION' if a.simuler else 'ÉCHEC'} : espace disque insuffisant, il manque "
+              f"{manque / 2**20:,.0f} Mo.".replace(",", " ") + ("" if a.simuler else " Rien n'a été modifié."))
+        if not a.simuler:
+            return 2
     if a.simuler:
         if actifs:
             print(f"\nÀ fermer avant la migration : {', '.join(actifs)}")

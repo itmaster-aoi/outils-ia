@@ -14,6 +14,7 @@ import argparse
 import filecmp
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -144,13 +145,12 @@ def archive_addin(nom, fiche, appliquer):
 
     L'archive n'est téléchargée que si sa version manque sur le poste, et refusée si son
     empreinte SHA-256 ne correspond pas à la fiche. Renvoie None si elle reste à télécharger."""
-    slug = "".join(c if c.isalnum() else "-" for c in nom.lower()).strip("-")
-    dossier = AOI / "addins" / f"{slug}-{fiche['version']}"
+    dossier = AOI / "addins" / f"{slug_addin(nom)}-{fiche['version']}"
     if (dossier / "aoi-version.txt").is_file():
         return dossier
     if not appliquer:
         return None
-    from archives_aoi import effacer_si_libre, sha256, telecharger  # même dossier que ce script
+    from archives_aoi import sha256, telecharger  # même dossier que ce script
     dossier.parent.mkdir(parents=True, exist_ok=True)
     # Pas de with_suffix : une version « 2026-10-14.2 » perdrait son « .2 »
     zip_, neuf = dossier.with_name(dossier.name + ".zip"), dossier.with_name(dossier.name + ".tmp")
@@ -171,12 +171,25 @@ def archive_addin(nom, fiche, appliquer):
     finally:
         zip_.unlink(missing_ok=True)
         shutil.rmtree(neuf, ignore_errors=True)
-    # Versions précédentes de cet add-in : effacées seulement si aucun fichier n'est ouvert
-    # (un hôte qui chargerait l'add-in depuis ce dossier le verrouille).
-    for ancien in dossier.parent.glob(f"{slug}-*"):
+    # Les versions précédentes sont effacées par copier_addin, une fois l'hôte passé à celle-ci :
+    # un pointeur désigne encore la précédente, dont il faut d'abord reprendre le registre.
+    return dossier
+
+
+def slug_addin(nom):
+    """« Revit 2025 » -> « revit-2025 » : préfixe des dossiers de aoi\\addins."""
+    return "".join(c if c.isalnum() else "-" for c in nom.lower()).strip("-")
+
+
+def nettoyer_addin(nom, dossier):
+    """Efface les autres versions d'un add-in de aoi\\addins, seulement si aucun fichier n'est
+    ouvert (un hôte qui charge l'add-in depuis ce dossier le verrouille)."""
+    if dossier is None or dossier.parent != AOI / "addins":
+        return
+    from archives_aoi import effacer_si_libre  # même dossier que ce script
+    for ancien in dossier.parent.glob(f"{slug_addin(nom)}-*"):
         if ancien != dossier and ancien.is_dir() and not ancien.name.endswith((".tmp", ".zip", ".a-effacer")):
             effacer_si_libre(ancien)
-    return dossier
 
 
 def version_application(fiche):
@@ -219,7 +232,8 @@ def addins(plugin, appliquer=False):
     """Add-ins décrits par mcp/<serveur>/addin.json : un serveur sans ce fichier n'a pas d'add-in.
 
     (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version,
-    motif du refus si l'application est trop ancienne, anciens fichiers à retirer de la destination)
+    motif du refus si l'application est trop ancienne, anciens fichiers à retirer de la destination,
+    forme « pointeur » ou None)
     La source est soit un dossier du plugin (« source »), soit une archive publiée à part
     (« archive ») ; None si l'archive reste à télécharger.
     Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
@@ -234,7 +248,7 @@ def addins(plugin, appliquer=False):
             if refus:  # rien à télécharger pour une application qui ne pourra pas charger l'add-in
                 liste.append((e["nom"], None, Path(os.path.expandvars(e["destination"])),
                               e.get("processus", ""), e.get("sauvegarder", []),
-                              (e.get("archive") or {}).get("version"), refus, e.get("retirer", [])))
+                              (e.get("archive") or {}).get("version"), refus, e.get("retirer", []), None))
                 continue
             if e.get("archive"):
                 source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
@@ -247,17 +261,31 @@ def addins(plugin, appliquer=False):
                 continue
             liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
                           e.get("processus", ""), e.get("sauvegarder", []), version, None,
-                          e.get("retirer", [])))
+                          e.get("retirer", []), e.get("pointeur") if e.get("archive") else None))
     return liste
 
 
-def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, appliquer):
+def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, pointeur, appliquer):
     if refus:
         print(f"  {nom} : ÉCHEC : {refus}")
         return False
     if source is None:
         print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
         return False
+    if pointeur and chemins_aoi.migre():
+        ok = poser_pointeur(nom, source, dst, proc, pointeur, appliquer)
+        if ok and appliquer:
+            nettoyer_addin(nom, source)
+        return ok
+    ok = copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer)
+    if ok and appliquer:
+        nettoyer_addin(nom, source)
+    return ok
+
+
+def copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer):
+    """Copie complète de l'add-in dans le dossier de l'hôte (ancienne organisation, ou add-in
+    sans forme « pointeur »). Remplace aussi un pointeur laissé par une migration annulée."""
     # Fichiers d'une version précédente sous un autre nom : copytree ne les efface pas
     restes = [dst / rel for rel in retirer if (dst / rel).is_file()]
     if restes and not appliquer:
@@ -286,6 +314,91 @@ def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, a
             shutil.copy2(f, f.with_name(f.name + time.strftime(".avant-aoi-%Y%m%d-%H%M%S")))
     shutil.copytree(source, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("aoi-version.txt"))
     print(f"  {nom} : add-in recopié vers {dst}")
+    return True
+
+
+ASSEMBLY = re.compile(r"<Assembly>(.*?)</Assembly>", re.S)
+
+
+def manifeste_pointeur(source, pointeur):
+    """Manifeste de l'hôte dont <Assembly> désigne, par un chemin absolu, l'add-in dans aoi\\addins."""
+    texte = (source / pointeur["manifeste"]).read_text(encoding="utf-8")
+    return ASSEMBLY.sub(lambda m: f"<Assembly>{(source / m.group(1).strip()).resolve()}</Assembly>", texte, count=1)
+
+
+def dossier_pointe(dst, pointeur):
+    """Version de aoi\\addins que désigne le manifeste de l'hôte, ou None (copie complète, ou rien)."""
+    f = dst / pointeur["manifeste"]
+    m = ASSEMBLY.search(f.read_text(encoding="utf-8", errors="replace")) if f.is_file() else None
+    if not m or not Path(m.group(1).strip()).is_absolute():
+        return None
+    chemin, racine = Path(m.group(1).strip()), AOI / "addins"
+    try:
+        return racine / chemin.relative_to(racine).parts[0]
+    except ValueError:
+        return None
+
+
+def fusionner_registre(ancien, nouveau):
+    """Registre des commandes (commandRegistry.json) : la liste vient de la nouvelle version, le
+    choix « enabled » de chaque commande vient de l'ancienne. Reprendre l'ancien registre tel quel
+    masquerait les commandes ajoutées. Renvoie le nombre de choix repris."""
+    if not (ancien.is_file() and nouveau.is_file()) or ancien.resolve() == nouveau.resolve():
+        return 0
+    vieux = {c.get("commandName"): c.get("enabled") for c in (lire_json(ancien) or {}).get("Commands", [])}
+    donnees = lire_json(nouveau)
+    if not donnees:
+        return 0
+    repris = 0
+    for c in donnees.get("Commands", []):
+        if c.get("commandName") in vieux and vieux[c["commandName"]] != c.get("enabled"):
+            c["enabled"] = vieux[c["commandName"]]
+            repris += 1
+    if repris:
+        nouveau.write_text(json.dumps(donnees, ensure_ascii=False, indent=2), encoding="utf-8")
+    return repris
+
+
+def poser_pointeur(nom, source, dst, proc, pointeur, appliquer):
+    """Forme « pointeur » (poste migré) : l'hôte ne garde que son manifeste, qui désigne la version
+    de aoi\\addins. La copie complète d'avant est gardée dans journal\\avant-migration\\<add-in>,
+    que migrer-dossiers.cmd --annuler remet en place."""
+    voulu = manifeste_pointeur(source, pointeur)
+    f = dst / pointeur["manifeste"]
+    restes = [dst / rel for rel in pointeur.get("retirer", []) if (dst / rel).exists()]
+    actuel = f.read_text(encoding="utf-8", errors="replace") if f.is_file() else None
+    if actuel == voulu and not restes:
+        print(f"  {nom} : add-in à jour (pointeur vers {source})")
+        return True
+    if not appliquer:
+        print(f"  {nom} : " + ("copie complète à remplacer par un pointeur" if restes else "pointeur à mettre à jour"))
+        return False
+    if proc and processus_actifs(proc):
+        print(f"  {nom} : pointeur à poser, mais {proc} est ouvert. Fermez-le puis relancez /regen.")
+        return False
+    # Choix de l'utilisateur dans le registre : copie complète de l'hôte, ou version désignée
+    ancien = dst if restes else dossier_pointe(dst, pointeur)
+    for rel in pointeur.get("fusionner", []) if ancien else ():
+        n = fusionner_registre(ancien / rel, source / rel)
+        if n:
+            print(f"  {nom} : {n} choix repris dans {rel}")
+    if restes:
+        garde = chemins_aoi.JOURNAL_NOUVEAU / "avant-migration" / slug_addin(nom)
+        if not garde.exists():  # la première copie gardée est celle d'avant la migration
+            tmp = garde.with_name(garde.name + ".tmp")
+            shutil.rmtree(tmp, ignore_errors=True)
+            tmp.mkdir(parents=True)
+            for g in restes + ([f] if f.is_file() else []):
+                (shutil.copytree if g.is_dir() else shutil.copy2)(g, tmp / g.name)
+            (tmp / "destination.txt").write_text(str(dst), encoding="utf-8")
+            tmp.rename(garde)
+    dst.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text(voulu, encoding="utf-8")
+    os.replace(tmp, f)
+    for g in restes:
+        shutil.rmtree(g) if g.is_dir() else g.unlink()
+    print(f"  {nom} : pointeur posé dans {dst} vers {source}")
     return True
 
 
@@ -362,14 +475,19 @@ def etat_dossiers():
         lignes.append("organisation : ancienne, migration à faire : fermez Claude Code et vos logiciels, "
                       f"puis lancez {commande_migration()}")
         resume = "à migrer"
-    plugin = plugin_installe()
+    # Sans plugin inscrit (poste en cours d'installation, essai) : celui de ce script
+    plugin = plugin_installe() or {"version": None, "chemin": Path(__file__).resolve().parents[3]}
     for f in sorted(plugin["chemin"].glob("*-aoi.json")) if plugin else ():
         fiche = lire_json(f) or {}
         if fiche.get("versionne"):
             nom = f.name[:-len("-aoi.json")]
             d = chemins_aoi.dossier_serveur(nom, fiche.get("version"))
             lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}")
-    base = chemins_aoi.base_cortexdb() or chemins_aoi.BASE_CORTEXDB_ANCIENNE
+    for x in addins(plugin) if plugin else ():
+        if x[8]:  # add-in qui a une forme « pointeur »
+            d = dossier_pointe(x[2], x[8])
+            lignes.append(f"add-in {x[0]} : " + (f"pointeur vers {d}" if d else f"copie complète dans {x[2]}"))
+    base =chemins_aoi.base_cortexdb() or chemins_aoi.BASE_CORTEXDB_ANCIENNE
     lignes.append(f"base cortexdb : {base}" + ("" if base.is_file() else " (absente)"))
     if chemins_aoi.migre() and chemins_aoi.BASE_CORTEXDB_ANCIENNE.is_file():
         lignes.append(f"ancienne base gardée : {chemins_aoi.BASE_CORTEXDB_ANCIENNE}")
