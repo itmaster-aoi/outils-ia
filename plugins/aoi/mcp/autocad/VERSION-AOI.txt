@@ -1,0 +1,13 @@
+Origine      : https://github.com/lfoletti/autocad-mcp
+Étiquette    : v0.3.6
+Commit       : f5e64fbf3fdd4b224d367ed886d31b34c47566e5
+Version      : add-in et serveur 0.3.6, 37 outils, 1 prompt(s)
+NuGet        : ModelContextProtocol.AspNetCore 2.3.0 (et leurs dépendances)
+Archive      : autocad-addin-2026-10-28, SHA-256 8d9997fa5bf28aaf11a4ce2f64f00b04d7c285338b01e3b1073459eb7661a416, DLL 0.3.6+f5e64fb
+Importé le   : 28.10.2026 par amont/importer_autocad.py
+Repris       : integration/plugin/mcp/autocad/ (README.md, LICENSE, addin.json)
+Adaptations  : aucune. addin.json garde l'archive écrite par archives/construire.py. Généré : ce fichier.
+SHA-256      :
+  cfa60a8c8152d9b094ef23fef535ce3a46236b91f35ae69d2a7b5c84cc69a096  LICENSE
+  a33d5a4ef9ef1a1da9e09187519466e2c5fc15accaa191900011bcc759954d92  README.md
+  e49d18f553eb8b8206c0b566a0a3911a45d77cf2deded12392a4782400972830  addin.json

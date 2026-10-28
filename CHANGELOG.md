@@ -4,6 +4,16 @@ Une entrée par étiquette du dépôt, la plus récente en haut. L'étiquette es
 
 À chaque nouvelle étiquette : ajouter son entrée ici, dans le même commit que le changement de version de `plugins/aoi/.claude-plugin/plugin.json`. À chaque modification de `installer-poste.ps1` : changer `$VersionInstalleur` (date du jour), sinon les copies dépassées ne sont pas signalées.
 
+## 2026-10-28.1 (plugin 2026.10.28.1)
+
+- Nouveau serveur `plugin:aoi:autocad` pour AutoCAD 2027 (version complète, pas LT) : 37 outils pour lire, contrôler, nettoyer, modifier, tracer en PDF et exporter des dessins DWG, et préparer des lots.
+  - Le serveur est l'add-in lui-même : il tourne dans AutoCAD et répond sur `http://127.0.0.1:1997/mcp`. Entrée `autocad` de `.mcp.json`, type `http`, délai de 600 s pour le tracé et l'export.
+  - Add-in 0.3.6, importé de [lfoletti/autocad-mcp](https://github.com/lfoletti/autocad-mcp), étiquette `v0.3.6`, commit `f5e64fbf3fdd4b224d367ed886d31b34c47566e5` par `amont/importer_autocad.py` (provenance et empreintes dans `mcp/autocad/VERSION-AOI.txt`). Livré par l'archive `autocad-addin-2026-10-28` (`archives/construire.py autocad-addin`). `/regen` le copie dans `%APPDATA%\Autodesk\ApplicationPlugins\aoi-autocad-mcp.bundle`, AutoCAD fermé, si le dossier `%APPDATA%\Autodesk\AutoCAD 2027` existe.
+  - Sans jeton (écoute sur 127.0.0.1, en-tête `Origin` étrangère refusée). DLL non signées : AutoCAD peut demander une fois de charger l'add-in.
+  - `execute_lisp` et `run_command` sont actifs. `"enable_execute": false` dans `%LOCALAPPDATA%\autocad-mcp\config.json` les ferme sur un poste.
+- `archives/construire.py` : partie `autocad-addin`.
+- Nouveau `amont/importer_autocad.py` : importe une étiquette d'un clone de lfoletti/autocad-mcp dans `mcp/autocad/` (contrôle du clone, README, licence, fiche add-in, provenance). Il vérifie que les DLL de l'archive portent le commit importé ; avec `--plugin`, il écrit les versions de `plugin.json` et de `VERSIONS.md`.
+
 ## 2026-10-27.3 (plugin 2026.10.27.3)
 
 - Skill `/aoi:cortexdb`, version 2 : Claude remplace le modèle de langage de cortexdb, avec l'abonnement de l'atelier. Aucun modèle externe n'est configuré, les variables de `.mcp.json` restent vides.

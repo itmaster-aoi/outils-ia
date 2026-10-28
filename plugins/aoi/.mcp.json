@@ -38,6 +38,11 @@
         "CORTEXDB_RERANK_URL": "",
         "CORTEXDB_RERANK_API_KEY": ""
       }
+    },
+    "autocad": {
+      "type": "http",
+      "url": "http://127.0.0.1:1997/mcp",
+      "timeout": 600000
     }
   }
 }

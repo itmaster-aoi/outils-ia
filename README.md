@@ -14,6 +14,7 @@ plugins/aoi/               le plugin de l'atelier
     revit/                          serveur compilé avec outils KG, dépendances figées, add-in Revit 2025, README
     keyshot/                        serveur et pont KeyShot (lfoletti/keyshot-mcp), librairies figées, README
     cortexdb/                       licence, README et provenance de cortexdb (binaire publié à part, archive cortexdb-server)
+    autocad/                        fiche, README et licence de l'add-in AutoCAD 2027, qui est le serveur (archive autocad-addin)
   commands/                       /aoi:remember et /aoi:recall (cortexdb, importées par amont/importer_cortexdb.py)
   controle/                       contrôle des imports Python (guard, liste blanche) et Python embarqué
   skills/
@@ -23,6 +24,7 @@ plugins/aoi/               le plugin de l'atelier
   output-styles/
     ste.md                        style de sortie aoi:ste : rédaction technique simplifiée (ASD-STE100)
 amont/importer_keyshot.py         importe une étiquette de lfoletti/keyshot-mcp (clone fait hors de Claude Code) dans mcp/keyshot
+amont/importer_autocad.py         importe une étiquette de lfoletti/autocad-mcp (clone fait hors de Claude Code) dans mcp/autocad et vérifie le commit des DLL de l'archive
 amont/importer_cortexdb.py        importe /remember et /recall d'une étiquette de itmaster-aoi/cortexdb (clone fait hors de Claude Code)
 VERSIONS.md                       versions de référence validées
 CHANGELOG.md                      journal des changements, une entrée par étiquette

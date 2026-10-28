@@ -1,7 +1,7 @@
 """Construit l'archive d'une partie lourde des outils de l'atelier et écrit sa fiche dans le plugin.
 
     python archives/construire.py <nom> <version>
-    nom : rhino-libs | revit-server | cortexdb-server | rhino-addin | revit-addin
+    nom : rhino-libs | revit-server | cortexdb-server | rhino-addin | revit-addin | autocad-addin
 
 Les parties lourdes (librairies, serveurs compilés, add-ins) ne sont plus dans le plugin : elles
 sont publiées comme versions GitHub du dépôt (<nom>-<version>) et /regen ou l'installeur ne les
@@ -39,6 +39,8 @@ PARTIES = {
                         "temoin": "cortexdb-mcp.exe"},
     "rhino-addin":  {"titre": "Add-in Rhino 8", "fiche": "addin", "serveur": "rhino", "nom": "Rhino 8"},
     "revit-addin":  {"titre": "Add-in Revit 2025", "fiche": "addin", "serveur": "revit", "nom": "Revit 2025"},
+    # Bundle construit dans autocad-mcp (outils/preparer-archive.ps1) : l'add-in est le serveur MCP
+    "autocad-addin": {"titre": "Add-in AutoCAD 2027", "fiche": "addin", "serveur": "autocad", "nom": "AutoCAD 2027"},
 }
 
 # Serveurs lancés depuis l'archive : entrée de .mcp.json et clé qui porte le chemin
