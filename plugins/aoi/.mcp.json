@@ -17,13 +17,18 @@
       ]
     },
     "revit": {
-      "command": "${LOCALAPPDATA}/aoi/node/node.exe",
+      "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
       "args": [
-        "${LOCALAPPDATA}/aoi/revit-server-2026-10-12/build/index.js"
+        "${CLAUDE_PLUGIN_ROOT}/lanceur/lancer.py",
+        "revit"
       ]
     },
     "cortexdb": {
-      "command": "${LOCALAPPDATA}/aoi/cortexdb-server-2.139.1/cortexdb-mcp.exe",
+      "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/lanceur/lancer.py",
+        "cortexdb"
+      ],
       "env": {
         "CORTEXDB_REMOTE": "",
         "CORTEXDB_GRPC_TOKEN": "",

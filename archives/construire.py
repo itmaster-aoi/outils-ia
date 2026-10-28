@@ -43,9 +43,6 @@ PARTIES = {
     "autocad-addin": {"titre": "Add-in AutoCAD 2027", "fiche": "addin", "serveur": "autocad", "nom": "AutoCAD 2027"},
 }
 
-# Serveurs lancés depuis l'archive : entrée de .mcp.json et clé qui porte le chemin
-MCP = {"revit-server": ("revit", "args"), "cortexdb-server": ("cortexdb", "command")}
-
 
 def archiver(source, zip_):
     zip_.parent.mkdir(parents=True, exist_ok=True)
@@ -90,18 +87,11 @@ def main():
                "sha256": sha256(zip_), "taille": zip_.stat().st_size}
 
     if p["fiche"] == "racine":
-        # Installée dans %LOCALAPPDATA%\aoi\<nom>-<version> : le plugin désigne cette version.
+        # Installée dans un dossier <nom>-<version> (chemins_aoi.serveurs()). .mcp.json ne porte
+        # aucune version : lanceur/lancer.py lit celle de cette fiche. Ne pas réécrire .mcp.json ici.
         fiche = PLUGIN / f"{nom}-aoi.json"
         ecrire(fiche, {**archive, "versionne": True, "exe": p["temoin"],
                        **({"conserver": p["conserver"]} if p.get("conserver") else {})})
-        if nom in MCP:  # .mcp.json lance le serveur de cette version
-            serveur, cle = MCP[nom]
-            chemin = f"${{LOCALAPPDATA}}/aoi/{nom}-{version}/{p['temoin']}"
-            mcp = PLUGIN / ".mcp.json"
-            d = json.loads(mcp.read_text(encoding="utf-8"))
-            d["mcpServers"][serveur][cle] = [chemin] if cle == "args" else chemin
-            ecrire(mcp, d)
-        # rhino-libs : mcp/rhino/run.py lit lui-même la version dans rhino-libs-aoi.json
     else:
         fiche = PLUGIN / "mcp" / p["serveur"] / "addin.json"
         donnees = json.loads(fiche.read_text(encoding="utf-8"))
