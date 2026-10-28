@@ -272,7 +272,7 @@ def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, p
     if source is None:
         print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (/regen)"))
         return False
-    if pointeur and chemins_aoi.migre():
+    if pointeur:
         ok = poser_pointeur(nom, source, dst, proc, pointeur, appliquer)
         if ok and appliquer:
             nettoyer_addin(nom, source)
@@ -284,8 +284,7 @@ def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, p
 
 
 def copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer):
-    """Copie complète de l'add-in dans le dossier de l'hôte (ancienne organisation, ou add-in
-    sans forme « pointeur »). Remplace aussi un pointeur laissé par une migration annulée."""
+    """Copie complète de l'add-in dans le dossier de l'hôte (add-in sans forme « pointeur »)."""
     # Fichiers d'une version précédente sous un autre nom : copytree ne les efface pas
     restes = [dst / rel for rel in retirer if (dst / rel).is_file()]
     if restes and not appliquer:
@@ -360,9 +359,10 @@ def fusionner_registre(ancien, nouveau):
 
 
 def poser_pointeur(nom, source, dst, proc, pointeur, appliquer):
-    """Forme « pointeur » (poste migré) : l'hôte ne garde que son manifeste, qui désigne la version
-    de aoi\\addins. La copie complète d'avant est gardée dans journal\\avant-migration\\<add-in>,
-    que migrer-dossiers.cmd --annuler remet en place."""
+    """Forme « pointeur » : l'hôte ne garde que son manifeste, qui désigne la version de aoi\\addins.
+    Une copie complète laissée par une version précédente du plugin est retirée de l'hôte : la même
+    version est dans aoi\\addins, et les choix de l'utilisateur (« fusionner ») sont repris avant.
+    Un retour à une ancienne étiquette remet la copie complète (son /regen recopie l'add-in)."""
     voulu = manifeste_pointeur(source, pointeur)
     f = dst / pointeur["manifeste"]
     restes = [dst / rel for rel in pointeur.get("retirer", []) if (dst / rel).exists()]
@@ -382,16 +382,6 @@ def poser_pointeur(nom, source, dst, proc, pointeur, appliquer):
         n = fusionner_registre(ancien / rel, source / rel)
         if n:
             print(f"  {nom} : {n} choix repris dans {rel}")
-    if restes:
-        garde = chemins_aoi.JOURNAL_NOUVEAU / "avant-migration" / slug_addin(nom)
-        if not garde.exists():  # la première copie gardée est celle d'avant la migration
-            tmp = garde.with_name(garde.name + ".tmp")
-            shutil.rmtree(tmp, ignore_errors=True)
-            tmp.mkdir(parents=True)
-            for g in restes + ([f] if f.is_file() else []):
-                (shutil.copytree if g.is_dir() else shutil.copy2)(g, tmp / g.name)
-            (tmp / "destination.txt").write_text(str(dst), encoding="utf-8")
-            tmp.rename(garde)
     dst.mkdir(parents=True, exist_ok=True)
     tmp = f.with_name(f.name + ".tmp")
     tmp.write_text(voulu, encoding="utf-8")
@@ -465,39 +455,30 @@ def etape(nom, fonction, *args, **kwargs):
 
 
 def etat_dossiers():
-    """Organisation des dossiers du poste (docs/organisation-dossiers.md), sans rien modifier."""
-    lignes = []
-    if chemins_aoi.migre():
-        t = lire_json(chemins_aoi.TEMOIN) or {}
-        lignes.append(f"organisation : nouvelle (migrée le {t.get('date', '?')} par {t.get('compte', '?')})")
-        resume = "migré"
-    else:
-        lignes.append("organisation : ancienne, migration à faire : fermez Claude Code et vos logiciels, "
-                      f"puis lancez {commande_migration()}")
-        resume = "à migrer"
+    """Organisation des dossiers du poste (docs/organisation-dossiers.md), sans rien modifier.
+    « a_jour » : chaque serveur est dans serveurs\\, aucune ancienne installation ne reste et chaque
+    add-in qui a une forme « pointeur » l'utilise. Sinon, le /regen suivant termine le passage."""
+    lignes, ecarts = [], 0
     # Sans plugin inscrit (poste en cours d'installation, essai) : celui de ce script
     plugin = plugin_installe() or {"version": None, "chemin": Path(__file__).resolve().parents[3]}
-    for f in sorted(plugin["chemin"].glob("*-aoi.json")) if plugin else ():
+    for f in sorted(plugin["chemin"].glob("*-aoi.json")):
         fiche = lire_json(f) or {}
         if fiche.get("versionne"):
             nom = f.name[:-len("-aoi.json")]
             d = chemins_aoi.dossier_serveur(nom, fiche.get("version"))
-            lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}")
-    for x in addins(plugin) if plugin else ():
+            restes = [r for b in (chemins_aoi.SERVEURS, chemins_aoi.ANCIEN) for r in b.glob(f"{nom}-*")
+                      if r.is_dir() and r != d and not r.name.endswith((".tmp", ".a-effacer"))]
+            ecarts += (d is None or d.parent != chemins_aoi.SERVEURS) + len(restes)
+            lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}"
+                          + "".join(f"\n  ancienne installation à effacer : {r}" for r in restes))
+    for x in addins(plugin):
         if x[8]:  # add-in qui a une forme « pointeur »
             d = dossier_pointe(x[2], x[8])
+            ecarts += d is None
             lignes.append(f"add-in {x[0]} : " + (f"pointeur vers {d}" if d else f"copie complète dans {x[2]}"))
-    base =chemins_aoi.base_cortexdb() or chemins_aoi.BASE_CORTEXDB_ANCIENNE
-    lignes.append(f"base cortexdb : {base}" + ("" if base.is_file() else " (absente)"))
-    if chemins_aoi.migre() and chemins_aoi.BASE_CORTEXDB_ANCIENNE.is_file():
-        lignes.append(f"ancienne base gardée : {chemins_aoi.BASE_CORTEXDB_ANCIENNE}")
-    return {"migre": chemins_aoi.migre(), "resume": resume, "lignes": lignes}
-
-
-def commande_migration():
-    plugin = plugin_installe()
-    racine = plugin["chemin"] if plugin else Path(__file__).resolve().parents[3]
-    return f'"{racine / "migrer-dossiers.cmd"}"'
+    lignes.append(f"journal : {chemins_aoi.JOURNAL}")
+    return {"a_jour": not ecarts, "resume": "à jour" if not ecarts else f"{ecarts} point(s) au prochain /regen",
+            "lignes": lignes}
 
 
 def finir(avant, apres):
@@ -514,10 +495,10 @@ def finir(avant, apres):
     echecs += not etape("nettoyage du cache", nettoyer_cache, avant, apres)
     if not echecs:
         try:
-            for vieux in chemins_aoi.journal().glob("finir-*.ok"):
+            for vieux in chemins_aoi.JOURNAL.glob("finir-*.ok"):
                 vieux.unlink()
-            chemins_aoi.journal().mkdir(parents=True, exist_ok=True)
-            (chemins_aoi.journal() / f"finir-{apres['version']}.ok").write_text(
+            chemins_aoi.JOURNAL.mkdir(parents=True, exist_ok=True)
+            (chemins_aoi.JOURNAL / f"finir-{apres['version']}.ok").write_text(
                 time.strftime("%Y-%m-%dT%H:%M:%S"), encoding="utf-8")
         except OSError as e:
             print(f"  ÉCHEC : témoin de fin non écrit ({e})")
@@ -585,7 +566,7 @@ def demarrage():
         imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
         etat = etat_session(plugin)
         avant = lire_json(chemins_aoi.lire_journal("session.json")) or {}
-        f = chemins_aoi.journal() / "session.json"
+        f = chemins_aoi.JOURNAL / "session.json"
         lignes = []
         if avant and avant.get("version") != etat["version"]:
             lignes.append(("Plugin aoi", avant.get("version") or "-", etat["version"] or "-"))
@@ -604,9 +585,9 @@ def demarrage():
         f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
         # finir() d'une version écrit son témoin à la fin. Un témoin d'une autre version sans
         # celui de la version installée : /regen interrompu, ou /regen trop ancien pour --finir.
-        temoins = list(chemins_aoi.journal().glob("finir-*.ok"))
+        temoins = list(chemins_aoi.JOURNAL.glob("finir-*.ok"))
         finir_manque = bool(plugin and temoins
-                            and not (chemins_aoi.journal() / f"finir-{plugin['version']}.ok").is_file())
+                            and not (chemins_aoi.JOURNAL / f"finir-{plugin['version']}.ok").is_file())
     finally:
         sys.stdout = sys.__stdout__
     # Bilan affiché à l'utilisateur à chaque session (systemMessage). Il n'est pas transmis à
@@ -633,15 +614,12 @@ def demarrage():
             texte.append(f"ATTENTION : add-in {x[0]} : {x[6]}")
     if finir_manque:
         texte.append("ATTENTION : la dernière mise à jour n'est pas allée au bout. Tapez /aoi:regen.")
-    migre = chemins_aoi.migre()
-    if plugin and not migre and (plugin["chemin"] / "migrer-dossiers.cmd").is_file():
-        texte.append("Dossiers des outils à migrer (une seule fois) : fermez Claude Code et vos logiciels, "
-                     f"puis lancez {commande_migration()}")
     print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
     try:  # trace du crochet : qu'il tourne, sa durée, et l'organisation des dossiers (relevé de l'IT)
-        with open(chemins_aoi.journal() / "demarrage.log", "a", encoding="utf-8") as f:
+        dossiers = etat_dossiers()["resume"] if plugin else "?"
+        with open(chemins_aoi.JOURNAL / "demarrage.log", "a", encoding="utf-8") as f:
             f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')}  {etat['version']}  {time.time() - debut:.1f} s"
-                    f"  nouveautés : {len(lignes)}  dossiers : {'migré' if migre else 'à migrer'}\n")
+                    f"  nouveautés : {len(lignes)}  dossiers : {dossiers}\n")
     except OSError:
         pass
     return 0
@@ -683,7 +661,7 @@ def main():
     if a.verifier_dossiers:
         etat = etat_dossiers()
         print("\n".join(etat["lignes"]))
-        return 0 if etat["migre"] else 3
+        return 0 if etat["a_jour"] else 3
     if a.finir:
         apres = plugin_installe()
         if not apres:
@@ -739,7 +717,7 @@ def prendre_verrou():
     """Verrou de /regen pour ce compte (deux sessions qui lancent /regen ensemble se
     marcheraient dessus : catalogue, archives .zip et .tmp). Un verrou laissé par un /regen
     arrêté net (processus disparu) est repris. Renvoie le fichier, ou None s'il est pris."""
-    f = chemins_aoi.journal() / "regen.verrou"
+    f = chemins_aoi.JOURNAL / "regen.verrou"
     f.parent.mkdir(parents=True, exist_ok=True)
     for _ in range(2):
         try:

@@ -1,10 +1,11 @@
-"""Lance un serveur MCP de l'atelier publié à part du plugin, depuis l'organisation de dossiers active.
+"""Lance un serveur MCP de l'atelier publié à part du plugin.
 
     controle/runtime/python.exe lanceur/lancer.py cortexdb|revit
 
-Entrée de .mcp.json. Le lanceur trouve le dossier du serveur (fiche <nom>-server-aoi.json et
-skills/regen/scripts/chemins_aoi.py), pose ses variables, puis le lance avec les flux standard
-hérités : Claude Code dialogue directement avec le serveur. Il ne migre rien (migrer_dossiers.py).
+Entrée de .mcp.json, sans numéro de version. Le lanceur trouve le dossier du serveur (fiche
+<nom>-server-aoi.json et skills/regen/scripts/chemins_aoi.py : serveurs\\, sinon l'ancien
+emplacement), puis le lance avec les flux standard hérités : Claude Code dialogue directement
+avec le serveur.
 
 - Le serveur tourne dans un Job Object Windows (KILL_ON_JOB_CLOSE) : si Claude Code tue le
   lanceur, Windows arrête aussi le serveur. Sans lui, le serveur resterait orphelin, la base ouverte.
@@ -73,10 +74,7 @@ def main():
         dire(f"{nom} {fiche['version']} n'est pas installé sur ce poste : tapez /aoi:regen.")
         return 1
     env = dict(os.environ)
-    if serveur == "cortexdb":
-        base = chemins_aoi.base_cortexdb()
-        if base is not None:
-            env["CORTEXDB_PATH"] = str(base)
+    if serveur == "cortexdb":  # base dans ~\.cortexdb, l'emplacement par défaut de cortexdb
         commande = [str(dossier / fiche["exe"])]
     else:
         commande = [str(chemins_aoi.AOI / "node" / "node.exe"), str(dossier / fiche["exe"])]

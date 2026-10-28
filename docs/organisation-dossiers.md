@@ -1,6 +1,29 @@
 # Organisation des dossiers d'installation AOI
 
-Étude du 28.10.2026, version 3. La version 2 intégrait des essais et une relecture adversariale. La version 3 remplace les 8 étiquettes de migration par une solution mixte : une étiquette qui lit les deux organisations, puis un script de migration lancé sur chaque poste. État : validée. Étiquette M réalisée (plugin 2026.10.28.3, voir « Réalisation de l'étiquette M ») ; aucun poste n'est migré.
+Étude du 28.10.2026, version 4. La version 2 intégrait des essais et une relecture adversariale. La version 3 prévoyait une étiquette qui lit les deux organisations, puis un script de migration sur chaque poste. **La version 4 supprime le script : la base cortexdb reste dans `~\.cortexdb`, et `/regen` fait tout le passage** (voir « Version 4 »). Les sections de la version 3 sur le script restent comme historique. État : réalisée dans le plugin 2026.10.28.3, pas encore déployée.
+
+## Version 4 : passage par `/regen`, sans migration
+
+Décision de l'IT du 28.10.2026 : la base cortexdb reste dans `~\.cortexdb`, l'emplacement par défaut de cortexdb. C'est une exception à la règle, comme `C:\ProgramData\aoi`.
+
+Raison : le script de la version 3 existait surtout pour copier cette base, ce qui exige Claude Code fermé. Sans cette copie, rien ne demande un geste en dehors de `/regen`.
+
+| Élément | Ce que fait `/regen` (plugin 2026.10.28.3) |
+|---|---|
+| Serveurs cortexdb et Revit | installés dans `aoi\serveurs\<nom>-<v>`. `lancer.py` prend ce dossier, sinon l'ancien (racine de `aoi`). L'ancien dossier est effacé quand il est libre, au même `/regen` ou au suivant |
+| `revit-data.db` (fichier « conserver ») | copié depuis l'ancien dossier. Si l'ancienne base est modifiée après la copie (session en cours), l'ancien dossier est gardé et `/regen` affiche une alerte pour l'IT |
+| Journaux (`session.json`, `demarrage.log`, témoins, verrou) | écrits dans `aoi\journal` ; l'ancien fichier est lu s'il manque |
+| Add-in Revit 2025 | forme « pointeur » : le dossier de Revit garde seulement le manifeste `.addin`, avec un chemin absolu vers `aoi\addins`. Les choix `enabled` de `commandRegistry.json` sont repris. Revit doit être fermé |
+| Base cortexdb | ne bouge pas (`~\.cortexdb`) |
+| KeyShot, AutoCAD, Rhino | inchangés, copie complète. KeyShot et AutoCAD passeront en pointeur avec de nouvelles étiquettes de leurs projets amont |
+
+Geste d'un utilisateur : `/aoi:regen`, puis redémarrer Claude Code, comme pour toute mise à jour. Pas de script, pas de témoin, pas d'étiquette N : les anciens dossiers s'effacent d'eux-mêmes.
+
+Retour à une ancienne étiquette : l'ancien plugin réinstalle ses serveurs à l'ancien emplacement et recopie l'add-in Revit en entier (Revit fermé). La base cortexdb ne bouge jamais, donc aucun risque de divergence.
+
+`maj.py --verifier-dossiers` donne l'état : serveurs, anciennes installations encore présentes, add-in Revit. Code 0 si tout est passé, 3 sinon. La ligne `dossiers :` de `journal\demarrage.log` le note à chaque démarrage.
+
+Points reportés : `revit-data.db` dans `donnees\revit` (nouvelle version du serveur Revit), KeyShot et AutoCAD (étiquettes amont).
 
 ## Objectif
 
@@ -95,27 +118,16 @@ Comparaison avec la version 2 de l'étude :
   - Verrou `journal\regen.verrou` : un seul `/regen` à la fois.
 - **Les nouvelles versions des add-ins KeyShot et AutoCAD** qui acceptent un pointeur (étiquettes amont, voir plus bas). Si elles ne sont pas prêtes, M part sans elles : KeyShot et AutoCAD restent en copie complète, et une étiquette suivante les ajoute.
 
-### Réalisation de l'étiquette M (plugin 2026.10.28.3)
+### Ce qui reste valable de cette liste dans la version 4
 
-Décisions de l'IT du 28.10.2026 : M part sans KeyShot ni AutoCAD, et la base du serveur Revit reste en place.
+- Fait : `chemins_aoi.py`, `lancer.py`, `.mcp.json` sans version, `construire.py`, les corrections de la relecture (`with_suffix`, `finir()` protégé et son témoin, verrou de `/regen`, `controle_si_besoin()`), l'add-in Revit en pointeur, l'effacement d'une ancienne version d'add-in seulement après le passage de l'hôte.
+- Abandonné : le script, le témoin, `--annuler`, la copie de la base cortexdb, `donnees\cortexdb`.
+- Non fait : l'appel à `--finir` dans `installer-poste.ps1`. `finir()` renvoie toujours 0, et l'installeur perdrait les échecs de son bilan. `--addins` couvre les add-ins.
+- Le registre des commandes Revit reste dans le dossier de la version (`aoi\addins\revit-2025-<v>`), et non dans `donnees\revit`.
+- L'étiquette `2026-10-28.2`, partielle, a été supprimée avant tout déploiement.
+- À essayer sur le poste de test : l'avertissement de Revit sur les add-ins non signés quand `<Assembly>` change de chemin.
 
-| Point de M | État |
-|---|---|
-| `chemins_aoi.py`, `lancer.py`, `migrer-dossiers.cmd`, témoin, `--annuler`, détection de divergence | fait |
-| Copie des serveurs, de la base cortexdb (contrôlée) et des journaux | fait |
-| Add-in Revit en forme « pointeur » : manifeste `.addin` avec chemin absolu vers `aoi\addins`, copie complète gardée dans `journal\avant-migration\revit-2025`, choix `enabled` de `commandRegistry.json` repris à chaque version, remise en place par `--annuler` | fait ; le registre reste dans le dossier de la version, pas dans `donnees\revit` |
-| Refus si `Revit.exe` est ouvert ; contrôle de l'espace libre | fait |
-| Corrections de la relecture : `with_suffix`, `finir()` protégé et témoin, verrou de `/regen`, `controle_si_besoin()` | fait |
-| Effacement d'une ancienne version d'add-in seulement après le passage de l'hôte à la nouvelle | fait |
-| `revit-data.db` dans `donnees\revit` | reporté : le chemin est fixé dans le serveur compilé (`build/database/db.js:8`). Demande une nouvelle version de `lfoletti/mcp-servers-for-revit` |
-| KeyShot et AutoCAD en forme « lanceur » ou « pointeur » ; copie de leurs réglages | reporté : demande des étiquettes amont de `keyshot-mcp` et `autocad-mcp` |
-| `installer-poste.ps1` appelle `--finir` | non fait : `finir()` renvoie toujours 0 et l'installeur perdrait les échecs de son bilan. `--addins` couvre les add-ins |
-
-L'étiquette `2026-10-28.2` contenait une partie de M sans ces ajouts. Elle a été supprimée avant tout déploiement.
-
-À essayer sur le poste de test : l'avertissement de Revit sur les add-ins non signés quand `<Assembly>` change de chemin.
-
-### Ce que fait le script `migrer-dossiers`
+### Ce que fait le script `migrer-dossiers` (version 3, abandonné)
 
 Le script travaille pour le compte Windows qui le lance. Il est idempotent : relancé, il reprend où il s'est arrêté.
 

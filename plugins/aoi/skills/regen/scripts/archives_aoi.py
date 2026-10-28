@@ -77,23 +77,43 @@ def effacer_si_libre(d):
     return True
 
 
+def retirer_ancienne(d, dest, conserver, nom):
+    """Efface une ancienne installation d'un serveur, seulement si elle est libre (renommage refusé
+    par Windows sinon) et si ses fichiers « conserver » ne sont pas plus récents que leur copie
+    dans dest : la session en cours a pu y écrire après la copie, avant de redémarrer sur dest."""
+    for rel in conserver:
+        a, n = d / rel, dest / rel
+        if a.is_file() and not n.is_file():
+            n.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(a, n)
+            print(f"{nom} : {rel} repris de {d}")
+        elif a.is_file() and a.stat().st_mtime > n.stat().st_mtime + 1:
+            print(f"ATTENTION : {nom} : {a} a été modifié après sa copie dans {dest}. "
+                  f"L'ancien dossier est gardé ; contactez l'IT, qui choisit le fichier à garder.")
+            return False
+    if effacer_si_libre(d):
+        print(f"{nom} : ancienne installation effacée : {d}")
+        return True
+    print(f"{nom} : ancienne installation encore utilisée, effacée au prochain /regen : {d}")
+    return False
+
+
 def installer_versionne(fiche, dossier, nom, verifier):
-    """Partie installée dans un dossier par version (<serveurs>\\<nom>-<version>, voir chemins_aoi) :
+    """Partie installée dans un dossier par version (serveurs\\<nom>-<version>, voir chemins_aoi) :
     la nouvelle version s'installe à côté de celle qu'utilise peut-être la session en cours.
     lanceur/lancer.py désigne la version de la fiche. Les fichiers « conserver » (données locales)
-    sont repris de la version précédente, cherchée dans les deux organisations ; seules les
-    anciennes versions de l'organisation active sont effacées, dès qu'elles ne sont plus utilisées.
-    Celles de l'ancienne organisation restent pour un retour arrière de la console."""
+    sont repris de l'installation précédente, dans serveurs\\ ou à l'ancien emplacement (racine de
+    %LOCALAPPDATA%\\aoi). Les anciennes installations sont effacées dès qu'elles sont libres."""
     voulue = fiche["version"]
-    racine = chemins_aoi.serveurs()
+    racine = chemins_aoi.SERVEURS
     dest = racine / f"{dossier}-{voulue}"
+    conserver = fiche.get("conserver", [])
 
     def versions(base):
         return [d for d in base.glob(f"{dossier}-*")
                 if d.is_dir() and d != dest and not d.name.endswith((".tmp", ".a-effacer"))]
-    anciennes = sorted(versions(racine), key=lambda d: d.stat().st_mtime, reverse=True)
-    autre = chemins_aoi.AOI if racine != chemins_aoi.AOI else chemins_aoi.SERVEURS_NOUVEAU
-    sources = sorted(anciennes + versions(autre), key=lambda d: d.stat().st_mtime, reverse=True)
+    anciennes = sorted(versions(racine) + versions(chemins_aoi.ANCIEN), key=lambda d: d.stat().st_mtime, reverse=True)
+    sources = list(anciennes)
     if dest.is_dir():
         # Installation incomplète de cette version (interrompue, ou fichiers retirés par l'antivirus) :
         # ses données sont les plus récentes et le dossier sera remplacé (revit-data.db perdu le 28.10.2026).
@@ -101,11 +121,15 @@ def installer_versionne(fiche, dossier, nom, verifier):
     if (dest / "aoi-version.txt").is_file() and (dest / fiche["exe"]).is_file():
         print(f"{nom} : à jour ({voulue}, {dest})")
         for d in anciennes:
-            if not verifier and effacer_si_libre(d):
-                print(f"{nom} : ancienne version {d.name} effacée")
+            if verifier:
+                print(f"{nom} : ancienne installation à effacer avec /regen : {d}")
+            else:
+                retirer_ancienne(d, dest, conserver, nom)
         return True
     if verifier:
-        print(f"{nom} : version validée {voulue} à installer avec /regen")
+        actuel = chemins_aoi.dossier_serveur(dossier, voulue)
+        print(f"{nom} : version validée {voulue} à " + (f"réinstaller dans {racine} avec /regen (aujourd'hui : {actuel})"
+                                                       if actuel else "installer avec /regen"))
         return False
 
     racine.mkdir(parents=True, exist_ok=True)
@@ -122,7 +146,7 @@ def installer_versionne(fiche, dossier, nom, verifier):
         if not (neuf / fiche["exe"]).is_file():
             print(f"ÉCHEC : archive {nom} incomplète ({fiche['exe']} absent).")
             return False
-        for rel in fiche.get("conserver", []):
+        for rel in conserver:
             precedent = next((d for d in sources if (d / rel).is_file()), None)
             if precedent:
                 (neuf / rel).parent.mkdir(parents=True, exist_ok=True)
@@ -142,10 +166,7 @@ def installer_versionne(fiche, dossier, nom, verifier):
         shutil.rmtree(neuf, ignore_errors=True)
     print(f"{nom} : version {voulue} installée dans {dest}")
     for d in anciennes:
-        if effacer_si_libre(d):
-            print(f"{nom} : ancienne version {d.name} effacée")
-        else:
-            print(f"{nom} : ancienne version {d.name} encore utilisée, effacée au prochain /regen")
+        retirer_ancienne(d, dest, conserver, nom)
     return True
 
 
