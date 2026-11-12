@@ -1,0 +1,2 @@
+[console_scripts]
+rhinomcp = rhinomcp.server:main

@@ -1,0 +1,72 @@
+"""Copie le contrôle des imports Python dans un dossier fixe.
+
+    activer_controle.py              copie le contrôle et la liste blanche dans C:\\ProgramData\\aoi
+    activer_controle.py --verifier   indique seulement si le contrôle est en place
+    activer_controle.py --si-besoin  copie seulement si la copie diffère (crochet de démarrage)
+
+Le réglage env.PYTHONPATH de Claude Code désigne ce dossier fixe, alors que le dossier du plugin
+change à chaque version. Ce script tient la copie à jour ; il ne modifie ni le registre ni les
+variables du compte Windows.
+N'utilise que la bibliothèque standard.
+"""
+import argparse
+import filecmp
+import os
+import shutil
+import sys
+from pathlib import Path
+
+RACINE = Path(__file__).resolve().parent.parent
+DEST = Path(os.environ.get("ProgramData") or r"C:\ProgramData") / "aoi"
+GUARD = DEST / "guard"
+FICHIERS = [(RACINE / "guard" / "sitecustomize.py", GUARD / "sitecustomize.py"),
+            (RACINE / "whitelist.txt", DEST / "whitelist.txt")]
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+
+def copie_a_jour():
+    return all(d.is_file() and filecmp.cmp(s, d, shallow=False) for s, d in FICHIERS)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--verifier", action="store_true")
+    ap.add_argument("--si-besoin", action="store_true", help="copier seulement si la copie diffère (crochet de démarrage)")
+    a = ap.parse_args()
+
+    if a.si_besoin and copie_a_jour():
+        print(f"Copie du contrôle ({GUARD}) : à jour")
+        return 0
+    if not a.verifier:
+        try:
+            GUARD.mkdir(parents=True, exist_ok=True)
+            for s, d in FICHIERS:
+                shutil.copy2(s, d)
+        except OSError as e:
+            print(f"ÉCHEC : copie du contrôle dans {GUARD} impossible ({e}).")
+            return 1
+        print(f"Contrôle copié dans {GUARD}")
+
+    copie = copie_a_jour()
+    print(f"Copie du contrôle ({GUARD}) : {'à jour' if copie else 'absente ou ancienne'}")
+    if a.verifier:
+        # Seule une commande lancée par Claude Code voit son PYTHONPATH. Hors de Claude Code,
+        # seule la copie se vérifie.
+        if not os.environ.get("CLAUDECODE"):
+            print("PYTHONPATH de Claude Code : vérifié au démarrage de Claude Code, pas ici")
+            return 0 if copie else 1
+        pp = os.environ.get("PYTHONPATH", "")
+        actif = os.path.normcase(os.path.normpath(pp)) == os.path.normcase(str(GUARD)) if pp else False
+        print(f"PYTHONPATH de cette commande : {pp or '(vide)'}")
+        print("CONTRÔLE EN PLACE" if copie and actif else
+              "CONTRÔLE INACTIF : vérifier le réglage env.PYTHONPATH de Claude Code")
+        return 0 if copie and actif else 1
+    return 0 if copie else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

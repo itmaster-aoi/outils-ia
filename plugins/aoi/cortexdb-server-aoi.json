@@ -1,0 +1,8 @@
+{
+  "version": "2.139.1",
+  "url": "https://github.com/itmaster-aoi/outils-ia/releases/download/cortexdb-server-2.139.1/cortexdb-server-2.139.1.zip",
+  "sha256": "d4531260dee944f3faa98bdafd3293690538f88d84437cbd9c4653b6ba65351d",
+  "taille": 12215772,
+  "versionne": true,
+  "exe": "cortexdb-mcp.exe"
+}

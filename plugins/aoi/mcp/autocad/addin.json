@@ -1,0 +1,16 @@
+{
+  "add-ins": [
+    {
+      "nom": "AutoCAD 2027",
+      "si_existe": "%APPDATA%/Autodesk/AutoCAD 2027",
+      "destination": "%APPDATA%/Autodesk/ApplicationPlugins/aoi-autocad-mcp.bundle",
+      "processus": "acad.exe",
+      "archive": {
+        "version": "2026-10-28",
+        "url": "https://github.com/itmaster-aoi/outils-ia/releases/download/autocad-addin-2026-10-28/autocad-addin-2026-10-28.zip",
+        "sha256": "8d9997fa5bf28aaf11a4ce2f64f00b04d7c285338b01e3b1073459eb7661a416",
+        "taille": 856998
+      }
+    }
+  ]
+}

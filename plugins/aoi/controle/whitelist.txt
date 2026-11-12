@@ -1,0 +1,48 @@
+# Liste blanche des librairies Python
+#
+# Un nom par ligne : le nom utilisé dans `import`, qui peut différer du nom du paquet pip.
+# La bibliothèque standard de Python est toujours acceptée et n'a pas à figurer ici.
+# Les dépendances d'une librairie acceptée sont acceptées quand c'est elle qui les importe.
+#
+
+# Tableurs, documents, PDF
+openpyxl        # pip : openpyxl
+docx            # pip : python-docx
+pptx            # pip : python-pptx
+pypdf           # pip : pypdf
+pymupdf         # pip : pymupdf (licence AGPL-3.0)
+fitz            # pip : pymupdf, ancien nom d'import
+reportlab       # pip : reportlab
+
+# Données et calcul
+numpy           # pip : numpy
+pandas          # pip : pandas
+sklearn         # pip : scikit-learn (pas dans le Python AOI)
+skimage         # pip : scikit-image (pas dans le Python AOI)
+
+# Images et graphiques
+PIL             # pip : pillow
+matplotlib      # pip : matplotlib
+
+# Divers
+yaml            # pip : pyyaml
+requests        # pip : requests
+
+# Graphes de connaissances
+graphify        # clone GitHub Graphify-Labs/graphify (paquet pip graphifyy), installé dans le Python AOI
+networkx        # pip : networkx, dépendance de graphify que la skill importe aussi directement
+
+# Développement
+mcp
+pydantic
+
+# PyWin32
+pywintypes      # pip : pywin32, types de base
+pythoncom       # pip : pywin32, COM
+win32com        # pip : pywin32, automatisation COM (ex. piloter une application)
+win32api        # pip : pywin32
+win32con        # pip : pywin32, constantes Windows
+win32gui
+win32process
+win32file
+win32clipboard

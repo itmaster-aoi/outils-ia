@@ -1,0 +1,18 @@
+{
+  "name": "aoi",
+  "description": "Dépôt de travail : outils pour Claude Code (serveurs MCP, skills, style de sortie).",
+  "owner": {
+    "name": "itmaster-aoi",
+    "url": "https://github.com/itmaster-aoi"
+  },
+  "plugins": [
+    {
+      "name": "aoi",
+      "source": "./plugins/aoi",
+      "description": "Serveurs MCP plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad ; skills /aoi:adhd, /aoi:graphify, /aoi:cortexdb, /aoi:d5-lite-rhino ; commandes /aoi:remember, /aoi:recall ; style de sortie aoi:ste."
+    }
+  ],
+  "renames": {
+    "aoi-outils": "aoi"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "aoi",
+  "version": "2026.11.12.3",
+  "description": "Serveurs MCP, skills et style de sortie, avec leurs dépendances figées.",
+  "author": {
+    "name": "itmaster-aoi",
+    "url": "https://github.com/itmaster-aoi"
+  }
+}

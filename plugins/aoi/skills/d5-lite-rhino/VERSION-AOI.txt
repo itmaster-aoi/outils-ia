@@ -1,0 +1,11 @@
+Origine      : code de ce dépôt
+Version      : 1.0.0
+Testé avec   : D5 Lite pour Rhino 1.2.0.0017 (Beta), D5LiteWorkflowCli API 1,
+               contrats sha256:f2cc11f00b949698d61661b9ea8cf95c33855c0b3583dc6b17136d3ea246d344,
+               Rhino 8, Windows 11, Python AOI 3.12
+Dépendances  : D5 Lite pour Rhino (installé par D5 Launcher, par utilisateur) ; serveur plugin:aoi:rhino ;
+               Python AOI (bibliothèque standard ; Pillow et numpy pour la commande « comparer »)
+Non repris   : le skill officiel de D5 « d5lite-ops-author » (écrit pour SketchUp) et la documentation
+               de la CLI livrée par D5. Le skill appelle la CLI installée sur le poste, sans la copier.
+Essais       : essais\campagne.py (98 cas), essais\essai_d5mat.py (38 cas), essais\LISEZMOI.md
+Limites      : CLI en Bêta ; passage vers D5 Render non testé ; testé sur une scène d'essai

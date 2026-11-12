@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "rhino": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "-I",
+        "-S",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/rhino/run.py"
+      ]
+    },
+    "keyshot": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "-I",
+        "-S",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/keyshot/run.py"
+      ]
+    },
+    "revit": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/lanceur/lancer.py",
+        "revit"
+      ]
+    },
+    "cortexdb": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/lanceur/lancer.py",
+        "cortexdb"
+      ],
+      "env": {
+        "CORTEXDB_REMOTE": "",
+        "CORTEXDB_GRPC_TOKEN": "",
+        "CORTEXDB_EMBED_BASE_URL": "",
+        "CORTEXDB_EMBED_API_KEY": "",
+        "OPENAI_BASE_URL": "",
+        "OPENAI_API_KEY": "",
+        "CORTEXDB_LLM_BASE_URL": "",
+        "CORTEXDB_LLM_URL": "",
+        "CORTEXDB_LLM_API_KEY": "",
+        "CORTEXDB_RERANK_BASE_URL": "",
+        "CORTEXDB_RERANK_URL": "",
+        "CORTEXDB_RERANK_API_KEY": ""
+      }
+    },
+    "autocad": {
+      "type": "http",
+      "url": "http://127.0.0.1:1997/mcp",
+      "timeout": 600000
+    }
+  }
+}

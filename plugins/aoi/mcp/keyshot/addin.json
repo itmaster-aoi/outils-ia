@@ -1,0 +1,17 @@
+{
+  "add-ins": [
+    {
+      "nom": "KeyShot Studio",
+      "si_existe": "%PUBLIC%/Documents/KeyShot Studio",
+      "source": "addin/Scripts",
+      "destination": "%PUBLIC%/Documents/KeyShot Studio/Scripts",
+      "processus": "keyshot.exe",
+      "retirer": [
+        "aoi_keyshot_bridge.py",
+        "aoi_keyshot_stop.py",
+        "MCP server start.py",
+        "MCP server stop.py"
+      ]
+    }
+  ]
+}

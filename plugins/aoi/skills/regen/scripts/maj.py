@@ -1,0 +1,820 @@
+"""Met le plugin aoi à l'étiquette imposée par les managed settings.
+Lancé Claude Code fermé.
+
+    maj.py              état du poste, sans rien changer
+    maj.py --appliquer  inscrit le catalogue à l'étiquette imposée, met le plugin à jour, puis
+                        passe la main au maj.py de la nouvelle version (--finir) : add-ins,
+                        contrôle des imports, Python et Node AOI, nettoyage du cache
+
+N'utilise que la bibliothèque standard. L'étiquette vient toujours des managed settings
+(~/.claude/remote-settings.json) : ce script ne choisit jamais lui-même une version.
+Claude Code n'écrit ce fichier qu'au démarrage d'un processus « claude » : le script en lance
+un (lecture seule) pour le rafraîchir, sans qu'il faille redémarrer la session.
+"""
+import argparse
+import filecmp
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+import zipfile
+from pathlib import Path
+
+DEPOT = "itmaster-aoi/outils-ia"
+PLUGIN = "aoi@aoi"
+CLAUDE = Path.home() / ".claude"
+# Le Python « embeddable » du plugin (fichier ._pth) n'ajoute pas le dossier du script à sys.path :
+# sans cette ligne, « import archives_aoi » échoue alors qu'il marche avec un Python complet.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import chemins_aoi  # noqa: E402
+
+AOI = chemins_aoi.AOI
+# Consignes affichées aux utilisateurs : la mise à jour se lance hors de Claude Code
+RELANCER = "relancez upgrader-outils.cmd"
+LANCER_REGEN = "fermez Claude Code, puis lancez upgrader-outils.cmd"
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
+
+def lire_json(chemin):
+    try:
+        return json.loads(Path(chemin).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def ref_imposee():
+    pol = lire_json(CLAUDE / "remote-settings.json") or {}
+    return (((pol.get("extraKnownMarketplaces") or {}).get("aoi") or {}).get("source") or {}).get("ref")
+
+
+def ref_inscrite():
+    ins = lire_json(CLAUDE / "plugins" / "known_marketplaces.json") or {}
+    return ((ins.get("aoi") or {}).get("source") or {}).get("ref")
+
+
+# Forme d'une étiquette du dépôt : 2026-10-12 ou 2026-11-12.1
+FORME_ETIQUETTE = re.compile(r"^\d{4}-\d{2}-\d{2}(\.\d+)?$")
+
+
+def refs_autorisees():
+    """Étiquettes que strictKnownMarketplaces autorise pour ce dépôt."""
+    pol = lire_json(CLAUDE / "remote-settings.json") or {}
+    return [e.get("ref") for e in pol.get("strictKnownMarketplaces") or []
+            if isinstance(e, dict) and e.get("repo") == DEPOT]
+
+
+def defaut_etiquette(imposee):
+    """Renvoie ce qui cloche dans l'étiquette imposée, ou None.
+
+    Contrôle fait AVANT de retirer le catalogue : une étiquette mal formée ou refusée par
+    strictKnownMarketplaces laisserait le poste sans plugin. Aucune correction n'est faite ici :
+    Claude Code lit la même règle, elle doit être juste."""
+    if not isinstance(imposee, str) or not FORME_ETIQUETTE.match(imposee):
+        return (f"extraKnownMarketplaces impose l'étiquette {imposee!r}. Forme attendue : "
+                "2026-11-12.1, sans espace ni autre caractère.")
+    autorisees = refs_autorisees()
+    if autorisees and imposee not in autorisees:
+        return (f"extraKnownMarketplaces impose {imposee!r}, mais strictKnownMarketplaces "
+                f"n'autorise que {', '.join(repr(r) for r in autorisees)}. Les deux règles doivent "
+                "porter la même étiquette.")
+    return None
+
+
+def plugin_installe():
+    d = lire_json(CLAUDE / "plugins" / "installed_plugins.json") or {}
+    entrees = (d.get("plugins") or d).get(PLUGIN) or []
+    if not entrees:
+        return None
+    e = entrees[0]
+    chemin = Path(e.get("installPath", ""))
+    if not chemin.is_dir():
+        return None
+    # Plugin en portée « managed » : « claude plugin update » met la nouvelle version dans le cache
+    # sans toujours corriger installed_plugins.json. On prend
+    # alors la version du catalogue inscrit, si elle est déjà dans le cache.
+    catalogue = ((lire_json(CLAUDE / "plugins" / "known_marketplaces.json") or {}).get("aoi") or {}).get("installLocation")
+    voulue = (lire_json(Path(catalogue or CLAUDE / "plugins" / "marketplaces" / "aoi")
+                        / "plugins" / "aoi" / ".claude-plugin" / "plugin.json") or {}).get("version")
+    cache = chemin.parent / str(voulue)
+    if voulue and voulue != e.get("version") and \
+            (lire_json(cache / ".claude-plugin" / "plugin.json") or {}).get("version") == voulue:
+        return {"version": voulue, "chemin": cache}
+    return {"version": e.get("version"), "chemin": chemin}
+
+
+def serveurs(plugin):
+    if not plugin:
+        return []
+    mcp = lire_json(plugin["chemin"] / ".mcp.json") or {}
+    return sorted(mcp.get("mcpServers", {}))
+
+
+def skills(plugin):
+    if not plugin:
+        return []
+    return sorted(p.parent.name for p in (plugin["chemin"] / "skills").glob("*/SKILL.md"))
+
+
+def claude(*args, silencieux=False):
+    exe = shutil.which("claude")
+    if not exe:
+        raise SystemExit("ÉCHEC : commande « claude » introuvable. Installez Claude Code.")
+    env = dict(os.environ, CLAUDE_CODE_PLUGIN_PREFER_HTTPS="1")
+    # La commande passe par le compte claude.ai, pas par une clé API.
+    env.pop("ANTHROPIC_API_KEY", None)
+    if not silencieux:
+        print(f"  > claude {' '.join(args)}")
+    r = subprocess.run([exe, *args], env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    sortie = (r.stdout + r.stderr).strip()
+    if sortie and not silencieux:
+        print("    " + sortie.replace("\n", "\n    "))
+    return r.returncode == 0
+
+
+def rafraichir_regles():
+    """Fait relire les managed settings : un processus « claude » qui démarre
+    réécrit ~/.claude/remote-settings.json. La session en cours, elle, garde ses règles."""
+    f = CLAUDE / "remote-settings.json"
+    avant = f.stat().st_mtime if f.is_file() else 0
+    claude("plugin", "marketplace", "list", silencieux=True)
+    apres = f.stat().st_mtime if f.is_file() else 0
+    quand = time.strftime("%d.%m.%Y %H:%M", time.localtime(apres)) if apres else "jamais"
+    # Claude Code ne réécrit le fichier que si les règles ont changé : une date inchangée
+    # veut dire « rien de nouveau » (ou serveur injoignable).
+    etat = "nouvelles règles reçues à l'instant" if apres > avant else "inchangées depuis le"
+    print(f"Managed settings                 : {etat} {quand}")
+
+
+def processus_actifs(*noms):
+    try:
+        r = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True, errors="replace")
+        lances = {l.split(",")[0].strip('"').lower() for l in r.stdout.splitlines() if l}
+        return [n for n in noms if n.lower() in lances]
+    except Exception:
+        return []
+
+
+def deja_copie(source, dst):
+    """Vrai si chaque fichier de source existe dans dst avec le même contenu."""
+    for f in source.rglob("*"):
+        if f.is_file() and f.name != "aoi-version.txt":
+            g = dst / f.relative_to(source)
+            if not (g.is_file() and filecmp.cmp(f, g, shallow=False)):
+                return False
+    return True
+
+
+def archive_addin(nom, fiche, appliquer):
+    """Dossier extrait de l'archive d'un add-in publiée à part du plugin (version GitHub).
+
+    L'archive n'est téléchargée que si sa version manque sur le poste, et refusée si son
+    empreinte SHA-256 ne correspond pas à la fiche. Renvoie None si elle reste à télécharger."""
+    dossier = AOI / "addins" / f"{slug_addin(nom)}-{fiche['version']}"
+    if (dossier / "aoi-version.txt").is_file():
+        return dossier
+    if not appliquer:
+        return None
+    from archives_aoi import sha256, telecharger  # même dossier que ce script
+    dossier.parent.mkdir(parents=True, exist_ok=True)
+    # Pas de with_suffix : une version « 2026-10-14.2 » perdrait son « .2 »
+    zip_, neuf = dossier.with_name(dossier.name + ".zip"), dossier.with_name(dossier.name + ".tmp")
+    print(f"  {nom} : téléchargement de l'add-in {fiche['version']} ({fiche.get('taille', 0) >> 20} Mo)")
+    try:
+        telecharger(fiche["url"], zip_, fiche.get("taille"))
+        if sha256(zip_) != fiche["sha256"].lower():
+            print(f"  ÉCHEC : l'empreinte SHA-256 de l'add-in {nom} ne correspond pas à la fiche. Archive refusée, contactez votre administrateur.")
+            return None
+        shutil.rmtree(neuf, ignore_errors=True)
+        with zipfile.ZipFile(zip_) as z:
+            z.extractall(neuf)
+        (neuf / "aoi-version.txt").write_text(fiche["version"], encoding="utf-8")
+        neuf.rename(dossier)
+    except OSError as e:
+        print(f"  ÉCHEC : add-in {nom} : {e}")
+        return None
+    finally:
+        zip_.unlink(missing_ok=True)
+        shutil.rmtree(neuf, ignore_errors=True)
+    # Les versions précédentes sont effacées par copier_addin, une fois l'hôte passé à celle-ci :
+    # un pointeur désigne encore la précédente, dont il faut d'abord reprendre le registre.
+    return dossier
+
+
+def slug_addin(nom):
+    """« Revit 2025 » -> « revit-2025 » : préfixe des dossiers de aoi\\addins."""
+    return "".join(c if c.isalnum() else "-" for c in nom.lower()).strip("-")
+
+
+def nettoyer_addin(nom, dossier):
+    """Efface les autres versions d'un add-in de aoi\\addins, seulement si aucun fichier n'est
+    ouvert (un hôte qui charge l'add-in depuis ce dossier le verrouille)."""
+    if dossier is None or dossier.parent != AOI / "addins":
+        return
+    from archives_aoi import effacer_si_libre  # même dossier que ce script
+    for ancien in dossier.parent.glob(f"{slug_addin(nom)}-*"):
+        if ancien != dossier and ancien.is_dir() and not ancien.name.endswith((".tmp", ".zip", ".a-effacer")):
+            effacer_si_libre(ancien)
+
+
+def version_application(fiche):
+    """Version de l'application lue dans le registre (« registre », « valeur »), ou None."""
+    import winreg
+    racine, _, cle = fiche["registre"].replace("/", "\\").partition("\\")
+    ruche = {"HKLM": winreg.HKEY_LOCAL_MACHINE, "HKCU": winreg.HKEY_CURRENT_USER}.get(racine.upper())
+    if ruche is None:
+        return None
+    try:
+        with winreg.OpenKey(ruche, cle) as k:
+            return str(winreg.QueryValueEx(k, fiche.get("valeur", "Version"))[0])
+    except OSError:
+        return None
+
+
+def en_nombres(version):
+    try:
+        return tuple(int(x) for x in version.split("."))
+    except ValueError:
+        return None
+
+
+def application_incompatible(e):
+    """Motif du refus si l'application est plus ancienne que « version_min » de la fiche, sinon None.
+    Une version illisible est refusée aussi : un add-in trop récent peut empêcher l'application de démarrer."""
+    m = e.get("version_min")
+    if not m:
+        return None
+    v = version_application(m)
+    if v is None or en_nombres(v) is None:
+        return f"version de {e['nom']} illisible ({m['registre']}), add-in non installé. Contactez votre administrateur."
+    if en_nombres(v) < en_nombres(m["min"]):
+        return (f"version {v} installée, l'add-in demande {m['min']} ou plus récente. "
+                f"Mettez {e['nom']} à jour, puis {RELANCER}.")
+    return None
+
+
+def addins(plugin, appliquer=False):
+    """Add-ins décrits par mcp/<serveur>/addin.json : un serveur sans ce fichier n'a pas d'add-in.
+
+    (nom, dossier source, dossier de destination, processus à fermer, fichiers à sauvegarder, version,
+    motif du refus si l'application est trop ancienne, anciens fichiers à retirer de la destination,
+    forme « pointeur » ou None)
+    La source est soit un dossier du plugin (« source »), soit une archive publiée à part
+    (« archive ») ; None si l'archive reste à télécharger.
+    Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
+    """
+    liste = []
+    for manifeste in sorted((plugin["chemin"] / "mcp").glob("*/addin.json")):
+        for e in (lire_json(manifeste) or {}).get("add-ins", []):
+            temoin = Path(os.path.expandvars(e.get("si_existe", e["destination"])))
+            if not temoin.is_dir():
+                continue
+            refus = application_incompatible(e)
+            if refus:  # rien à télécharger pour une application qui ne pourra pas charger l'add-in
+                liste.append((e["nom"], None, Path(os.path.expandvars(e["destination"])),
+                              e.get("processus", ""), e.get("sauvegarder", []),
+                              (e.get("archive") or {}).get("version"), refus, e.get("retirer", []), None))
+                continue
+            if e.get("archive"):
+                source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
+            elif e.get("source"):
+                source, version = manifeste.parent / e["source"], None
+                if not source.is_dir():
+                    continue
+            else:  # forme inconnue (fiche plus récente que ce script) : ignorée, sans planter
+                print(f"  {e.get('nom', '?')} : fiche d'add-in non reconnue, ignorée (plugin trop ancien, contactez votre administrateur)")
+                continue
+            liste.append((e["nom"], source, Path(os.path.expandvars(e["destination"])),
+                          e.get("processus", ""), e.get("sauvegarder", []), version, None,
+                          e.get("retirer", []), e.get("pointeur") if e.get("archive") else None))
+    return liste
+
+
+def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, pointeur, appliquer):
+    if refus:
+        print(f"  {nom} : ÉCHEC : {refus}")
+        return False
+    if source is None:
+        print(f"  {nom} : add-in {version} à télécharger" + ("" if appliquer else " (upgrader-outils.cmd)"))
+        return False
+    if pointeur:
+        ok = poser_pointeur(nom, source, dst, proc, pointeur, appliquer)
+        if ok and appliquer:
+            nettoyer_addin(nom, source)
+        return ok
+    ok = copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer)
+    if ok and appliquer:
+        nettoyer_addin(nom, source)
+    return ok
+
+
+def copier_complet(nom, source, dst, proc, sauvegarder, retirer, appliquer):
+    """Copie complète de l'add-in dans le dossier de l'hôte (add-in sans forme « pointeur »)."""
+    # Fichiers d'une version précédente sous un autre nom : copytree ne les efface pas
+    restes = [dst / rel for rel in retirer if (dst / rel).is_file()]
+    if restes and not appliquer:
+        print(f"  {nom} : anciens fichiers à retirer ({', '.join(f.name for f in restes)})")
+        return False
+    if restes and not (proc and processus_actifs(proc)):
+        for f in restes:
+            try:
+                f.unlink()
+                print(f"  {nom} : ancien fichier retiré : {f}")
+            except OSError as err:
+                print(f"  {nom} : ÉCHEC : {f} n'a pas pu être retiré ({err})")
+    if deja_copie(source, dst):
+        print(f"  {nom} : add-in à jour")
+        return True
+    if not appliquer:
+        print(f"  {nom} : add-in à recopier")
+        return False
+    if proc and processus_actifs(proc):
+        print(f"  {nom} : add-in à recopier, mais {proc} est ouvert. Fermez-le, puis {RELANCER}.")
+        return False
+    dst.mkdir(parents=True, exist_ok=True)
+    for rel in sauvegarder:
+        f = dst / rel
+        if f.is_file():
+            shutil.copy2(f, f.with_name(f.name + time.strftime(".avant-aoi-%Y%m%d-%H%M%S")))
+    shutil.copytree(source, dst, dirs_exist_ok=True, ignore=shutil.ignore_patterns("aoi-version.txt"))
+    print(f"  {nom} : add-in recopié vers {dst}")
+    return True
+
+
+ASSEMBLY = re.compile(r"<Assembly>(.*?)</Assembly>", re.S)
+
+
+def manifeste_pointeur(source, pointeur):
+    """Manifeste de l'hôte dont <Assembly> désigne, par un chemin absolu, l'add-in dans aoi\\addins."""
+    texte = (source / pointeur["manifeste"]).read_text(encoding="utf-8")
+    return ASSEMBLY.sub(lambda m: f"<Assembly>{(source / m.group(1).strip()).resolve()}</Assembly>", texte, count=1)
+
+
+def dossier_pointe(dst, pointeur):
+    """Version de aoi\\addins que désigne le manifeste de l'hôte, ou None (copie complète, ou rien)."""
+    f = dst / pointeur["manifeste"]
+    m = ASSEMBLY.search(f.read_text(encoding="utf-8", errors="replace")) if f.is_file() else None
+    if not m or not Path(m.group(1).strip()).is_absolute():
+        return None
+    chemin, racine = Path(m.group(1).strip()), AOI / "addins"
+    try:
+        return racine / chemin.relative_to(racine).parts[0]
+    except ValueError:
+        return None
+
+
+def fusionner_registre(ancien, nouveau):
+    """Registre des commandes (commandRegistry.json) : la liste vient de la nouvelle version, le
+    choix « enabled » de chaque commande vient de l'ancienne. Reprendre l'ancien registre tel quel
+    masquerait les commandes ajoutées. Renvoie le nombre de choix repris."""
+    if not (ancien.is_file() and nouveau.is_file()) or ancien.resolve() == nouveau.resolve():
+        return 0
+    vieux = {c.get("commandName"): c.get("enabled") for c in (lire_json(ancien) or {}).get("Commands", [])}
+    donnees = lire_json(nouveau)
+    if not donnees:
+        return 0
+    repris = 0
+    for c in donnees.get("Commands", []):
+        if c.get("commandName") in vieux and vieux[c["commandName"]] != c.get("enabled"):
+            c["enabled"] = vieux[c["commandName"]]
+            repris += 1
+    if repris:
+        nouveau.write_text(json.dumps(donnees, ensure_ascii=False, indent=2), encoding="utf-8")
+    return repris
+
+
+def poser_pointeur(nom, source, dst, proc, pointeur, appliquer):
+    """Forme « pointeur » : l'hôte ne garde que son manifeste, qui désigne la version de aoi\\addins.
+    Une copie complète laissée par une version précédente du plugin est retirée de l'hôte : la même
+    version est dans aoi\\addins, et les choix de l'utilisateur (« fusionner ») sont repris avant.
+    Un retour à une ancienne étiquette remet la copie complète (son /regen recopie l'add-in)."""
+    voulu = manifeste_pointeur(source, pointeur)
+    f = dst / pointeur["manifeste"]
+    restes = [dst / rel for rel in pointeur.get("retirer", []) if (dst / rel).exists()]
+    actuel = f.read_text(encoding="utf-8", errors="replace") if f.is_file() else None
+    if actuel == voulu and not restes:
+        print(f"  {nom} : add-in à jour (pointeur vers {source})")
+        return True
+    if not appliquer:
+        print(f"  {nom} : " + ("copie complète à remplacer par un pointeur" if restes else "pointeur à mettre à jour"))
+        return False
+    if proc and processus_actifs(proc):
+        print(f"  {nom} : pointeur à poser, mais {proc} est ouvert. Fermez-le, puis {RELANCER}.")
+        return False
+    # Choix de l'utilisateur dans le registre : copie complète de l'hôte, ou version désignée
+    ancien = dst if restes else dossier_pointe(dst, pointeur)
+    for rel in pointeur.get("fusionner", []) if ancien else ():
+        n = fusionner_registre(ancien / rel, source / rel)
+        if n:
+            print(f"  {nom} : {n} choix repris dans {rel}")
+    dst.mkdir(parents=True, exist_ok=True)
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text(voulu, encoding="utf-8")
+    os.replace(tmp, f)
+    for g in restes:
+        shutil.rmtree(g) if g.is_dir() else g.unlink()
+    print(f"  {nom} : pointeur posé dans {dst} vers {source}")
+    return True
+
+
+def anciennes_versions(garder):
+    cache = CLAUDE / "plugins" / "cache" / "aoi" / "aoi"
+    for reste in cache.glob("*.a-effacer"):  # effacement interrompu la fois précédente
+        shutil.rmtree(reste, ignore_errors=True)
+    # Un reste encore verrouillé n'est pas une version : le renommer encore donnerait .a-effacer.a-effacer…
+    return [d for d in cache.glob("*") if d.is_dir() and not d.name.endswith(".a-effacer")
+            and d.resolve() not in garder]
+
+
+def nettoyer_cache(*garder):
+    """Claude Code garde une copie complète de chaque version du plugin (~300 Mo chacune) et
+    ne les efface jamais. On garde la version installée et celle dont tourne la session
+    en cours (ses serveurs et ce script en dépendent) : elle partira à la mise à jour suivante."""
+    garder = {Path(g["chemin"]).resolve() for g in garder if g}
+    garder.add(Path(sys.executable).resolve().parents[2])  # .../<version>/controle/runtime/python.exe
+    libere, echecs = 0, []
+    for d in anciennes_versions(garder):
+        taille = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
+        # Renommer d'abord : Windows refuse si un fichier du dossier est ouvert (serveur MCP
+        # d'une session en cours). On n'efface donc jamais à moitié une version utilisée.
+        corbeille = d.with_name(d.name + ".a-effacer")
+        try:
+            d.rename(corbeille)
+        except OSError:
+            echecs.append(d.name)
+            continue
+        shutil.rmtree(corbeille, ignore_errors=True)
+        libere += taille
+    if libere:
+        print(f"Anciennes versions effacées du cache : {libere / 2**20:,.0f} Mo libérés".replace(",", " "))
+    if echecs:
+        print(f"Anciennes versions encore utilisées, à effacer à la prochaine mise à jour : {', '.join(echecs)}")
+
+
+def controle(plugin, verifier):
+    """Contrôle des imports Python : copie dans C:\\ProgramData\\aoi (dossier controle du plugin)."""
+    script = plugin["chemin"] / "controle" / "scripts" / "activer_controle.py"
+    if script.is_file():
+        r = subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []),
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+        print("  " + (r.stdout + r.stderr).strip().replace("\n", "\n  "))
+    else:  # jamais en silence : une étape passée sans le dire laisse le poste à moitié à jour
+        print(f"  ÉCHEC : contrôle des imports non traité, {script} introuvable dans le plugin {plugin['version']}. Contactez votre administrateur.")
+    # Python AOI, Node AOI : archives téléchargées à part, seulement si leur version change
+    script = plugin["chemin"] / "skills" / "regen" / "scripts" / "archives_aoi.py"
+    if script.is_file():
+        sys.stdout.flush()
+        subprocess.run([sys.executable, str(script)] + (["--verifier"] if verifier else []))
+    else:
+        print(f"  ÉCHEC : Python AOI et Node AOI non traités, {script} introuvable dans le plugin {plugin['version']}. Contactez votre administrateur.")
+
+
+def etape(nom, fonction, *args, **kwargs):
+    """Lance une étape de finir() ; une exception devient un échec affiché. Vrai si elle a réussi
+    (une fonction qui ne renvoie rien a réussi)."""
+    try:
+        return fonction(*args, **kwargs) is not False
+    except Exception as e:  # noqa: BLE001 : une étape ne doit jamais arrêter les suivantes
+        print(f"  ÉCHEC : {nom} : {type(e).__name__} : {e}")
+        return False
+
+
+def etat_dossiers():
+    """Organisation des dossiers du poste (voir chemins_aoi), sans rien modifier.
+    « a_jour » : chaque serveur est dans serveurs\\, aucune ancienne installation ne reste et chaque
+    add-in qui a une forme « pointeur » l'utilise. Sinon, la mise à jour suivante termine le passage."""
+    lignes, ecarts = [], 0
+    # Sans plugin inscrit (poste en cours d'installation, essai) : celui de ce script
+    plugin = plugin_installe() or {"version": None, "chemin": Path(__file__).resolve().parents[3]}
+    for f in sorted(plugin["chemin"].glob("*-aoi.json")):
+        fiche = lire_json(f) or {}
+        if fiche.get("versionne"):
+            nom = f.name[:-len("-aoi.json")]
+            d = chemins_aoi.dossier_serveur(nom, fiche.get("version"))
+            restes = [r for b in (chemins_aoi.SERVEURS, chemins_aoi.ANCIEN) for r in b.glob(f"{nom}-*")
+                      if r.is_dir() and r != d and not r.name.endswith((".tmp", ".a-effacer"))]
+            ecarts += (d is None or d.parent != chemins_aoi.SERVEURS) + len(restes)
+            lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}"
+                          + "".join(f"\n  ancienne installation à effacer : {r}" for r in restes))
+    for x in addins(plugin):
+        if x[8]:  # add-in qui a une forme « pointeur »
+            d = dossier_pointe(x[2], x[8])
+            ecarts += d is None
+            lignes.append(f"add-in {x[0]} : " + (f"pointeur vers {d}" if d else f"copie complète dans {x[2]}"))
+    lignes.append(f"journal : {chemins_aoi.JOURNAL}")
+    return {"a_jour": not ecarts, "resume": "à jour" if not ecarts else f"{ecarts} point(s) à la prochaine mise à jour",
+            "lignes": lignes}
+
+
+def finir(avant, apres):
+    """Étapes qui suivent l'installation du plugin : add-ins, contrôle des imports, archives, cache.
+    Lancées par le maj.py de la NOUVELLE version (voir main) : chaque version prépare le poste
+    avec ses propres chemins, si bien qu'un fichier peut changer de place d'une version à l'autre.
+    Une étape qui échoue (fichier verrouillé...) est signalée et n'empêche pas les suivantes.
+    Le témoin finir-<version>.ok, écrit à la fin, prouve au crochet de démarrage que tout a tourné."""
+    echecs = 0
+    for x in addins(apres, appliquer=True):
+        # Application trop ancienne (x[6]) : refus durable, déjà signalé à chaque démarrage
+        echecs += not etape(f"add-in {x[0]}", copier_addin, *x, appliquer=True) and not x[6]
+    echecs += not etape("contrôle des imports et archives", controle, apres, verifier=False)
+    echecs += not etape("nettoyage du cache", nettoyer_cache, avant, apres)
+    if not echecs:
+        try:
+            for vieux in chemins_aoi.JOURNAL.glob("finir-*.ok"):
+                vieux.unlink()
+            chemins_aoi.JOURNAL.mkdir(parents=True, exist_ok=True)
+            (chemins_aoi.JOURNAL / f"finir-{apres['version']}.ok").write_text(
+                time.strftime("%Y-%m-%dT%H:%M:%S"), encoding="utf-8")
+        except OSError as e:
+            print(f"  ÉCHEC : témoin de fin non écrit ({e})")
+    print(f"\nÉtat des dossiers : {etat_dossiers()['resume']}")
+    # Pas de « déjà à jour, aucun redémarrage » : la session qui lançait /regen pouvait tourner
+    # avec une version plus ancienne que « avant ». Claude Code ne charge
+    # les serveurs qu'à son démarrage : la consigne vaut dans tous les cas.
+    print("\nRelancez Claude Code : il charge les serveurs à jour au démarrage.")
+    # Code non nul si une étape a échoué (passer_la_main le transmet)
+    return 1 if echecs else 0
+
+
+def passer_la_main(avant, apres):
+    """Lance « maj.py --finir » de la version qu'on vient d'installer, avec son propre Python.
+    Renvoie son code de sortie, ou None si cette version ne sait pas le faire (plus ancienne)."""
+    py = apres["chemin"] / "controle" / "runtime" / "python.exe"
+    maj = apres["chemin"] / "skills" / "regen" / "scripts" / "maj.py"
+    if not (py.is_file() and maj.is_file()) or "--finir" not in maj.read_text(encoding="utf-8", errors="replace"):
+        return None
+    args = [str(py), str(maj), "--finir"]
+    if avant:
+        args += ["--avant-chemin", str(avant["chemin"]), "--avant-version", avant["version"] or ""]
+    sys.stdout.flush()
+    return subprocess.run(args).returncode
+
+
+def controle_si_besoin():
+    """Crochet de démarrage : recopie le contrôle des imports s'il diffère de celui de ce plugin.
+    Rattrape une mise à jour faite par un /regen plus ancien, qui ne connaissait pas ce chemin.
+    Renvoie le motif d'un échec (affiché dans la ligne de démarrage), sinon None."""
+    script = Path(__file__).resolve().parents[3] / "controle" / "scripts" / "activer_controle.py"
+    if not script.is_file():
+        return None
+    try:
+        r = subprocess.run([sys.executable, str(script), "--si-besoin"], capture_output=True, timeout=20,
+                           text=True, encoding="utf-8", errors="replace")
+    except (OSError, subprocess.SubprocessError) as e:
+        return f"mise à jour du contrôle des imports impossible ({e})"
+    if r.returncode:
+        detail = (r.stdout + r.stderr).strip().splitlines()
+        return f"mise à jour du contrôle des imports impossible ({detail[-1] if detail else r.returncode})"
+    return None
+
+
+def etat_session(plugin):
+    archives = {}
+    if plugin:  # parties publiées à part : <nom>-aoi.json à la racine du plugin
+        for f in sorted(plugin["chemin"].glob("*-aoi.json")):
+            archives[f.name[:-len("-aoi.json")]] = (lire_json(f) or {}).get("version")
+    return {"version": plugin["version"] if plugin else None,
+            "serveurs": serveurs(plugin), "skills": skills(plugin), "archives": archives,
+            "add-ins": {x[0]: x[5] or "dans le plugin" for x in addins(plugin)} if plugin else {}}
+
+
+def demarrage():
+    """Crochet SessionStart : bilan d'une ligne à chaque session (version, serveurs, contrôle des
+    imports, refus récents), puis tableau des nouveautés par rapport à la session précédente
+    (session.json du journal, voir chemins_aoi) et mise à jour imposée, s'il y en a.
+    Ne modifie rien d'autre que ce fichier et demarrage.log."""
+    debut = time.time()
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")  # silence des fonctions d'état
+    try:
+        # Pas de rafraichir_regles() ici : Claude Code vient de relire les règles en démarrant,
+        # et un « claude » imbriqué pendant son démarrage peut bloquer jusqu'au délai du crochet.
+        echec_controle = controle_si_besoin()
+        imposee, inscrite, plugin = ref_imposee(), ref_inscrite(), plugin_installe()
+        etat = etat_session(plugin)
+        avant = lire_json(chemins_aoi.lire_journal("session.json")) or {}
+        f = chemins_aoi.JOURNAL / "session.json"
+        lignes = []
+        if avant and avant.get("version") != etat["version"]:
+            lignes.append(("Plugin aoi", avant.get("version") or "-", etat["version"] or "-"))
+            for cle, prefixe, nom in (("serveurs", "plugin:aoi:", "Serveur"), ("skills", "/aoi:", "Skill")):
+                for s in sorted(set(etat[cle]) - set(avant.get(cle, []))):
+                    lignes.append((f"{nom} {prefixe}{s}", "-", "nouveau"))
+                for s in sorted(set(avant.get(cle, [])) - set(etat[cle])):
+                    lignes.append((f"{nom} {prefixe}{s}", "présent", "retiré"))
+            for nom, v in etat["add-ins"].items():
+                if avant.get("add-ins", {}).get(nom) != v:
+                    lignes.append((f"Add-in {nom}", avant.get("add-ins", {}).get(nom) or "-", v))
+            for nom, v in etat["archives"].items() if "archives" in avant else ():  # ancien format : pas de comparaison
+                if avant.get("archives", {}).get(nom) != v:
+                    lignes.append((f"Archive {nom}", avant.get("archives", {}).get(nom) or "-", v or "-"))
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(etat, ensure_ascii=False, indent=2), encoding="utf-8")
+        # finir() d'une version écrit son témoin à la fin. Un témoin d'une autre version sans
+        # celui de la version installée : /regen interrompu, ou /regen trop ancien pour --finir.
+        temoins = list(chemins_aoi.JOURNAL.glob("finir-*.ok"))
+        finir_manque = bool(plugin and temoins
+                            and not (chemins_aoi.JOURNAL / f"finir-{plugin['version']}.ok").is_file())
+    finally:
+        sys.stdout = sys.__stdout__
+    # Bilan affiché à l'utilisateur à chaque session (systemMessage). Il n'est pas transmis à
+    # Claude (pas d'additionalContext) : le suivi des outils reste séparé de la conversation.
+    # La version du plugin est déjà en tête de ligne : seul son changement ne fait pas un nouvel outil.
+    nouveautes = [f"{l[0]} ({l[2]})" if l[2] != "nouveau" else l[0]
+                  for l in lignes if l[0] != "Plugin aoi" and l[2] != "retiré"]
+    retraits = [l[0] for l in lignes if l[2] == "retiré"]
+    if imposee and inscrite != imposee:
+        suivi = f"mise à jour disponible ({imposee}) : {LANCER_REGEN}"
+    elif nouveautes or retraits:
+        suivi = " · ".join(([f"nouveaux outils : {', '.join(nouveautes)}"] if nouveautes else [])
+                           + ([f"outils retirés : {', '.join(retraits)}"] if retraits else []))
+    else:
+        suivi = "vos librairies sont à jour"
+    texte = [f"Outils IA, v{etat['version'] or '?'} : {', '.join(etat['serveurs']) or 'aucun serveur'}"
+             f" · {python_aoi()} · {suivi}"]
+    if not controle_actif():
+        texte.append("ATTENTION : contrôle des imports Python inactif. Fermez Claude Code, puis lancez upgrader-outils.cmd, ou contactez votre administrateur.")
+    if echec_controle:
+        texte.append(f"ATTENTION : {echec_controle}. Contactez votre administrateur.")
+    for x in addins(plugin) if plugin else ():
+        if x[6]:
+            texte.append(f"ATTENTION : add-in {x[0]} : {x[6]}")
+    if finir_manque:
+        texte.append("ATTENTION : la dernière mise à jour n'est pas allée au bout. Fermez Claude Code, puis lancez upgrader-outils.cmd.")
+    print(json.dumps({"systemMessage": "\n".join(texte)}, ensure_ascii=False))
+    try:  # trace du crochet : qu'il tourne, sa durée, et l'organisation des dossiers
+        dossiers = etat_dossiers()["resume"] if plugin else "?"
+        with open(chemins_aoi.JOURNAL / "demarrage.log", "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%dT%H:%M:%S')}  {etat['version']}  {time.time() - debut:.1f} s"
+                    f"  nouveautés : {len(lignes)}  dossiers : {dossiers}\n")
+    except OSError:
+        pass
+    return 0
+
+
+def controle_actif():
+    """Contrôle des imports : la copie fixe existe et PYTHONPATH (managed settings) la désigne."""
+    guard = Path(r"C:\ProgramData\aoi\guard")
+    return (guard / "sitecustomize.py").is_file() and str(guard).lower() in os.environ.get("PYTHONPATH", "").lower()
+
+
+def python_aoi():
+    """Version et chemin du Python AOI, celui qu'utilisent les scripts de Claude."""
+    dossier = AOI / "python"
+    exe = dossier / "python.exe"
+    if not exe.is_file():
+        return f"Python AOI absent ({dossier}) : {LANCER_REGEN}"
+    try:
+        r = subprocess.run([str(exe), "-c", "import sys; print('%d.%d.%d' % sys.version_info[:3])"],
+                           capture_output=True, text=True, timeout=10)
+        version = r.stdout.strip() or "?"
+    except (OSError, subprocess.SubprocessError):
+        version = "?"
+    return f"Python {version}, {dossier}"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--appliquer", action="store_true")
+    ap.add_argument("--addins", action="store_true", help="seulement les add-ins (installeur)")
+    ap.add_argument("--demarrage", action="store_true", help="crochet SessionStart : rapport des nouveautés")
+    ap.add_argument("--finir", action="store_true", help="étapes après installation, lancées par le maj.py précédent")
+    ap.add_argument("--avant-chemin")
+    ap.add_argument("--avant-version")
+    ap.add_argument("--verifier-dossiers", action="store_true", help="organisation des dossiers, sans rien changer")
+    a = ap.parse_args()
+    if a.demarrage:
+        return demarrage()
+    if a.verifier_dossiers:
+        etat = etat_dossiers()
+        print("\n".join(etat["lignes"]))
+        return 0 if etat["a_jour"] else 3
+    if a.finir:
+        apres = plugin_installe()
+        if not apres:
+            print("\nÉCHEC : plugin aoi introuvable après l'installation.")
+            return 1
+        avant = {"version": a.avant_version, "chemin": Path(a.avant_chemin)} if a.avant_chemin else None
+        return finir(avant, apres)
+    if a.addins:
+        plugin = plugin_installe()
+        if not plugin:
+            print("Plugin aoi introuvable : add-ins non installés.")
+            return 1
+        ok = [copier_addin(*x, appliquer=True) for x in addins(plugin, appliquer=True)]
+        return 0 if all(ok) else 1
+
+    rafraichir_regles()
+    imposee, inscrite, avant = ref_imposee(), ref_inscrite(), plugin_installe()
+    print(f"Étiquette imposée               : {imposee or 'aucune (règles non reçues)'}")
+    print(f"Étiquette inscrite sur ce poste  : {inscrite or 'aucune'}")
+    print(f"Plugin installé                  : {avant['version'] if avant else 'aucun'}")
+    print(f"Serveurs du plugin installé      : {', '.join('plugin:aoi:' + s for s in serveurs(avant)) or 'aucun'}")
+
+    if not imposee:
+        print("\nRÈGLES NON REÇUES : la session doit être connectée avec un compte claude.ai "
+              "(pas de clé API). Rien n'a été modifié.")
+        return 2
+
+    defaut = defaut_etiquette(imposee)
+    if defaut:
+        print(f"\nRÈGLE INCORRECTE : {defaut}\n"
+              "Rien n'a été modifié sur ce poste. Corrigez la règle des managed settings, "
+              f"puis {RELANCER}.")
+        return 2
+
+    a_jour = inscrite == imposee and avant is not None
+    if not a.appliquer:
+        print("\nÉTAT : " + ("catalogue à jour." if a_jour else f"mise à jour disponible vers {imposee}."))
+        if avant:
+            vieilles = anciennes_versions({avant["chemin"].resolve(), Path(sys.executable).resolve().parents[2]})
+            if vieilles:
+                print(f"  ANCIENNES VERSIONS dans le cache : {', '.join(d.name for d in vieilles)} "
+                      "(--appliquer les efface)")
+            for x in addins(avant):
+                copier_addin(*x, appliquer=False)
+            controle(avant, verifier=True)
+            print("Dossiers : " + "\n  ".join(etat_dossiers()["lignes"]))
+        return 0
+
+    verrou = prendre_verrou()
+    if verrou is None:
+        print(f"\nUne autre mise à jour est en cours sur ce compte. Attendez sa fin, puis {RELANCER}.")
+        return 4
+    try:
+        return appliquer(imposee, inscrite, avant)
+    finally:
+        verrou.unlink(missing_ok=True)
+
+
+def prendre_verrou():
+    """Verrou de /regen pour ce compte (deux sessions qui lancent /regen ensemble se
+    marcheraient dessus : catalogue, archives .zip et .tmp). Un verrou laissé par un /regen
+    arrêté net (processus disparu) est repris. Renvoie le fichier, ou None s'il est pris."""
+    f = chemins_aoi.JOURNAL / "regen.verrou"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(2):
+        try:
+            fd = os.open(f, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                pid = f.read_text(encoding="utf-8").strip()
+            except OSError:
+                pid = ""
+            r = subprocess.run(["tasklist", "/FI", f"PID eq {pid or 0}", "/NH"], capture_output=True, text=True)
+            if pid and pid in r.stdout:
+                return None
+            f.unlink(missing_ok=True)
+            continue
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        return f
+    return None
+
+
+def appliquer(imposee, inscrite, avant):
+    print()
+    if inscrite != imposee:
+        retire = bool(inscrite) and claude("plugin", "marketplace", "remove", "aoi")
+        if not claude("plugin", "marketplace", "add", f"{DEPOT}#{imposee}"):
+            print("\nÉCHEC : inscription du catalogue refusée. Vérifiez la connexion et les managed settings.")
+            if retire:
+                # Retirer le catalogue désinstalle le plugin. L'ancienne étiquette ne peut pas être
+                # réinscrite : strictKnownMarketplaces n'autorise que la nouvelle.
+                print(f"Le catalogue {inscrite} a été retiré : le plugin aoi est désinstallé sur ce poste, "
+                      "et ses serveurs ne répondent plus.\n"
+                      f"Corrigez la cause affichée ci-dessus, puis {RELANCER}. "
+                      "Si l'échec persiste, contactez votre administrateur.")
+            return 1
+    # Retirer le catalogue désinstalle aussi son plugin : on regarde à nouveau ce qui reste.
+    if plugin_installe() is None:
+        ok = claude("plugin", "install", PLUGIN)
+    else:
+        ok = claude("plugin", "update", PLUGIN)
+    apres = plugin_installe()
+    if not ok or apres is None:
+        print("\nÉCHEC : le plugin n'a pas pu être installé ou mis à jour.")
+        return 1
+
+    nouveaux = sorted(set(serveurs(apres)) - set(serveurs(avant)))
+    retires = sorted(set(serveurs(avant)) - set(serveurs(apres)))
+    print(f"\nPlugin : {avant['version'] if avant else 'aucun'} -> {apres['version']}")
+    print(f"Nouveaux serveurs : {', '.join('plugin:aoi:' + s for s in nouveaux) or 'aucun'}")
+    if retires:
+        print(f"Serveurs retirés  : {', '.join('plugin:aoi:' + s for s in retires)}")
+    nouvelles = sorted(set(skills(apres)) - set(skills(avant)))
+    print(f"Nouvelles skills  : {', '.join('/aoi:' + s for s in nouvelles) or 'aucune'}")
+    retirees = sorted(set(skills(avant)) - set(skills(apres)))
+    if retirees:
+        print(f"Skills retirées   : {', '.join('/aoi:' + s for s in retirees)}")
+    code = passer_la_main(avant, apres)
+    return finir(avant, apres) if code is None else code
+
+
+if __name__ == "__main__":
+    sys.exit(main())
