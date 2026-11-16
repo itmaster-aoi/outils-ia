@@ -16,6 +16,12 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/keyshot/run.py"
       ]
     },
+    "indesign": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/indesign/run.py"
+      ]
+    },
     "revit": {
       "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
       "args": [

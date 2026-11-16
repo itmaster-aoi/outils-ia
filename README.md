@@ -16,6 +16,7 @@ plugins/aoi/                      le plugin
     revit/                          Revit 2025 : serveur Node avec outils de graphe de connaissances (KG)
     keyshot/                        KeyShot Studio 2026 : serveur et pont
     autocad/                        AutoCAD 2027 : add-in qui est aussi le serveur
+    indesign/                       InDesign 2026 : serveur Python et plugin UXP
     cortexdb/                       mémoire durable locale (SQLite)
   commands/                       /aoi:remember et /aoi:recall (cortexdb)
   controle/                       contrôle des imports Python (liste blanche) et Python embarqué

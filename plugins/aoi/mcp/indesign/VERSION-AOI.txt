@@ -1,0 +1,21 @@
+Origine      : projet indesign-mcp, dépôt git local, pas encore publié
+Étiquette    : aucune
+Commit       : 138b31d994160f4a16d55870b17ae5de58dfc8db
+Version      : serveur 0.1.0, 4 outils ; plugin UXP « Claude MCP » 0.1.0, 18 commandes de lot
+Librairies   : aucune dans ce dossier ; mcp 2.3.0 des librairies du Python AOI (python-libs 2026-10-16)
+Importé le   : 16.11.2026
+Repris       : run.py, indesignmcp/ (sans __pycache__)
+Fabriqués    : addin/ par paquet.py du projet d'origine : le .ccx est l'archive de plugin/ sans essais.js
+Adaptations  : aucune dans le code. Écrits pour ce dépôt : README.md, ce fichier.
+Non repris   : tests/, plugin/essais.js (mesures de développement), LICENSE (absent de l'origine)
+Vérifié      : InDesign 21.6.0.57 ; test de bout en bout du projet d'origine, 9 étapes sur 9
+SHA-256      :
+  0b402fa7f2a63f2d413efbda42317d269450af2edc8dda1e6e45f62821c4e9f0  run.py
+  192c402a4545e07e2de52eef3260c1d694dc8380b337ff562308c1a3306e08dc  indesignmcp/__init__.py
+  d87a5627c9a3a38910138e39995f3d8444c810875dc981f0187ab9762b67a9c0  indesignmcp/outils.py
+  e83a1eb668226495665626a76ceb16e7cd41aa42bbf8ffa0f5bc4d5e7cac2bc9  indesignmcp/server.py
+  bb0d0be705c6bf9e29bede4b9b63493b80ba0d8379e45b1e79ddcc044505b5cd  indesignmcp/ws.py
+  d4343fdf0470c3d700082e4241409ce3b2f00355d71b2c459d739a17939ea970  addin/indesign-mcp.claude-mcp_ID.ccx
+  13985bd54dc5f27cb876cd1032809bf54d8ae28a45304d8faad6356b0df769f7  addin/installer.cmd
+  4f9239235af667b38783b04f511ab055d688e4ba5694c515b608f83900679982  addin/desinstaller.cmd
+Contenu du .ccx : commandes.js, index.html, jsx.js, main.js, manifest.json, moteur.js
