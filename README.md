@@ -2,7 +2,7 @@
 
 Dépôt de travail : un catalogue de plugins pour Claude Code. Il contient le plugin `aoi`, avec des serveurs MCP (Model Context Protocol) pour des logiciels de CAO et de rendu, des skills et un style de sortie.
 
-Le contenu change souvent et n'a pas de garantie. Les étiquettes datées (`2026-11-16.1`) marquent des états cohérents du dépôt.
+Le contenu change souvent et n'a pas de garantie. Les étiquettes datées (`2026-11-16.2`) marquent des états cohérents du dépôt.
 
 ## Contenu
 

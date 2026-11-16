@@ -266,7 +266,9 @@ def addins(plugin, appliquer=False):
     motif du refus si l'application est trop ancienne, anciens fichiers à retirer de la destination,
     forme « pointeur » ou None)
     La source est soit un dossier du plugin (« source »), soit une archive publiée à part
-    (« archive ») ; None si l'archive reste à télécharger.
+    (« archive ») ; None si l'archive reste à télécharger. Forme « uxp » (plugin UXP d'Adobe) : la
+    source est le dossier de la fiche, la destination le dossier du registre UXP, et la dernière
+    valeur vaut {"uxp": fiche}.
     Seules les applications déjà lancées sur ce compte (dossier « si_existe ») sont traitées.
     """
     liste = []
@@ -280,6 +282,11 @@ def addins(plugin, appliquer=False):
                 liste.append((e["nom"], None, Path(os.path.expandvars(e["destination"])),
                               e.get("processus", ""), e.get("sauvegarder", []),
                               (e.get("archive") or {}).get("version"), refus, e.get("retirer", []), None))
+                continue
+            if e.get("uxp"):  # plugin UXP d'Adobe : posé par l'installateur d'Adobe, voir poser_uxp
+                u = e["uxp"] if isinstance(e["uxp"], dict) else {}  # fiche mal formée : poser_uxp le dira
+                liste.append((e["nom"], manifeste.parent, Path(os.path.expandvars(e["destination"])),
+                              e.get("processus", ""), [], u.get("version"), None, [], {"uxp": u}))
                 continue
             if e.get("archive"):
                 source, version = archive_addin(e["nom"], e["archive"], appliquer), e["archive"]["version"]
@@ -296,7 +303,94 @@ def addins(plugin, appliquer=False):
     return liste
 
 
+UPIA = (r"%CommonProgramFiles%\Adobe\Adobe Desktop Common\RemoteComponents\UPI"
+        r"\UnifiedPluginInstallerAgent\UnifiedPluginInstallerAgent.exe")
+
+
+def uxp_pose(registre, uxp):
+    """Entrées du registre UXP de l'hôte (PluginsInfo\\v1\\<hôte>.json) qui portent l'identifiant ou le
+    nom du plugin : [(identifiant, version, état)]. Liste vide si rien n'est posé."""
+    plugins = (lire_json(registre) or {}).get("plugins") or []
+    return [(p.get("pluginId"), p.get("versionString"), p.get("status")) for p in plugins
+            if isinstance(p, dict) and (p.get("pluginId") == uxp.get("id") or p.get("name") == uxp.get("nom"))]
+
+
+def upia(*args):
+    """Lance l'installateur de plugins d'Adobe avec les droits de l'utilisateur. (code, sortie).
+    RunAsInvoker : sans lui, l'installateur demande une élévation dont il n'a pas besoin, car il
+    n'écrit que dans %APPDATA%\\Adobe\\UXP. Délai de 120 s : il ne doit jamais retenir la mise à jour."""
+    exe = os.environ.get("AOI_UPIA") or os.path.expandvars(UPIA)
+    if not Path(exe).is_file():
+        return None, f"installateur de plugins d'Adobe introuvable ({exe}) : Creative Cloud est-il installé ?"
+    r = subprocess.run([exe, *args], env=dict(os.environ, __COMPAT_LAYER="RunAsInvoker"), capture_output=True,
+                       text=True, errors="replace", timeout=120, stdin=subprocess.DEVNULL)
+    return r.returncode, " ".join((r.stdout + " " + r.stderr).split())[-300:]
+
+
+def poser_uxp(nom, dossier_fiche, dossier_registre, proc, uxp, appliquer):
+    """Plugin UXP d'Adobe (forme « uxp » de la fiche) : posé pour l'utilisateur par l'installateur d'Adobe.
+
+    Une copie de fichiers ne suffit pas : l'hôte ne charge que les plugins inscrits dans son registre,
+    que seul l'installateur d'Adobe tient à jour.
+    Cette étape ne bloque JAMAIS la mise à jour : elle renvoie toujours vrai, ne lève aucune exception
+    et ne pose aucune question. Un échec est affiché en clair (« ÉCHEC NON BLOQUANT ») et la pose est
+    retentée à la mise à jour suivante. Hôte ouvert (clé « processus ») : la pose est remise, sans échec."""
+    def echec(motif):
+        ligne = "!" * 78
+        print(f"  {ligne}\n  {nom} : ÉCHEC NON BLOQUANT : plugin UXP « {uxp.get('nom', '?')} » non posé.\n"
+              f"  Motif : {motif}\n"
+              f"  La mise à jour continue. Les autres outils ne sont pas touchés.\n"
+              f"  Pour le poser à la main : {dossier_fiche / 'addin' / 'installer.cmd'}\n  {ligne}")
+        return True
+
+    try:
+        manque = [c for c in ("paquet", "id", "nom", "version", "registre") if not uxp.get(c)]
+        if manque:
+            return echec(f"fiche incomplète (clé {', '.join(manque)}). Contactez votre administrateur.")
+        paquet, registre = dossier_fiche / uxp["paquet"], dossier_registre / uxp["registre"]
+        poses = uxp_pose(registre, uxp)
+        if poses == [(uxp["id"], uxp["version"], "enabled")]:
+            print(f"  {nom} : plugin UXP {uxp['version']} à jour")
+            return True
+        if not appliquer:
+            print(f"  {nom} : plugin UXP {uxp['version']} à poser")
+            return True
+        if proc and processus_actifs(proc):  # ses fichiers sont verrouillés : pose remise, pas un échec
+            print(f"  {nom} : plugin UXP {uxp['version']} à poser, mais {proc} est ouvert. Fermez-le, puis {RELANCER}.")
+            return True
+        if not paquet.is_file():
+            return echec(f"paquet introuvable dans le plugin ({paquet}). Contactez votre administrateur.")
+        if uxp.get("sha256"):
+            from archives_aoi import sha256  # même dossier que ce script
+            if sha256(paquet) != uxp["sha256"].lower():
+                return echec("l'empreinte SHA-256 du paquet ne correspond pas à la fiche. Paquet refusé, "
+                             "contactez votre administrateur.")
+        # Autre version, ou ancien identifiant sous le même nom : retirée d'abord (3 passes au plus)
+        for _ in range(3):
+            if not uxp_pose(registre, uxp):
+                break
+            code, sortie = upia("/remove", uxp["nom"])
+            if code != 0:
+                return echec(f"l'ancienne version n'a pas pu être retirée ({sortie}). Fermez {nom}, puis {RELANCER}.")
+        if uxp_pose(registre, uxp):
+            # Constaté : l'installateur d'Adobe répond « Removal Successful » sans rien retirer quand
+            # l'hôte vient de charger le plugin. On ne pose pas une version par-dessus l'autre.
+            return echec(f"l'ancienne version est toujours dans {registre} après 3 retraits annoncés réussis. "
+                         f"Fermez {nom}, puis {RELANCER}.")
+        code, sortie = upia("/install", str(paquet))
+        if code != 0:
+            return echec(sortie if code is None else f"l'installateur d'Adobe a répondu {code} : {sortie}")
+        if uxp_pose(registre, uxp) != [(uxp["id"], uxp["version"], "enabled")]:
+            return echec(f"l'installateur d'Adobe a répondu 0, mais {registre} ne montre pas le plugin {uxp['version']}.")
+        print(f"  {nom} : plugin UXP {uxp['version']} posé. Redémarrez {nom} pour le voir.")
+        return True
+    except Exception as e:  # noqa: BLE001 : rien de cette étape ne doit arrêter la mise à jour
+        return echec(f"{type(e).__name__} : {e}")
+
+
 def copier_addin(nom, source, dst, proc, sauvegarder, version, refus, retirer, pointeur, appliquer):
+    if pointeur and "uxp" in pointeur:
+        return poser_uxp(nom, source, dst, proc, pointeur["uxp"] or {}, appliquer)
     if refus:
         print(f"  {nom} : ÉCHEC : {refus}")
         return False
@@ -503,7 +597,7 @@ def etat_dossiers():
             lignes.append(f"{nom} {fiche.get('version')} : {d or 'non installé'}"
                           + "".join(f"\n  ancienne installation à effacer : {r}" for r in restes))
     for x in addins(plugin):
-        if x[8]:  # add-in qui a une forme « pointeur »
+        if x[8] and "manifeste" in x[8]:  # add-in qui a une forme « pointeur » (pas la forme « uxp »)
             d = dossier_pointe(x[2], x[8])
             ecarts += d is None
             lignes.append(f"add-in {x[0]} : " + (f"pointeur vers {d}" if d else f"copie complète dans {x[2]}"))

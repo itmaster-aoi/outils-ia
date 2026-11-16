@@ -333,6 +333,114 @@ def test_pointeur_revit():
         shutil.rmtree(t, ignore_errors=True)
 
 
+FAUX_UPIA = r'''
+import json, os, sys
+from pathlib import Path
+# Faux installateur d'Adobe. FAUX_UPIA : ok (défaut), echec (code 3), menteur (code 0, rien d'écrit).
+mode = os.environ.get("FAUX_UPIA", "ok")
+registre = Path(os.environ["APPDATA"]) / "Adobe" / "UXP" / "PluginsInfo" / "v1" / "ID.json"
+plugins = json.loads(registre.read_text(encoding="utf-8"))["plugins"] if registre.is_file() else []
+if mode == "echec":
+    print("Failed to install, status = -410!")
+    sys.exit(3)
+if mode != "menteur":
+    if sys.argv[1] == "/remove":
+        plugins = [p for p in plugins if p["name"] != sys.argv[2]]
+    elif sys.argv[1] == "/install":
+        plugins.append({"name": "Claude MCP", "pluginId": os.environ["FAUX_ID"], "status": "enabled",
+                        "type": "uxp", "versionString": os.environ["FAUX_VERSION"]})
+    registre.parent.mkdir(parents=True, exist_ok=True)
+    registre.write_text(json.dumps({"plugins": plugins}), encoding="utf-8")
+print("Installation Successful")
+'''
+
+
+def test_plugin_uxp():
+    """Forme « uxp » d'une fiche d'add-in (plugin UXP d'InDesign), avec un faux installateur d'Adobe.
+    Règle contrôlée dans chaque cas : poser_uxp renvoie vrai, donc la mise à jour n'est jamais bloquée."""
+    t, aoi, env = poste()
+    try:
+        fiche = json.loads((PLUGIN / "mcp" / "indesign" / "addin.json").read_text(encoding="utf-8"))["add-ins"][0]
+        uxp = fiche["uxp"]
+        paquet = PLUGIN / "mcp" / "indesign" / uxp["paquet"]
+        verifier("plugin UXP : le paquet de la fiche existe", paquet.is_file(), str(paquet))
+        (t / "faux_upia.py").write_text(FAUX_UPIA, encoding="utf-8")
+        (t / "upia.cmd").write_text(f'@"{PY}" "{t / "faux_upia.py"}" %*\r\n', encoding="ascii")
+        dossier = Path(env["APPDATA"]) / "Adobe" / "UXP" / "PluginsInfo" / "v1"
+        registre = dossier / "ID.json"
+        env = dict(env, AOI_UPIA=str(t / "upia.cmd"), FAUX_ID=uxp["id"], FAUX_VERSION=uxp["version"])
+
+        def poser(appliquer=True, proc="", env=env, **change):
+            u = dict(uxp, **change)
+            code = (f"import sys; from pathlib import Path; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                    f"print('RETOUR', maj.poser_uxp('InDesign', Path(r'{PLUGIN / 'mcp' / 'indesign'}'), "
+                    f"Path(r'{dossier}'), {proc!r}, {u!r}, {appliquer}))")
+            return lancer(["-c", code], env)
+
+        def poses():
+            return [(p["pluginId"], p["versionString"]) for p in json.loads(registre.read_text(encoding="utf-8"))["plugins"]] \
+                if registre.is_file() else []
+
+        def non_bloquant(r):
+            return "RETOUR True" in r.stdout and r.returncode == 0 and "Traceback" not in r.stderr
+
+        r = poser(appliquer=False)
+        verifier("plugin UXP : état seul, « à poser », rien d'écrit",
+                 non_bloquant(r) and "à poser" in r.stdout and not registre.exists(), r.stdout + r.stderr)
+        r = poser(proc="python.exe")
+        verifier("plugin UXP : hôte ouvert, pose remise sans échec",
+                 non_bloquant(r) and "est ouvert" in r.stdout and "ÉCHEC" not in r.stdout and not registre.exists(),
+                 r.stdout + r.stderr)
+        r = poser()
+        verifier("plugin UXP : posé par l'installateur d'Adobe",
+                 non_bloquant(r) and "posé" in r.stdout and poses() == [(uxp["id"], uxp["version"])], r.stdout + r.stderr)
+        r = poser()
+        verifier("plugin UXP : mise à jour suivante, « à jour »", non_bloquant(r) and "à jour" in r.stdout, r.stdout + r.stderr)
+
+        registre.write_text(json.dumps({"plugins": [{"name": "Claude MCP", "pluginId": "ancien.identifiant",
+                                                     "status": "enabled", "versionString": "0.0.9"}]}), encoding="utf-8")
+        r = poser()
+        verifier("plugin UXP : ancienne version sous un autre identifiant retirée, puis nouvelle posée",
+                 non_bloquant(r) and poses() == [(uxp["id"], uxp["version"])], r.stdout + r.stderr)
+
+        registre.unlink()
+        for nom, e2, change in (
+                ("installateur d'Adobe absent", dict(env, AOI_UPIA=str(t / "absent.exe")), {}),
+                ("installateur d'Adobe en échec (code 3)", dict(env, FAUX_UPIA="echec"), {}),
+                ("installateur d'Adobe qui répond 0 sans rien poser", dict(env, FAUX_UPIA="menteur"), {}),
+                ("empreinte SHA-256 fausse", env, {"sha256": "0" * 64}),
+                ("paquet absent", env, {"paquet": "addin/absent.ccx", "sha256": ""}),
+                ("fiche incomplète", env, {"id": ""}),
+                ("exception dans le script", env, {"sha256": 123})):
+            r = poser(env=e2, **change)
+            verifier(f"plugin UXP : {nom} : échec affiché, non bloquant, rien de posé",
+                     non_bloquant(r) and "ÉCHEC NON BLOQUANT" in r.stdout and "installer.cmd" in r.stdout
+                     and poses() == [], r.stdout + r.stderr)
+
+        registre.parent.mkdir(parents=True, exist_ok=True)
+        registre.write_text("{ registre illisible", encoding="utf-8")
+        r = poser(appliquer=False)
+        verifier("plugin UXP : registre illisible, lu comme vide", non_bloquant(r) and "à poser" in r.stdout, r.stdout + r.stderr)
+        registre.unlink()
+
+        # Par les fiches du plugin : InDesign jamais lancé sur ce compte, puis lancé (dossier témoin)
+        code = (f"import sys; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"p = {{'chemin': __import__('pathlib').Path(r'{PLUGIN}'), 'version': None}}; "
+                "x = [a for a in maj.addins(p) if a[0] == 'InDesign']; print('FICHES', len(x)); "
+                "print('RETOUR', [maj.copier_addin(*a, appliquer=False) for a in x])")
+        r = lancer(["-c", code], env)
+        verifier("plugin UXP : InDesign jamais lancé sur ce compte, fiche ignorée", "FICHES 0" in r.stdout, r.stdout + r.stderr)
+        (Path(env["APPDATA"]) / "Adobe" / "InDesign").mkdir(parents=True)
+        r = lancer(["-c", code], env)
+        verifier("plugin UXP : fiche lue par addins(), état « à poser »",
+                 "FICHES 1" in r.stdout and "RETOUR [True]" in r.stdout and "à poser" in r.stdout, r.stdout + r.stderr)
+        r = maj(env, "--verifier-dossiers")
+        verifier("plugin UXP : --verifier-dossiers ne prend pas la fiche pour un pointeur",
+                 "Traceback" not in r.stderr and "add-in InDesign" not in r.stdout, r.stdout + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
 def test_etat_a_jour():
     """Poste passé entièrement : --verifier-dossiers répond 0."""
     t, aoi, env = poste()
@@ -359,6 +467,7 @@ if __name__ == "__main__":
     test_reparation()
     test_journal()
     test_pointeur_revit()
+    test_plugin_uxp()
     test_etat_a_jour()
     echecs = [n for n, ok in resultats if not ok]
     print(f"\n{len(resultats) - len(echecs)} réussis, {len(echecs)} en échec")

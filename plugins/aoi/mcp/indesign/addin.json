@@ -1,0 +1,18 @@
+{
+  "add-ins": [
+    {
+      "nom": "InDesign",
+      "si_existe": "%APPDATA%/Adobe/InDesign",
+      "destination": "%APPDATA%/Adobe/UXP/PluginsInfo/v1",
+      "processus": "InDesign.exe",
+      "uxp": {
+        "paquet": "addin/indesign-mcp.claude-mcp_ID.ccx",
+        "id": "indesign-mcp.claude-mcp",
+        "nom": "Claude MCP",
+        "version": "0.1.0",
+        "registre": "ID.json",
+        "sha256": "d4343fdf0470c3d700082e4241409ce3b2f00355d71b2c459d739a17939ea970"
+      }
+    }
+  ]
+}

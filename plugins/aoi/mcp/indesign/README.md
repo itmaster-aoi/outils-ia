@@ -1,14 +1,16 @@
 # indesign
 
-Serveur MCP qui permet à Claude de piloter Adobe InDesign (fenêtre ouverte) par un plugin UXP (Unified Extensibility Platform). Code repris tel quel du projet `indesign-mcp`, commit `138b31d` : voir `VERSION-AOI.txt`. Ne pas modifier ces fichiers à la main : les changements se font dans le projet d'origine.
+Serveur MCP qui permet à Claude de piloter Adobe InDesign (fenêtre ouverte) par un plugin UXP (Unified Extensibility Platform). Code repris tel quel de [lfoletti/indesign-mcp](https://github.com/lfoletti/indesign-mcp), étiquette `v0.1.0` (commit `08ada7d`) : voir `VERSION-AOI.txt`. Ne pas modifier ces fichiers à la main : les changements se font dans le projet d'origine.
 
 | Dossier | Contenu |
 |---|---|
 | `indesignmcp/` | le serveur MCP `indesignmcp` 0.1.0 : 4 outils (`status`, `snapshot`, `batch`, `execute_script`) |
 | `run.py` | le lanceur : il ajoute ce dossier au chemin de recherche |
 | `addin/indesign-mcp.claude-mcp_ID.ccx` | le plugin UXP « Claude MCP » 0.1.0 pour InDesign : panneau d'état et 18 commandes de lot |
-| `addin/installer.cmd` | installe le plugin UXP pour l'utilisateur, sans droits administrateur |
+| `addin.json` | la fiche de l'add-in, forme `uxp` : la mise à jour pose le plugin UXP par l'installateur d'Adobe, si InDesign a déjà été lancé sur ce compte (dossier `%APPDATA%\Adobe\InDesign` présent) |
+| `addin/installer.cmd` | pose à la main, en secours : installe le plugin UXP pour l'utilisateur, sans droits administrateur |
 | `addin/desinstaller.cmd` | retire le plugin UXP |
+| `LICENSE` | licence MIT du projet d'origine |
 
 Librairies : aucune dans ce dossier. Le serveur utilise `mcp` 2.3.0 des librairies du Python AOI (`plugins/aoi/python-libs.json`). Le WebSocket est écrit avec la bibliothèque standard (`indesignmcp/ws.py`).
 
@@ -26,13 +28,16 @@ Un plugin UXP ne peut pas écouter sur un port. Le serveur écoute donc, et le p
 
 ## Installation du plugin UXP
 
-La mise à jour du plugin `aoi` ne pose pas le plugin UXP dans InDesign : il n'y a pas de fiche `addin.json`. L'installation se fait une fois par poste et par utilisateur.
+La mise à jour (`upgrader-outils.cmd`) pose le plugin UXP. Elle demande de fermer InDesign, comme pour les autres add-ins.
 
-1. Fermez InDesign.
-2. Lancez `addin\installer.cmd`. Résultat attendu : « Installation Successful », sans demande d'élévation.
-3. Ouvrez InDesign, puis le menu Fenêtre > Modules externes > Claude MCP.
+1. Lancez `upgrader-outils.cmd`. Résultat attendu : « InDesign : plugin UXP 0.1.0 posé ».
+2. Ouvrez InDesign, puis le menu Fenêtre > Modules externes > Claude MCP.
 
-`installer.cmd` lance l'installateur de plugins d'Adobe (`UnifiedPluginInstallerAgent.exe`) avec les droits de l'utilisateur. L'installateur écrit dans `%APPDATA%\Adobe\UXP\Plugins\External` et dans `%APPDATA%\Adobe\UXP\PluginsInfo\v1\ID.json`. Creative Cloud doit être installé sur le poste.
+`maj.py` lance l'installateur de plugins d'Adobe (`UnifiedPluginInstallerAgent.exe`) avec les droits de l'utilisateur, sans élévation. L'installateur écrit dans `%APPDATA%\Adobe\UXP\Plugins\External` et dans `%APPDATA%\Adobe\UXP\PluginsInfo\v1\ID.json`. Creative Cloud doit être installé sur le poste.
+
+Cette étape ne bloque jamais la mise à jour. Un échec s'affiche en clair, entre deux lignes de points d'exclamation, avec la mention « ÉCHEC NON BLOQUANT » et son motif. La mise à jour continue, et la pose est retentée à la mise à jour suivante. Si InDesign reste ouvert, la pose est remise sans échec.
+
+Pose à la main, en secours : fermez InDesign, puis lancez `addin\installer.cmd`.
 
 ## Utilisation
 
@@ -63,4 +68,4 @@ La commande doit afficher 4 outils et un chemin `indesignmcp` qui pointe dans le
 
 ## Licence
 
-Le projet d'origine n'a pas encore de fichier de licence. À ajouter avant sa publication.
+MIT (`LICENSE`). Projet sans lien avec Adobe.
