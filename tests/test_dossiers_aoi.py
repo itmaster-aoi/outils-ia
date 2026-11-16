@@ -441,6 +441,43 @@ def test_plugin_uxp():
         shutil.rmtree(t, ignore_errors=True)
 
 
+def test_detail_plugin():
+    """Détail affiché par la mise à jour : une ligne par serveur, skill, commande et style."""
+    t, aoi, env = poste()
+    try:
+        ancien = t / "ancien"
+        shutil.copytree(PLUGIN / "skills" / "adhd", ancien / "skills" / "adhd")
+        (ancien / "mcp" / "keyshot").mkdir(parents=True)
+        (ancien / "mcp" / "keyshot" / "VERSION-AOI.txt").write_text("Version      : 0.9.0\n", encoding="utf-8")
+        (ancien / ".mcp.json").write_text(json.dumps({"mcpServers": {"keyshot": {}, "rhino": {}, "disparu": {}}}),
+                                          encoding="utf-8")
+        code = (f"import sys; from pathlib import Path; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"apres = {{'chemin': Path(r'{PLUGIN}'), 'version': 'essai'}}; "
+                "avant = %s; maj.detail_plugin(avant, apres)")
+        r = lancer(["-c", code % "None"], env)
+        lignes = r.stdout.splitlines()
+        attendus = json.loads((PLUGIN / ".mcp.json").read_text(encoding="utf-8"))["mcpServers"]
+        verifier("détail : une ligne par serveur de .mcp.json, tous « nouveau » sans version précédente",
+                 r.returncode == 0 and all(any(f"plugin:aoi:{s} " in l and "nouveau" in l for l in lignes) for s in attendus),
+                 r.stdout + r.stderr)
+        verifier("détail : version du serveur lue dans VERSION-AOI.txt",
+                 any("plugin:aoi:indesign" in l and "0.1.0" in l for l in lignes), r.stdout)
+        verifier("détail : skills, commandes et style listés",
+                 any("/aoi:graphify" in l for l in lignes) and any("commande  /aoi:recall" in l for l in lignes)
+                 and any("style     aoi:ste" in l for l in lignes), r.stdout)
+        r = lancer(["-c", code % f"{{'chemin': Path(r'{ancien}'), 'version': 'vieux'}}"], env)
+        sortie = r.stdout
+        verifier("détail : états par rapport à la version précédente",
+                 r.returncode == 0
+                 and any("plugin:aoi:keyshot" in l and "mis à jour" in l for l in sortie.splitlines())
+                 and any("plugin:aoi:rhino" in l and "inchangé" in l for l in sortie.splitlines())
+                 and any("plugin:aoi:indesign" in l and "nouveau" in l for l in sortie.splitlines())
+                 and any("plugin:aoi:disparu" in l and "retiré" in l for l in sortie.splitlines())
+                 and any("/aoi:adhd" in l and "inchangé" in l for l in sortie.splitlines()), sortie + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
 def test_etat_a_jour():
     """Poste passé entièrement : --verifier-dossiers répond 0."""
     t, aoi, env = poste()
@@ -468,6 +505,7 @@ if __name__ == "__main__":
     test_journal()
     test_pointeur_revit()
     test_plugin_uxp()
+    test_detail_plugin()
     test_etat_a_jour()
     echecs = [n for n, ok in resultats if not ok]
     print(f"\n{len(resultats) - len(echecs)} réussis, {len(echecs)} en échec")

@@ -122,6 +122,51 @@ def skills(plugin):
     return sorted(p.parent.name for p in (plugin["chemin"] / "skills").glob("*/SKILL.md"))
 
 
+def version_serveur(plugin, serveur):
+    """Version d'un serveur, pour l'affichage : ligne « Version » de mcp/<serveur>/VERSION-AOI.txt,
+    sinon version de la fiche <serveur>-server-aoi.json, sinon texte vide."""
+    if not plugin:
+        return ""
+    try:
+        for ligne in (plugin["chemin"] / "mcp" / serveur / "VERSION-AOI.txt").read_text(
+                encoding="utf-8", errors="replace").splitlines():
+            if ligne.startswith("Version") and ":" in ligne:
+                return ligne.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    return str((lire_json(plugin["chemin"] / f"{serveur}-server-aoi.json") or {}).get("version") or "")
+
+
+def detail_plugin(avant, apres):
+    """Affiche le contenu du plugin installé, une ligne par composant : serveurs MCP, skills,
+    commandes et styles de sortie, avec leur état par rapport à la version précédente."""
+    def etat(nom, anciens, change=False):
+        return "nouveau" if nom not in anciens else ("mis à jour" if change else "inchangé")
+
+    def fichiers(plugin, dossier):
+        return sorted(f.stem for f in (plugin["chemin"] / dossier).glob("*.md")) if plugin else []
+
+    print(f"\nContenu du plugin aoi {apres['version']} :")
+    anciens = set(serveurs(avant))
+    for s in serveurs(apres):
+        v = version_serveur(apres, s)
+        ligne = f"  serveur   plugin:aoi:{s:<10} {etat(s, anciens, v != version_serveur(avant, s)):<11} {v}"
+        print(ligne[:118].rstrip())
+    anciens = set(skills(avant))
+    for k in skills(apres):
+        print(f"  skill     /aoi:{k:<16} {etat(k, anciens)}")
+    anciens = set(fichiers(avant, "commands"))
+    for c in fichiers(apres, "commands"):
+        print(f"  commande  /aoi:{c:<16} {etat(c, anciens)}")
+    anciens = set(fichiers(avant, "output-styles"))
+    for o in fichiers(apres, "output-styles"):
+        print(f"  style     aoi:{o:<17} {etat(o, anciens)}")
+    for s in sorted(set(serveurs(avant)) - set(serveurs(apres))):
+        print(f"  serveur   plugin:aoi:{s:<10} retiré")
+    for k in sorted(set(skills(avant)) - set(skills(apres))):
+        print(f"  skill     /aoi:{k:<16} retirée")
+
+
 def claude(*args, silencieux=False):
     exe = shutil.which("claude")
     if not exe:
@@ -613,9 +658,16 @@ def finir(avant, apres):
     Une étape qui échoue (fichier verrouillé...) est signalée et n'empêche pas les suivantes.
     Le témoin finir-<version>.ok, écrit à la fin, prouve au crochet de démarrage que tout a tourné."""
     echecs = 0
-    for x in addins(apres, appliquer=True):
+    # Détail, composant par composant. Affichage seul : son échec ne compte pas dans le résultat.
+    etape("détail du plugin", detail_plugin, avant, apres)
+    print("\nAdd-ins des applications de ce compte :")
+    fiches = addins(apres, appliquer=True)
+    if not fiches:
+        print("  aucune application concernée n'a été lancée sur ce compte")
+    for x in fiches:
         # Application trop ancienne (x[6]) : refus durable, déjà signalé à chaque démarrage
         echecs += not etape(f"add-in {x[0]}", copier_addin, *x, appliquer=True) and not x[6]
+    print("\nContrôle des imports, Python AOI et Node AOI :")
     echecs += not etape("contrôle des imports et archives", controle, apres, verifier=False)
     echecs += not etape("nettoyage du cache", nettoyer_cache, avant, apres)
     if not echecs:
