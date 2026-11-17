@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-17.2 (plugin 2026.11.17.2)
+
+Serveur MCP `photoshop` : Claude pilote Adobe Photoshop par un plugin UXP. Le serveur a 4 outils (`status`, `snapshot`, `batch`, `execute_script`) et 27 commandes de lot, en pixels. Un lot forme une seule étape d'historique. Il tourne avec le Python AOI, sans `-I -S` et sans dossier `libs/`, comme les serveurs `indesign` et `illustrator`. La mise à jour pose le plugin UXP « Claude MCP Photoshop » par l'installateur d'Adobe, si Photoshop est installé sur le compte. Nouvelle fiche `mcp/photoshop/addin.json`, forme `uxp` ; `maj.py` ne change pas. Le mode développeur de Photoshop n'est pas nécessaire. Le panneau se connecte seulement après un clic sur « Connecter ». `execute_script` exécute du JavaScript UXP ; il reste fermé tant que la case du panneau n'est pas cochée. Origine : `lfoletti/photoshop-mcp` `v0.1.0`, licence MIT. Vérifié avec Photoshop 28.0. Voir `mcp/photoshop/README.md` et `VERSIONS.md`.
+
 ## 2026-11-17.1 (plugin 2026.11.17.1)
 
 Serveur MCP `illustrator` : Claude pilote Adobe Illustrator par un panneau CEP. Le serveur a 4 outils (`status`, `snapshot`, `batch`, `execute_script`) et 26 commandes de lot. Il tourne avec le Python AOI, sans `-I -S` et sans dossier `libs/`, comme le serveur `indesign`. Le panneau « Claude MCP » est signé : aucun réglage du poste n'est nécessaire. La mise à jour le copie dans `%APPDATA%\Adobe\CEP\extensions`, si Illustrator 2026 a déjà été lancé sur le compte. Nouvelle fiche `mcp/illustrator/addin.json`, forme `source` ; `maj.py` ne change pas. Le panneau se connecte seulement après un clic sur « Connecter ». Origine : `lfoletti/illustrator-mcp` `v0.1.0`, licence MIT. Vérifié avec Illustrator 30.8.2. Voir `mcp/illustrator/README.md` et `VERSIONS.md`.

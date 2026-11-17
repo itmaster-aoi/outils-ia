@@ -18,6 +18,7 @@ plugins/aoi/                      le plugin
     autocad/                        AutoCAD 2027 : add-in qui est aussi le serveur
     indesign/                       InDesign 2026 : serveur Python et plugin UXP
     illustrator/                    Illustrator 2026 : serveur Python et panneau CEP signé
+    photoshop/                      Photoshop 2027 : serveur Python et plugin UXP
     cortexdb/                       mémoire durable locale (SQLite)
   commands/                       /aoi:remember et /aoi:recall (cortexdb)
   controle/                       contrôle des imports Python (liste blanche) et Python embarqué

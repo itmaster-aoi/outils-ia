@@ -1,0 +1,18 @@
+{
+  "add-ins": [
+    {
+      "nom": "Photoshop",
+      "si_existe": "%APPDATA%/Adobe/UXP/PluginsStorage/PHSP",
+      "destination": "%APPDATA%/Adobe/UXP/PluginsInfo/v1",
+      "processus": "Photoshop.exe",
+      "uxp": {
+        "paquet": "addin/photoshop-mcp.claude-mcp_PS.ccx",
+        "id": "photoshop-mcp.claude-mcp",
+        "nom": "Claude MCP Photoshop",
+        "version": "0.1.0",
+        "registre": "PS.json",
+        "sha256": "0b3f9cca90684336dee15df25eca07d847d5e059c7dec8c77b96fd67ce8692af"
+      }
+    }
+  ]
+}

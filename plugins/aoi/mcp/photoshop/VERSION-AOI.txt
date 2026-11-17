@@ -1,0 +1,22 @@
+Origine      : https://github.com/lfoletti/photoshop-mcp
+Étiquette    : v0.1.0
+Commit       : ec99ff5eff35bdcce5eee6495889de719a77c895
+Version      : serveur 0.1.0, 4 outils ; plugin UXP « Claude MCP Photoshop » 0.1.0, 27 commandes de lot
+Librairies   : aucune dans ce dossier ; mcp 2.3.0 des librairies du Python AOI (python-libs 2026-10-16)
+Importé le   : 17.11.2026
+Repris       : run.py, LICENSE, photoshopmcp/ (sans __pycache__)
+Fabriqués    : addin/ par paquet.py du projet d'origine : le .ccx est l'archive de plugin/
+Adaptations  : aucune dans le code. Écrits pour ce dépôt : README.md, addin.json, ce fichier.
+Non repris   : tests/
+Vérifié      : Photoshop 28.0.0 ; tests du projet d'origine dans Photoshop, bout_en_bout.py et commandes.py, aussi sur le plugin posé par le .ccx
+SHA-256      :
+  c852410237b02409e7c4b1002284d38af80db1abc0ea8f14a9bdbe3d664c1c65  run.py
+  1dd287a7918c1851288e6b15926e7252c0311cb5748d4c313a23530e59742766  LICENSE
+  9366c6e46a7a53e53b87e38467dd4938b488a02e1976b6b9ee2037cf119698e5  photoshopmcp/__init__.py
+  3c257882fc0bcf5785e33aa00f61380472710ebfb821662d105b77640f993271  photoshopmcp/outils.py
+  9eda2cba6cbde5d626773355b032b2d7dec6b40b7412a62b87178765d2d0947f  photoshopmcp/server.py
+  bb0d0be705c6bf9e29bede4b9b63493b80ba0d8379e45b1e79ddcc044505b5cd  photoshopmcp/ws.py
+  0b3f9cca90684336dee15df25eca07d847d5e059c7dec8c77b96fd67ce8692af  addin/photoshop-mcp.claude-mcp_PS.ccx
+  bf5e5e640b102cfad955399832254100bba98d7cfa21d57c8487956f0d03f645  addin/installer.cmd
+  19a33a279bb92ef08464303d148c862b2171c147a1dfe86628506ae9bb6acaeb  addin/desinstaller.cmd
+Contenu du .ccx : commandes.js, index.html, main.js, manifest.json, moteur.js, icons/dark@1x.png, icons/dark@2x.png, icons/light@1x.png, icons/light@2x.png, icons/plugin@1x.png, icons/plugin@2x.png

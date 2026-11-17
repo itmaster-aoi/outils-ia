@@ -338,7 +338,7 @@ import json, os, sys
 from pathlib import Path
 # Faux installateur d'Adobe. FAUX_UPIA : ok (défaut), echec (code 3), menteur (code 0, rien d'écrit).
 mode = os.environ.get("FAUX_UPIA", "ok")
-registre = Path(os.environ["APPDATA"]) / "Adobe" / "UXP" / "PluginsInfo" / "v1" / "ID.json"
+registre = Path(os.environ["APPDATA"]) / "Adobe" / "UXP" / "PluginsInfo" / "v1" / os.environ.get("FAUX_REGISTRE", "ID.json")
 plugins = json.loads(registre.read_text(encoding="utf-8"))["plugins"] if registre.is_file() else []
 if mode == "echec":
     print("Failed to install, status = -410!")
@@ -347,7 +347,7 @@ if mode != "menteur":
     if sys.argv[1] == "/remove":
         plugins = [p for p in plugins if p["name"] != sys.argv[2]]
     elif sys.argv[1] == "/install":
-        plugins.append({"name": "Claude MCP", "pluginId": os.environ["FAUX_ID"], "status": "enabled",
+        plugins.append({"name": os.environ.get("FAUX_NOM", "Claude MCP"), "pluginId": os.environ["FAUX_ID"], "status": "enabled",
                         "type": "uxp", "versionString": os.environ["FAUX_VERSION"]})
     registre.parent.mkdir(parents=True, exist_ok=True)
     registre.write_text(json.dumps({"plugins": plugins}), encoding="utf-8")
@@ -437,6 +437,74 @@ def test_plugin_uxp():
         r = maj(env, "--verifier-dossiers")
         verifier("plugin UXP : --verifier-dossiers ne prend pas la fiche pour un pointeur",
                  "Traceback" not in r.stderr and "add-in InDesign" not in r.stdout, r.stdout + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
+def test_plugin_uxp_photoshop():
+    """Plugin UXP de Photoshop (fiche de forme « uxp ») : le paquet du dépôt est celui de la fiche et de
+    VERSION-AOI.txt, son nom ne se confond pas avec celui d'InDesign, et la pose écrit dans PS.json."""
+    import hashlib
+    import zipfile
+    dossier = PLUGIN / "mcp" / "photoshop"
+    fiche = json.loads((dossier / "addin.json").read_text(encoding="utf-8"))["add-ins"][0]
+    uxp = fiche["uxp"]
+    paquet = dossier / uxp["paquet"]
+    empreinte = hashlib.sha256(paquet.read_bytes()).hexdigest() if paquet.is_file() else ""
+    verifier("Photoshop : le paquet a l'empreinte de la fiche", empreinte == uxp["sha256"], empreinte)
+    ecarts = []
+    for ligne in (dossier / "VERSION-AOI.txt").read_text(encoding="utf-8").splitlines():
+        parties = ligne.split()
+        if len(parties) == 2 and len(parties[0]) == 64:
+            f = dossier / parties[1]
+            # Les fichiers texte peuvent avoir changé de fin de ligne au clone : l'empreinte est celle du contenu en LF.
+            contenu = f.read_bytes() if f.is_file() else b""
+            if hashlib.sha256(contenu).hexdigest() != parties[0] and \
+                    hashlib.sha256(contenu.replace(b"\r\n", b"\n")).hexdigest() != parties[0]:
+                ecarts.append(parties[1])
+    verifier("Photoshop : les fichiers ont les empreintes de VERSION-AOI.txt", not ecarts, str(ecarts))
+    with zipfile.ZipFile(paquet) as z:
+        manifeste = json.loads(z.read("manifest.json"))
+        noms = z.namelist()
+    verifier("Photoshop : le manifeste du paquet porte l'identifiant, le nom et la version de la fiche",
+             (manifeste["id"], manifeste["name"], manifeste["version"]) == (uxp["id"], uxp["nom"], uxp["version"])
+             and manifeste["host"]["app"] == "PS", str(manifeste)[:300])
+    verifier("Photoshop : le paquet contient le panneau, le moteur et les icônes",
+             {"index.html", "main.js", "moteur.js", "commandes.js", "icons/dark@1x.png", "icons/light@1x.png"} <= set(noms), str(noms))
+    indesign = json.loads((PLUGIN / "mcp" / "indesign" / "addin.json").read_text(encoding="utf-8"))["add-ins"][0]["uxp"]
+    verifier("Photoshop : nom et identifiant différents de ceux du plugin d'InDesign (retrait par le nom)",
+             uxp["nom"] != indesign["nom"] and uxp["id"] != indesign["id"], uxp["nom"])
+    t, aoi, env = poste()
+    try:
+        (t / "faux_upia.py").write_text(FAUX_UPIA, encoding="utf-8")
+        (t / "upia.cmd").write_text(f'@"{PY}" "{t / "faux_upia.py"}" %*\r\n', encoding="ascii")
+        registres = Path(env["APPDATA"]) / "Adobe" / "UXP" / "PluginsInfo" / "v1"
+        registres.mkdir(parents=True)
+        autre = {"plugins": [{"name": indesign["nom"], "pluginId": indesign["id"], "status": "enabled",
+                              "type": "uxp", "versionString": indesign["version"]}]}
+        (registres / "ID.json").write_text(json.dumps(autre), encoding="utf-8")
+        env = dict(env, AOI_UPIA=str(t / "upia.cmd"), FAUX_ID=uxp["id"], FAUX_VERSION=uxp["version"],
+                   FAUX_REGISTRE=uxp["registre"], FAUX_NOM=uxp["nom"])
+        # proc vide : le test ne dépend pas d'un Photoshop ouvert sur le poste
+        code = (f"import sys; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"p = {{'chemin': __import__('pathlib').Path(r'{PLUGIN}'), 'version': None}}; "
+                "x = [a[:3] + ('',) + a[4:] for a in maj.addins(p) if a[0] == 'Photoshop']; print('FICHES', len(x)); "
+                "print('RETOUR', [maj.copier_addin(*a, appliquer=%s) for a in x])")
+        r = lancer(["-c", code % "False"], env)
+        verifier("Photoshop : absent de ce compte, fiche ignorée", "FICHES 0" in r.stdout, r.stdout + r.stderr)
+        (Path(env["APPDATA"]) / "Adobe" / "UXP" / "PluginsStorage" / "PHSP").mkdir(parents=True)
+        r = lancer(["-c", code % "False"], env)
+        verifier("Photoshop : fiche lue par addins(), état « à poser »",
+                 "FICHES 1" in r.stdout and "RETOUR [True]" in r.stdout and "à poser" in r.stdout, r.stdout + r.stderr)
+        r = lancer(["-c", code % "True"], env)
+        pose = json.loads((registres / "PS.json").read_text(encoding="utf-8"))["plugins"] if (registres / "PS.json").is_file() else []
+        verifier("Photoshop : plugin posé dans PS.json",
+                 "RETOUR [True]" in r.stdout and "posé" in r.stdout
+                 and [(x["pluginId"], x["versionString"]) for x in pose] == [(uxp["id"], uxp["version"])], r.stdout + r.stderr)
+        verifier("Photoshop : le registre d'InDesign n'a pas changé",
+                 json.loads((registres / "ID.json").read_text(encoding="utf-8")) == autre)
+        r = lancer(["-c", code % "True"], env)
+        verifier("Photoshop : mise à jour suivante, « à jour »", "RETOUR [True]" in r.stdout and "à jour" in r.stdout, r.stdout + r.stderr)
     finally:
         shutil.rmtree(t, ignore_errors=True)
 
@@ -555,6 +623,7 @@ if __name__ == "__main__":
     test_journal()
     test_pointeur_revit()
     test_plugin_uxp()
+    test_plugin_uxp_photoshop()
     test_panneau_cep()
     test_detail_plugin()
     test_etat_a_jour()

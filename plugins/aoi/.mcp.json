@@ -28,6 +28,12 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/illustrator/run.py"
       ]
     },
+    "photoshop": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/photoshop/run.py"
+      ]
+    },
     "revit": {
       "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
       "args": [
