@@ -22,6 +22,12 @@
         "${CLAUDE_PLUGIN_ROOT}/mcp/indesign/run.py"
       ]
     },
+    "illustrator": {
+      "command": "${LOCALAPPDATA}/aoi/python/python.exe",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/illustrator/run.py"
+      ]
+    },
     "revit": {
       "command": "${CLAUDE_PLUGIN_ROOT}/controle/runtime/python.exe",
       "args": [

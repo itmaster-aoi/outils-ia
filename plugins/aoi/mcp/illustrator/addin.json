@@ -1,0 +1,11 @@
+{
+  "add-ins": [
+    {
+      "nom": "Illustrator",
+      "si_existe": "%APPDATA%/Adobe/Adobe Illustrator 30 Settings",
+      "source": "addin/illustrator-mcp.claude-mcp",
+      "destination": "%APPDATA%/Adobe/CEP/extensions/illustrator-mcp.claude-mcp",
+      "processus": "Illustrator.exe"
+    }
+  ]
+}

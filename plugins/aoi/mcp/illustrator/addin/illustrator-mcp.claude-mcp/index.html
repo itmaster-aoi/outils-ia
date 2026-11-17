@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    /* Couleurs : thème sombre par défaut. main.js lit le thème d'Illustrator : fond, et classe « clair ». */
+    body {
+      --fond: #323232; --texte: #e6e6e6; --discret: #9a9a9a; --trait: #4a4a4a;
+      --carte: rgba(255, 255, 255, 0.05); --eteint: #666666;
+      --vert: #4bbf73; --jaune: #e0b040; --rouge: #e5645a;
+      margin: 0; padding: 12px;
+      background: var(--fond); color: var(--texte);
+      font-family: sans-serif; font-size: 12px; line-height: 16px;
+      display: flex; flex-direction: column; overflow: hidden; user-select: none; cursor: default;
+    }
+    body.clair {
+      --texte: #2c2c2c; --discret: #6e6e6e; --trait: #cfcfcf;
+      --carte: rgba(0, 0, 0, 0.04); --eteint: #b4b4b4;
+      --vert: #2d9d5c; --jaune: #b98300; --rouge: #c9372c;
+    }
+
+    /* En-tête : état de la connexion. Deux couleurs : vert si connecté, rouge sinon. */
+    #tete { display: flex; flex-direction: row; align-items: center; }
+    #voyant { width: 10px; height: 10px; border-radius: 5px; margin-right: 8px; background: var(--rouge); flex-shrink: 0; }
+    #etat { font-size: 14px; font-weight: bold; flex-grow: 1; }
+    #tete.ok #voyant { background: var(--vert); }
+    /* Essai de connexion : main.js alterne cette classe pour faire clignoter la pastille. */
+    #tete #voyant.eteinte { background: var(--eteint); }
+    #detail { color: var(--discret); margin: 2px 0 0 18px; height: 32px; overflow: hidden; }
+
+    /* Bouton de connexion : sous l'état, aligné sur le texte */
+    #action { display: flex; flex-direction: row; margin: 8px 0 0 18px; }
+    #bouton {
+      margin: 0; padding: 3px 14px; font: inherit; color: var(--texte); background: transparent;
+      border: 1px solid var(--discret); border-radius: 12px; outline: none;
+    }
+    #bouton:hover { background: var(--carte); }
+
+    /* Connexion inactive : l'activité et la sécurité sont grisées. L'en-tête et le bouton restent nets. */
+    #corps { display: flex; flex-direction: column; }
+    #corps.inactif, #corps.inactif .titre, #corps.inactif .nombre, #corps.inactif .legende,
+    #corps.inactif .heure, #corps.inactif .texte, #corps.inactif .duree, #corps.inactif .vide,
+    #corps.inactif label, #corps.inactif .aide, #corps.inactif #nb-ko.actif,
+    #corps.inactif #securite.actif .aide, #version.inactif { color: var(--eteint); }
+    #corps.inactif .puce, #corps.inactif .entree.ok .puce, #corps.inactif .entree.ko .puce { background: var(--eteint); }
+
+    /* Sections */
+    .titre {
+      margin: 10px 0 6px 0; padding-top: 8px; border-top: 1px solid var(--trait);
+      color: var(--discret); font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.6px;
+    }
+
+    /* Compteurs */
+    #compteurs { display: flex; flex-direction: row; margin-bottom: 8px; }
+    .compteur { flex-grow: 1; flex-basis: 0; background: var(--carte); border-radius: 4px; padding: 6px 8px; margin-right: 6px; }
+    .compteur:last-child { margin-right: 0; }
+    .compteur .nombre { font-size: 16px; line-height: 20px; font-weight: bold; }
+    .compteur .legende { color: var(--discret); font-size: 10px; }
+    #nb-ko.actif { color: var(--rouge); }
+
+    /* Journal : 50 dernières commandes, 5 visibles. Hauteur fixe : le panneau ne change pas de hauteur.
+       La plus récente est en haut, les autres défilent. */
+    #journal { height: 100px; overflow-x: hidden; overflow-y: auto; }
+    #journal::-webkit-scrollbar { width: 3px; }
+    #journal::-webkit-scrollbar-thumb { background: var(--discret); border-radius: 2px; }
+    #corps.inactif #journal::-webkit-scrollbar-thumb { background: var(--eteint); }
+    .vide { color: var(--discret); }
+    .entree { display: flex; flex-direction: row; align-items: baseline; height: 20px; margin-right: 8px; }
+    .entree .heure { color: var(--discret); width: 56px; flex-shrink: 0; font-size: 11px; }
+    .entree .puce { width: 6px; height: 6px; border-radius: 3px; margin-right: 6px; flex-shrink: 0; background: var(--discret); }
+    .entree.ok .puce { background: var(--vert); }
+    .entree.ko .puce { background: var(--rouge); }
+    .entree .texte { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entree .duree { color: var(--discret); font-size: 11px; margin-left: 6px; flex-shrink: 0; }
+
+    /* Sécurité */
+    #securite label { display: flex; flex-direction: row; align-items: center; }
+    #securite input { margin: 0 6px 0 0; }
+    .aide { color: var(--discret); font-size: 11px; margin: 4px 0 0 0; height: 32px; overflow: hidden; }
+    #securite.actif .aide { color: var(--jaune); }
+
+    /* Pied */
+    #pied { display: flex; flex-direction: row; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--trait); }
+    #version { color: var(--discret); font-size: 11px; flex-grow: 1; white-space: nowrap; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div id="tete" class="ko">
+    <div id="voyant"></div>
+    <div id="etat">Déconnecté</div>
+  </div>
+  <div id="detail"></div>
+  <div id="action"><button id="bouton">Connecter</button></div>
+
+  <div id="corps">
+  <div class="titre">Activité</div>
+  <div id="compteurs">
+    <div class="compteur"><div class="nombre" id="nb-ok">0</div><div class="legende">réussies</div></div>
+    <div class="compteur"><div class="nombre" id="nb-ko">0</div><div class="legende">en erreur</div></div>
+    <div class="compteur"><div class="nombre" id="nb-ops">0</div><div class="legende">opérations</div></div>
+  </div>
+  <div id="journal"></div>
+
+  <div class="titre">Sécurité</div>
+  <div id="securite">
+    <label><input type="checkbox" id="autoriser"> Autoriser les scripts ExtendScript (JSX)</label>
+    <div class="aide" id="aide-script">Claude ne peut pas exécuter de code libre dans Illustrator.</div>
+  </div>
+  </div>
+
+  <div id="pied">
+    <div id="version"></div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>

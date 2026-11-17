@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Extension CEP « Claude MCP » pour Illustrator : un panneau, pas de Node.js. -->
+<ExtensionManifest Version="7.0" ExtensionBundleId="illustrator-mcp.claude-mcp" ExtensionBundleVersion="0.1.0"
+                   ExtensionBundleName="Claude MCP" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ExtensionList>
+    <Extension Id="illustrator-mcp.claude-mcp.panneau" Version="0.1.0"/>
+  </ExtensionList>
+  <ExecutionEnvironment>
+    <HostList>
+      <Host Name="ILST" Version="[27.0,99.9]"/>
+    </HostList>
+    <LocaleList>
+      <Locale Code="All"/>
+    </LocaleList>
+    <RequiredRuntimeList>
+      <RequiredRuntime Name="CSXS" Version="11.0"/>
+    </RequiredRuntimeList>
+  </ExecutionEnvironment>
+  <DispatchInfoList>
+    <Extension Id="illustrator-mcp.claude-mcp.panneau">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./index.html</MainPath>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Panel</Type>
+          <Menu>Claude MCP</Menu>
+          <Geometry>
+            <Size><Height>430</Height><Width>260</Width></Size>
+            <MinSize><Height>430</Height><Width>240</Width></MinSize>
+            <MaxSize><Height>430</Height><Width>600</Width></MaxSize>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+  </DispatchInfoList>
+</ExtensionManifest>

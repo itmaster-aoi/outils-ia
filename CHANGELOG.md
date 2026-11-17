@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-17.1 (plugin 2026.11.17.1)
+
+Serveur MCP `illustrator` : Claude pilote Adobe Illustrator par un panneau CEP. Le serveur a 4 outils (`status`, `snapshot`, `batch`, `execute_script`) et 26 commandes de lot. Il tourne avec le Python AOI, sans `-I -S` et sans dossier `libs/`, comme le serveur `indesign`. Le panneau « Claude MCP » est signé : aucun réglage du poste n'est nécessaire. La mise à jour le copie dans `%APPDATA%\Adobe\CEP\extensions`, si Illustrator 2026 a déjà été lancé sur le compte. Nouvelle fiche `mcp/illustrator/addin.json`, forme `source` ; `maj.py` ne change pas. Le panneau se connecte seulement après un clic sur « Connecter ». Origine : `lfoletti/illustrator-mcp` `v0.1.0`, licence MIT. Vérifié avec Illustrator 30.8.2. Voir `mcp/illustrator/README.md` et `VERSIONS.md`.
+
 ## 2026-11-16.3 (plugin 2026.11.16.3)
 
 La mise à jour affiche le détail du plugin installé, une ligne par composant : chaque serveur MCP avec sa version, chaque skill, chaque commande et chaque style de sortie, avec son état (« nouveau », « mis à jour », « inchangé », « retiré »). Les étapes suivantes ont un titre : add-ins des applications de ce compte, puis contrôle des imports, Python AOI et Node AOI. Cet affichage ne change pas le résultat de la mise à jour.

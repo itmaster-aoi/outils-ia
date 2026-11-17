@@ -17,6 +17,7 @@ plugins/aoi/                      le plugin
     keyshot/                        KeyShot Studio 2026 : serveur et pont
     autocad/                        AutoCAD 2027 : add-in qui est aussi le serveur
     indesign/                       InDesign 2026 : serveur Python et plugin UXP
+    illustrator/                    Illustrator 2026 : serveur Python et panneau CEP signé
     cortexdb/                       mémoire durable locale (SQLite)
   commands/                       /aoi:remember et /aoi:recall (cortexdb)
   controle/                       contrôle des imports Python (liste blanche) et Python embarqué

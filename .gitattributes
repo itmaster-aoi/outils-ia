@@ -3,3 +3,6 @@
 *.md   text eol=lf
 *.ps1  text eol=crlf
 *.cmd  text eol=crlf
+
+# Panneau CEP signé d'Illustrator : un octet changé annule la signature, donc aucune conversion.
+plugins/aoi/mcp/illustrator/addin/illustrator-mcp.claude-mcp/** -text

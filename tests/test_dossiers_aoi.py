@@ -441,6 +441,56 @@ def test_plugin_uxp():
         shutil.rmtree(t, ignore_errors=True)
 
 
+def test_panneau_cep():
+    """Panneau CEP signé d'Illustrator (fiche de forme « source ») : les fichiers du dépôt sont ceux de la
+    signature, git ne les convertit pas, et la mise à jour les copie à l'identique."""
+    import hashlib
+    dossier = PLUGIN / "mcp" / "illustrator"
+    signe = dossier / "addin" / "illustrator-mcp.claude-mcp"
+    attendus = {}
+    for ligne in (dossier / "VERSION-AOI.txt").read_text(encoding="utf-8").splitlines():
+        parties = ligne.split()
+        if len(parties) == 2 and len(parties[0]) == 64 and parties[1].startswith("addin/illustrator-mcp.claude-mcp/"):
+            attendus[parties[1].split("/", 2)[2]] = parties[0]
+    reels = {f.relative_to(signe).as_posix(): hashlib.sha256(f.read_bytes()).hexdigest()
+             for f in signe.rglob("*") if f.is_file()}
+    verifier("panneau CEP : signature présente", "META-INF/signatures.xml" in reels and "mimetype" in reels, str(sorted(reels)))
+    verifier("panneau CEP : fichiers du dépôt identiques aux empreintes de VERSION-AOI.txt (signature intacte)",
+             reels == attendus and len(reels) == 6, f"{reels}\n{attendus}")
+    r = subprocess.run(["git", "check-attr", "text", "--", str(signe / "main.js")], cwd=RACINE,
+                       capture_output=True, text=True, errors="replace")
+    verifier("panneau CEP : dossier signé marqué -text dans .gitattributes", "text: unset" in r.stdout, r.stdout + r.stderr)
+
+    t, aoi, env = poste()
+    try:
+        dst = Path(env["APPDATA"]) / "Adobe" / "CEP" / "extensions" / "illustrator-mcp.claude-mcp"
+        # proc vide : le test ne dépend pas d'un Illustrator ouvert sur le poste
+        code = (f"import sys; sys.path.insert(0, r'{SCRIPTS}'); import maj; "
+                f"p = {{'chemin': __import__('pathlib').Path(r'{PLUGIN}'), 'version': None}}; "
+                "x = [a[:3] + ('',) + a[4:] for a in maj.addins(p) if a[0] == 'Illustrator']; print('FICHES', len(x)); "
+                "print('RETOUR', [maj.copier_addin(*a, appliquer=%s) for a in x])")
+        r = lancer(["-c", code % False], env)
+        verifier("panneau CEP : Illustrator jamais lancé sur ce compte, fiche ignorée", "FICHES 0" in r.stdout, r.stdout + r.stderr)
+        (Path(env["APPDATA"]) / "Adobe" / "Adobe Illustrator 30 Settings").mkdir(parents=True)
+        r = lancer(["-c", code % False], env)
+        verifier("panneau CEP : état seul, « à recopier », rien d'écrit",
+                 "FICHES 1" in r.stdout and "à recopier" in r.stdout and not dst.exists(), r.stdout + r.stderr)
+        r = lancer(["-c", code % True], env)
+        copies = {f.relative_to(dst).as_posix(): hashlib.sha256(f.read_bytes()).hexdigest()
+                  for f in dst.rglob("*") if f.is_file()} if dst.is_dir() else {}
+        verifier("panneau CEP : copié à l'identique dans CEP\\extensions",
+                 "RETOUR [True]" in r.stdout and copies == attendus, r.stdout + r.stderr)
+        r = lancer(["-c", code % True], env)
+        verifier("panneau CEP : mise à jour suivante, « à jour »", "RETOUR [True]" in r.stdout and "à jour" in r.stdout,
+                 r.stdout + r.stderr)
+        (dst / "main.js").write_text("// modifié", encoding="utf-8")
+        r = lancer(["-c", code % True], env)
+        verifier("panneau CEP : fichier modifié sur le poste, recopié",
+                 hashlib.sha256((dst / "main.js").read_bytes()).hexdigest() == attendus["main.js"], r.stdout + r.stderr)
+    finally:
+        shutil.rmtree(t, ignore_errors=True)
+
+
 def test_detail_plugin():
     """Détail affiché par la mise à jour : une ligne par serveur, skill, commande et style."""
     t, aoi, env = poste()
@@ -505,6 +555,7 @@ if __name__ == "__main__":
     test_journal()
     test_pointeur_revit()
     test_plugin_uxp()
+    test_panneau_cep()
     test_detail_plugin()
     test_etat_a_jour()
     echecs = [n for n, ok in resultats if not ok]

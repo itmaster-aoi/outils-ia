@@ -1,0 +1,32 @@
+Origine      : https://github.com/lfoletti/illustrator-mcp
+Étiquette    : v0.1.0
+Commit       : c47f52fd2aed552a3f80ffe2889924699f92388f
+Version      : serveur 0.1.0, 4 outils ; panneau CEP « Claude MCP » 0.1.0 signé, 26 commandes de lot
+Librairies   : aucune dans ce dossier ; mcp 2.3.0 des librairies du Python AOI (python-libs 2026-10-16)
+Importé le   : 17.11.2026
+Repris       : run.py, LICENSE, illustratormcp/ (sans __pycache__)
+Fabriqués    : addin/ par paquet.py du projet d'origine : le dossier illustrator-mcp.claude-mcp est panneau/
+               sans .debug, signé par ZXPSignCmd 4.1.103 (META-INF/signatures.xml, mimetype)
+Signature    : certificat auto-signé « atelier oi IT », valide du 17.11.2026 au 14.11.2036, sans horodatage.
+               Le certificat et son mot de passe sont hors de ce dépôt. À signer de nouveau avant le 14.11.2036.
+               Toute modification d'un fichier du dossier signé annule la signature : .gitattributes le marque -text.
+Adaptations  : aucune dans le code. Écrits pour ce dépôt : README.md, addin.json, ce fichier.
+Non repris   : tests/, paquet.py, panneau/ (le moteur est dans le dossier signé ; le canal com n'est pas utilisable ici)
+Vérifié      : Illustrator 30.8.2 ; test de bout en bout du projet d'origine par le panneau, 31 contrôles sur 31 ;
+               panneau signé chargé sans PlayerDebugMode
+SHA-256      :
+  c766db58ccdd6f65b069f7dbe6f848c3202d9755d789155b6b5443eb77abc54f  run.py
+  1dd287a7918c1851288e6b15926e7252c0311cb5748d4c313a23530e59742766  LICENSE
+  3cf0b821a2c81b8d46e045608bf14a463bccf5e4b5fe4ad5b49e56ea6a7a7a4e  illustratormcp/__init__.py
+  e8239735b1572356817a955c620a5903c8d2eab4563d6b5100aebe4c3c732325  illustratormcp/com.py
+  7bdb1b4c8e1f611eb350024d23a280940d9e36d0dab0ee3bcf96fd7844f05265  illustratormcp/outils.py
+  3ee4368754a8be6179303140ad729659f5d5cf48ead03f3234b6135e0ecade46  illustratormcp/server.py
+  a9eb9df2381e7acd3357f16caf6bc5a0ab2299b2ecd9f63e242dace9df168078  illustratormcp/ws.py
+  e1dd379f0febf61abb3feae08fe2cf963562dc770bc3bae090b71a5e959e7b02  addin/illustrator-mcp.claude-mcp/CSXS/manifest.xml
+  55fbcdfb56be35e2dcee0836f9ffa8cb0eba21d9889c09f403c6cbbd9e28cd9f  addin/illustrator-mcp.claude-mcp/META-INF/signatures.xml
+  5cf477a223317e86d13d26f936cc6524540f40c03132279f4547e0df49ddac4a  addin/illustrator-mcp.claude-mcp/index.html
+  70b475d76515d41c31fed7e8f189e3c4912b4b2ca641cd362a29c7144d4ff265  addin/illustrator-mcp.claude-mcp/main.js
+  6f4ece9eef5c4e518ad56a6f82d14e95f93e4e5d07b1cb8d22de8666d7ac3d7f  addin/illustrator-mcp.claude-mcp/mimetype
+  1c861442bbf8c7156bc4357d18f651e9e27d5c34843e297388917a5f2c23017e  addin/illustrator-mcp.claude-mcp/moteur.jsx
+  c8fbb097424e7d2525a15dd9da03eeb61169e543e7993420b9a4ddc56b6b12f1  addin/installer.cmd
+  340c34a4bd19eaed175de4f9a26c6e774cd4043df52ee7aecfe4a9d0177d7da4  addin/desinstaller.cmd
