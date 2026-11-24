@@ -26,7 +26,7 @@ plugins/aoi/                      le plugin
   hooks/hooks.json                démarrage (maj.py) ; memo : contrôle des écritures CortexDB, miroir de la mémoire Claude Code
   memo/                           convention de nommage des cerveaux CortexDB : convention.yaml, script convention.py
   agents/
-    memo-cerveau.md               agent aoi:memo-cerveau (analyse d'un cerveau, migration préparée)
+    memo-analyse.md               agent aoi:memo-analyse (analyse d'un cerveau, migration préparée)
   skills/
     adhd/                         idéation en parallèle
     cortexdb/                     mémoire durable de l'utilisateur

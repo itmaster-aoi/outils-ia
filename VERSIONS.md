@@ -37,7 +37,7 @@ annotated-doc 0.0.4 · annotated-types 0.7.0 · anyio 4.9.0 · attrs 23.1.0 · c
 
 Note : le plugin Rhino (0.4.1.1) et le serveur Python (0.3.2) n'ont pas le même numéro de version. C'est la combinaison testée.
 
-## memo (`plugins/aoi/memo`, avec `skills/memo`, `commands/memo-bilan.md`, `commands/memo-importer.md`, `agents/memo-cerveau.md` et deux crochets de `hooks/hooks.json`)
+## memo (`plugins/aoi/memo`, avec `skills/memo`, `commands/memo-bilan.md`, `commands/memo-importer.md`, `agents/memo-analyse.md` et deux crochets de `hooks/hooks.json`)
 
 | Composant | Source | Version | Licence | Date |
 |---|---|---|---|---|

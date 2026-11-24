@@ -1,5 +1,5 @@
 ---
-name: memo-cerveau
+name: memo-analyse
 description: Analyse un cerveau CortexDB selon la convention de nommage de l'atelier oï, propose de nouvelles natures, prépare et relit la table de renommage, simule la migration et contrôle le résultat. Utiliser pour « analyser un cerveau », « mettre à jour la convention CortexDB », « préparer la table de renommage » ou « contrôler une migration ». La migration finale est un geste de l'utilisateur : l'agent ne la lance jamais, il lui donne les commandes exactes et ce qu'il faut faire. Il ne valide rien à la place de l'utilisateur : il s'arrête à chaque point de validation et rend sa proposition.
 tools: Read, Grep, Glob, Edit, Write, PowerShell, Bash, mcp__plugin_aoi_cortexdb__knowledge_get, mcp__plugin_aoi_cortexdb__memory_get, mcp__plugin_aoi_cortexdb__memory_list_all, mcp__plugin_aoi_cortexdb__aggregate_metadata, mcp__plugin_aoi_cortexdb__knowledge_search
 ---
@@ -126,7 +126,7 @@ Modèle à remplir :
 >    `& "<PY réel>" "<CONV réel>" migrer "<RAP réel>\renommage.csv"`
 >    Résultat attendu : une ligne `Sauvegarde : …` (notez ce chemin), puis `écrit 1/<n>` à `écrit <n>/<n>`, `supprimé 1/<n>` à `supprimé <n>/<n>`, puis `Journal : …`. Durée : moins d'une minute pour quelques centaines d'éléments.
 > 4. Dans le même terminal, entrez la commande de l'étape 1. Résultat attendu : `Écritures : 0 ; suppressions : 0`.
-> 5. Rouvrez Claude Code et demandez la phase F de l'agent aoi:memo-cerveau.
+> 5. Rouvrez Claude Code et demandez la phase F de l'agent aoi:memo-analyse.
 
 Ajoute toujours ce tableau des messages d'arrêt :
 

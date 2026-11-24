@@ -16,7 +16,7 @@ memo fait partie du plugin aoi (catalogue `itmaster-aoi/outils-ia`). Il utilise 
 | `commands/memo-bilan.md` | La commande `/aoi:memo-bilan` : proposer les faits de la session à retenir. |
 | `commands/memo-importer.md` | La commande `/aoi:memo-importer tout` ou `<chemin du projet>` : importer les mémoires Claude Code déjà écrites. |
 | `skills/memo/SKILL.md` | La skill `/aoi:memo` : comment nommer un élément avant de l'écrire. |
-| `agents/memo-cerveau.md` | L'agent `aoi:memo-cerveau` : le processus ci-dessous, phase par phase, avec un arrêt à chaque validation. |
+| `agents/memo-analyse.md` | L'agent `aoi:memo-analyse` : le processus ci-dessous, phase par phase, avec un arrêt à chaque validation. |
 
 Les rapports d'analyse sont des données de l'utilisateur. Ils ne sont jamais écrits dans le plugin : ils vont dans `%MEMO_RAPPORTS%` si la variable existe, sinon dans `%USERPROFILE%\Documents\memo\rapports\<cerveau>-<date>\`.
 
@@ -76,7 +76,7 @@ Le passage vers un cerveau partagé du bureau viendra avec le serveur thalamus (
 
 ## Processus : analyser un cerveau et obtenir un livrable à jour
 
-Le livrable d'un cerveau est sa table de renommage relue et validée, `<rapports>\<cerveau>-<date>\renommage.csv`, faite avec la dernière version de la convention. L'agent `aoi:memo-cerveau` applique ce processus.
+Le livrable d'un cerveau est sa table de renommage relue et validée, `<rapports>\<cerveau>-<date>\renommage.csv`, faite avec la dernière version de la convention. L'agent `aoi:memo-analyse` applique ce processus.
 
 1. **Analyser le cerveau avec la convention actuelle.** La base doit être sur C: (copie si besoin). L'analyse lit la base en lecture seule et dure quelques secondes.
 

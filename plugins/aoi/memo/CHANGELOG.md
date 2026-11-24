@@ -1,5 +1,11 @@
 # Changements de la convention et de memo
 
+## memo dans le plugin aoi 2026.11.24.4 (2026-11-24), convention version 2
+
+- `/aoi:memo` lancé sans demande précise pose une seule question, « Que voulez-vous faire avec la mémoire centrale ? », avec 3 choix : écrire un élément, ingérer une mémoire dossier, analyser ou migrer un cerveau. « Corriger un refus » n'est plus proposé.
+- L'agent `aoi:memo-cerveau` devient `aoi:memo-analyse` (fichier `agents/memo-analyse.md`).
+- `/aoi:memo-importer tout` demande une confirmation avant de lancer la liste, puis montre la liste avant d'ingérer.
+
 ## memo dans le plugin aoi 2026.11.24.3 (2026-11-24), convention version 2
 
 - Tous les composants portent le nom memo : skill `/aoi:memo` (au lieu de `/aoi:convention`), commandes `/aoi:memo-bilan` et `/aoi:memo-importer` (au lieu de `/aoi:importer-memoire`), agent `aoi:memo-cerveau` (au lieu de `aoi:convention-cortexdb`).

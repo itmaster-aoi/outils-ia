@@ -6,6 +6,7 @@ argument-hint: tout | <chemin du projet>
 Importe dans le cerveau CortexDB local les fichiers de mémoire Claude Code déjà écrits, selon la convention de l'atelier. Argument : `$ARGUMENTS`.
 
 1. Si l'argument est vide, demande à l'utilisateur : « tout » (tous les projets) ou le chemin d'un projet. Ne devine pas.
+   Si l'argument ou la réponse est « tout », demande une confirmation avant de lancer quoi que ce soit : « Lister les mémoires de tous les projets de ce poste ? Rien n'est écrit à cette étape. » Sans accord, arrête-toi.
 2. Lance la liste, en lecture seule, avec l'outil Bash :
    `"$LOCALAPPDATA/aoi/python/python.exe" "${CLAUDE_PLUGIN_ROOT}/memo/convention.py" memoires "<argument>"`
    Si `${CLAUDE_PLUGIN_ROOT}` n'est pas remplacé, le script est `memo/convention.py` du plugin aoi : dossier donné par `--plugin-dir`, sinon `%USERPROFILE%\.claude\plugins\cache\aoi\aoi\<version la plus récente>\memo`. Ne cherche nulle part ailleurs.
@@ -16,7 +17,7 @@ Importe dans le cerveau CortexDB local les fichiers de mémoire Claude Code déj
    - `a-mettre-a-jour` : déjà importé, le fichier a changé ; à réécrire sous le même identifiant ;
    - `deja-importe` : rien à faire ;
    - `doublon-probable` : le fait est déjà dans le cerveau sous l'identifiant indiqué ; pas d'import, sauf si l'utilisateur le demande pour ce fichier.
-5. Demande une seule confirmation : « Importer <n> nouveaux et mettre à jour <m> ? ». Sans accord, n'écris rien.
+5. Demande une seule confirmation : « Importer <n> nouveaux et mettre à jour <m> ? ». Sans accord, n'écris rien. N'ingère jamais un fichier avant d'avoir montré la liste de l'étape 4, même si l'utilisateur a déjà confirmé « tout » à l'étape 1.
 6. Pour chaque fichier `nouveau` ou `a-mettre-a-jour`, appelle `mcp__plugin_aoi_cortexdb__memory_save` :
    - `memory_id` : l'identifiant proposé ; remplace `<theme>` (et `<nature>` pour le type `project`) selon la skill `/aoi:memo` ; garde l'identifiant tel quel pour `a-mettre-a-jour` ;
    - `content` : le `corps`, tel quel ;

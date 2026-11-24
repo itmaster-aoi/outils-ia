@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-24.4 (plugin 2026.11.24.4)
+
+memo : `/aoi:memo` lancé sans demande précise propose 3 choix : écrire un élément, ingérer une mémoire dossier, analyser ou migrer un cerveau. L'agent `aoi:memo-cerveau` devient `aoi:memo-analyse`. `/aoi:memo-importer tout` demande une confirmation avant de lancer la liste, puis montre la liste avant d'ingérer. Aucun autre changement.
+
 ## 2026-11-24.3 (plugin 2026.11.24.3)
 
 Tous les composants de memo portent le nom memo : skill `/aoi:memo` (au lieu de `/aoi:convention`), commandes `/aoi:memo-bilan` et `/aoi:memo-importer` (au lieu de `/aoi:importer-memoire`), agent `aoi:memo-cerveau` (au lieu de `aoi:convention-cortexdb`). Aucun autre changement.
