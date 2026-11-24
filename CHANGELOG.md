@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-24.2 (plugin 2026.11.24.2)
+
+memo fait maintenant partie du plugin `aoi`. Le plugin séparé `memo` de l'étiquette `2026-11-24.1`, jamais activé, est retiré du catalogue : `maj.py` met à jour seulement `aoi@aoi`, et un plugin séparé n'aurait jamais été mis à jour sur les postes. Nouveaux noms : skill `/aoi:convention`, commandes `/aoi:memo-bilan` et `/aoi:importer-memoire`, agent `aoi:convention-cortexdb` (premier dossier `agents/` du plugin). Script `plugins/aoi/memo/convention.py`. Deux crochets s'ajoutent au crochet de démarrage dans `hooks/hooks.json` : `PreToolUse` (contrôle des écritures CortexDB) et `PostToolUse` (miroir de la mémoire Claude Code). Rien à ajouter dans `enabledPlugins` : seule l'étiquette du catalogue change dans les réglages gérés. Voir `plugins/aoi/memo/LISEZMOI.md`.
+
 ## 2026-11-24.1 (plugin aoi 2026.11.24.1, plugin memo 2026.11.24.8)
 
 Nouveau plugin `memo` dans le catalogue : la convention de nommage commune des cerveaux CortexDB de l'atelier. Identifiant `<nature>:<theme>:<sujet>`, métadonnées `nature`, `theme`, `status`, `date` pour une nature datée et `produit_par`, auteur = login Windows normalisé. Un crochet `PreToolUse` refuse une écriture CortexDB hors convention et donne la correction. Un crochet `PostToolUse` recopie chaque fichier de la mémoire Claude Code dans le cerveau local (phase de transition, double écriture). Skill `/memo:convention`, commandes `/memo:bilan` et `/memo:importer-memoire`, agent `memo:convention-cortexdb` (analyse d'un cerveau, table de renommage, migration préparée ; la migration finale reste un geste de l'utilisateur). Script `plugins/memo/convention/convention.py` en bibliothèque standard, lancé avec le Python AOI. Le plugin s'active par `"memo@aoi": true` dans les réglages gérés. Voir `plugins/memo/LISEZMOI.md` et `plugins/memo/CHANGELOG.md`.

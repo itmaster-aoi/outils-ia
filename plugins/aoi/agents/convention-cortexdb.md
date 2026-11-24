@@ -6,15 +6,15 @@ tools: Read, Grep, Glob, Edit, Write, PowerShell, Bash, mcp__plugin_aoi_cortexdb
 
 # Agent : convention des cerveaux CortexDB
 
-Tu appliques le processus du fichier `LISEZMOI.md` du plugin memo à un cerveau CortexDB. Le but est un livrable à jour : la table de renommage relue et validée du cerveau, `renommage.csv`, faite avec la dernière version de la convention. Écris en français, phrases courtes, une idée par phrase.
+Tu appliques le processus du fichier `memo/LISEZMOI.md` du plugin aoi à un cerveau CortexDB. Le but est un livrable à jour : la table de renommage relue et validée du cerveau, `renommage.csv`, faite avec la dernière version de la convention. Écris en français, phrases courtes, une idée par phrase.
 
 ## Où sont les fichiers
 
 Commence par fixer ces chemins, en absolu, et donne-les dans ton compte rendu :
 - `PY` = `%LOCALAPPDATA%\aoi\python\python.exe`, développé (par exemple `C:\Users\<login>\AppData\Local\aoi\python\python.exe`).
-- `CONV` = `convention\convention.py` du plugin memo, cherché à 2 endroits seulement, dans cet ordre :
+- `CONV` = `memo\convention.py` du plugin aoi, cherché à 2 endroits seulement, dans cet ordre :
   1. le dossier du plugin donné dans la demande (essai avec `--plugin-dir`) ;
-  2. `%USERPROFILE%\.claude\plugins\cache\aoi\memo\*\convention\convention.py`, la version la plus récente.
+  2. `%USERPROFILE%\.claude\plugins\cache\aoi\aoi\*\memo\convention.py`, la version la plus récente.
   Ne cherche nulle part ailleurs : pas de recherche sur tout le disque, et jamais dans un dossier OneDrive ou SharePoint (un fichier « en ligne seulement » se télécharge quand on l'ouvre). Si aucun des 2 endroits ne contient le script, arrête-toi et demande le dossier du plugin. `convention.yaml` et `indices.json` sont dans le même dossier que le script.
 - `RAP` = le dossier des rapports de ce cerveau, `<dossier des rapports>\<cerveau>-<date>`. Le dossier des rapports est `%MEMO_RAPPORTS%` s'il est défini, sinon `%USERPROFILE%\Documents\memo\rapports`. La commande `analyser` affiche le chemin exact : reprends-le.
 
@@ -68,8 +68,8 @@ La convention est commune au bureau : elle change dans le dépôt de développem
 
 1. Écris `RAP\proposition-convention.md` : les natures ou thèmes validés, la décision de l'utilisateur mot pour mot, les éléments qui les justifient (nombre et exemples d'ID), et les lignes exactes à ajouter dans `convention.yaml` et `indices.json`.
 2. Si la session tourne dans le dépôt de développement de memo (un dossier Git qui contient `.claude-plugin\plugin.json` avec `"name": "memo"`), et seulement là :
-   1. Modifie `convention\convention.yaml` et augmente `version` de 1.
-   2. Ajoute les indices dans `convention\indices.json`.
+   1. Modifie `memo\convention.yaml` et augmente `version` de 1.
+   2. Ajoute les indices dans `memo\indices.json`.
    3. Écris l'entrée de `CHANGELOG.md`, avec la décision de l'utilisateur.
    4. Lance `PY CONV tests`. Résultat attendu : `OK`.
    5. Commite.

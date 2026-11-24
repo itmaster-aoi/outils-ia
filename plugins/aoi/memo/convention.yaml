@@ -1,4 +1,4 @@
-# Convention de nommage des cerveaux CortexDB de l'atelier oï (plugin memo).
+# Convention de nommage des cerveaux CortexDB de l'atelier oï (composant memo du plugin aoi).
 # Le même bloc « convention: » sert dans le rights.yaml de chaque cerveau du serveur thalamus.
 #
 # Forme d'un identifiant : <nature>:<theme>:<sujet>

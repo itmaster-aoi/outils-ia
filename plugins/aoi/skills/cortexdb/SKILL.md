@@ -4,7 +4,7 @@ description: Mémoire durable de l'utilisateur dans CortexDB (serveur plugin:aoi
 ---
 
 <!-- Skill de ce dépôt, version 3 du 24.11.2026 : identifiants et métadonnées selon la convention
-     du plugin memo. Le serveur et les commandes viennent de liliang-cn/cortexdb v2.139.1 :
+     du composant memo (plugin aoi). Le serveur et les commandes viennent de liliang-cn/cortexdb v2.139.1 :
      voir plugins/aoi/mcp/cortexdb/README.md et VERSION-AOI.txt. -->
 
 # CortexDB : mémoire durable
@@ -18,16 +18,16 @@ Le serveur `plugin:aoi:cortexdb` n'appelle aucun modèle : ni service d'embeddin
 
 Le serveur cherche par mots (mode lexical) et par le graphe des entités. Un mot absent du fait enregistré ne le trouve pas, sauf par une entité commune.
 
-## Convention de nommage (plugin memo)
+## Convention de nommage (composant memo)
 
-Toute écriture suit la convention commune de l'atelier, gardée par le plugin memo. Charge la skill `/memo:convention` avant le premier enregistrement de la session. Un crochet du plugin memo refuse une écriture hors convention : lis son message, corrige l'appel et relance-le.
+Toute écriture suit la convention commune de l'atelier, gardée par le composant memo du plugin aoi. Charge la skill `/aoi:convention` avant le premier enregistrement de la session. Un crochet du plugin aoi refuse une écriture hors convention : lis son message, corrige l'appel et relance-le.
 
 En bref :
 - identifiant `<nature>:<theme>:<sujet>`, mots en minuscules joints par des tirets, sans accent, sans date ni numéro de version ;
 - métadonnées `nature`, `theme`, `status` (`current` ou `replaced`), `date` (AAAA-MM-JJ) pour une nature datée, `produit_par` (`claude-code` pour un texte que tu écris) ;
 - auteur : `user_id` (mémoire) ou `author` (document) = le login Windows de la personne (`%USERNAME%`), normalisé (minuscules, sans accent, « . », « _ » et espace remplacés par « - »).
 
-Les listes de natures et de thèmes sont dans `convention/convention.yaml` du plugin memo. Ne les recopie pas de mémoire.
+Les listes de natures et de thèmes sont dans `memo/convention.yaml` du plugin aoi. Ne les recopie pas de mémoire.
 
 ## Quand mémoriser
 
@@ -81,5 +81,5 @@ Fais un bilan seulement si l'utilisateur le demande.
 ## Limites
 
 - Ne configure pas de modèle externe : les variables `CORTEXDB_EMBED_*`, `CORTEXDB_LLM_*`, `CORTEXDB_RERANK_*` et `OPENAI_*` restent vides. Les outils qui exigent un modèle côté serveur (par exemple `import_agent_memory` avec les transcriptions de sessions) restent inactifs. Fais ce travail toi-même avec la procédure « Bilan d'une session ».
-- N'appelle pas le binaire `cortexdb-mcp.exe` en ligne de commande. Utilise les outils MCP. Seule exception : la migration d'un cerveau par le script du plugin memo (`convention.py migrer`), que l'utilisateur lance lui-même, Claude Code fermé.
+- N'appelle pas le binaire `cortexdb-mcp.exe` en ligne de commande. Utilise les outils MCP. Seule exception : la migration d'un cerveau par le script `memo/convention.py migrer`, que l'utilisateur lance lui-même, Claude Code fermé.
 - Le serveur partagé `cortexdb-grpc` n'est pas utilisé.

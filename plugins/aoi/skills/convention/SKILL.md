@@ -1,13 +1,13 @@
 ---
 name: convention
-description: Convention de nommage commune des cerveaux CortexDB de l'atelier oï (plugin memo). Utiliser avant toute écriture dans CortexDB (memory_save, knowledge_save, ingest_document, knowledge_update), quand un crochet refuse une écriture « Convention CortexDB », ou quand l'utilisateur demande quel identifiant, quelle nature ou quel thème donner à une note. Pour analyser ou migrer un cerveau entier, utiliser l'agent convention-cortexdb du même plugin.
+description: Convention de nommage commune des cerveaux CortexDB de l'atelier oï (composant memo du plugin aoi). Utiliser avant toute écriture dans CortexDB (memory_save, knowledge_save, ingest_document, knowledge_update), quand un crochet refuse une écriture « Convention CortexDB », ou quand l'utilisateur demande quel identifiant, quelle nature ou quel thème donner à une note. Pour analyser ou migrer un cerveau entier, utiliser l'agent aoi:convention-cortexdb.
 ---
 
 # Convention CortexDB de l'atelier
 
-Le plugin memo garde une convention commune à tous les cerveaux CortexDB de l'atelier. Les cerveaux pourront ainsi être fusionnés ou séparés par thème (thalamus, fiche docs/upstream/13). Un crochet refuse toute écriture hors convention, avec la correction à faire.
+Le composant memo du plugin aoi garde une convention commune à tous les cerveaux CortexDB de l'atelier. Les cerveaux pourront ainsi être fusionnés ou séparés par thème (thalamus, fiche docs/upstream/13). Un crochet refuse toute écriture hors convention, avec la correction à faire.
 
-La convention elle-même est dans le fichier `convention/convention.yaml` de ce plugin. Lis ce fichier pour connaître les listes à jour : natures, natures datées, thèmes, producteurs. Ne recopie jamais ces listes de mémoire.
+La convention elle-même est dans le fichier `memo/convention.yaml` de ce plugin. Lis ce fichier pour connaître les listes à jour : natures, natures datées, thèmes, producteurs. Ne recopie jamais ces listes de mémoire.
 
 ## Écrire un élément
 

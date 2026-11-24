@@ -1,6 +1,6 @@
 # outils-ia
 
-Dépôt de travail : un catalogue de plugins pour Claude Code. Il contient le plugin `aoi`, avec des serveurs MCP (Model Context Protocol) pour des logiciels de CAO et de rendu, des skills et un style de sortie, et le plugin `memo`, la convention de nommage des cerveaux CortexDB.
+Dépôt de travail : un catalogue de plugins pour Claude Code. Il contient le plugin `aoi`, avec des serveurs MCP (Model Context Protocol) pour des logiciels de CAO et de rendu, des skills, un style de sortie et memo, la convention de nommage des cerveaux CortexDB.
 
 Le contenu change souvent et n'a pas de garantie. Les étiquettes datées (`2026-11-16.3`) marquent des états cohérents du dépôt.
 
@@ -20,24 +20,22 @@ plugins/aoi/                      le plugin
     illustrator/                    Illustrator 2026 : serveur Python et panneau CEP signé
     photoshop/                      Photoshop 2027 : serveur Python et plugin UXP
     cortexdb/                       mémoire durable locale (SQLite)
-  commands/                       /aoi:remember et /aoi:recall (cortexdb)
+  commands/                       /aoi:remember et /aoi:recall (cortexdb), /aoi:memo-bilan et /aoi:importer-memoire (memo)
   controle/                       contrôle des imports Python (liste blanche) et Python embarqué
   lanceur/                        lanceur des serveurs publiés à part
+  hooks/hooks.json                démarrage (maj.py) ; memo : contrôle des écritures CortexDB, miroir de la mémoire Claude Code
+  memo/                           convention de nommage des cerveaux CortexDB : convention.yaml, script convention.py
+  agents/
+    convention-cortexdb.md        agent aoi:convention-cortexdb (analyse d'un cerveau, migration préparée)
   skills/
     adhd/                         idéation en parallèle
+    convention/                   convention de nommage des cerveaux CortexDB (memo)
     cortexdb/                     mémoire durable de l'utilisateur
     d5-lite-rhino/                pilotage de D5 Lite dans Rhino 8
     graphify/                     graphe de connaissances d'un dossier
     regen/scripts/                mise à jour du plugin et des archives (maj.py)
   output-styles/
     ste.md                        style de sortie aoi:ste : rédaction technique simplifiée (ASD-STE100)
-plugins/memo/                     convention de nommage des cerveaux CortexDB
-  .claude-plugin/plugin.json
-  hooks/hooks.json                contrôle des écritures CortexDB, miroir de la mémoire Claude Code
-  convention/                     convention.yaml, script convention.py (bibliothèque standard)
-  skills/convention/              /memo:convention
-  commands/                       /memo:bilan et /memo:importer-memoire
-  agents/                         memo:convention-cortexdb
 tests/                            tests des scripts du plugin
 VERSIONS.md                       versions des composants, sources et empreintes
 CHANGELOG.md                      journal des changements
@@ -54,5 +52,4 @@ Les licences des projets d'origine sont conservées dans chaque dossier. Voir `V
 ```
 claude plugin validate .
 claude plugin validate ./plugins/aoi
-claude plugin validate ./plugins/memo
 ```

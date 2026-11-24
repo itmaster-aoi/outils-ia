@@ -38,7 +38,7 @@ import sys
 import unicodedata
 
 DOSSIER = os.path.dirname(os.path.abspath(__file__))
-RACINE = os.path.dirname(DOSSIER)  # racine du plugin memo (ou du dépôt de développement)
+RACINE = os.path.dirname(DOSSIER)  # racine du plugin aoi (ou du dépôt de développement)
 CONVENTION = os.path.join(DOSSIER, "convention.yaml")
 INDICES = os.path.join(DOSSIER, "indices.json")
 BASE_DEFAUT = os.path.join(os.path.expanduser("~"), ".cortexdb", "cortexdb.db")
@@ -359,7 +359,7 @@ def garde(entree, conv=None, base=None):
         erreurs.append(str(r))
     if erreurs:
         parties = [p for e in erreurs for p in e.split(" ; ")]
-        return True, ("Convention CortexDB de l'atelier, plugin memo (%s) : %d erreur(s) à corriger ensemble : %s. Voir %s."
+        return True, ("Convention CortexDB de l'atelier, memo (%s) : %d erreur(s) à corriger ensemble : %s. Voir %s."
                       % (court, len(parties), " ; ".join(parties), CONVENTION))
     return False, ""
 
@@ -548,7 +548,7 @@ def miroir(entree, base=None):
     if existant:
         cible = "réécris l'élément existant %s (même identifiant, contenu et métadonnées à jour)" % existant
     else:
-        cible = ("memory_id %s:<theme>:%s, avec la nature : %s, et le thème choisi selon la skill /memo:convention"
+        cible = ("memory_id %s:<theme>:%s, avec la nature : %s, et le thème choisi selon la skill /aoi:convention"
                  % (nature, sujet, consigne))
     texte = (
         "Miroir memo (phase de transition : double écriture). Le fichier de mémoire Claude Code %s vient d'être "
@@ -602,7 +602,7 @@ def commande_garde():
     if entree is None:
         print(json.dumps({"hookSpecificOutput": {
             "hookEventName": "PreToolUse", "permissionDecision": "deny",
-            "permissionDecisionReason": "Convention CortexDB (memo) : entrée du crochet illisible, écriture bloquée."}},
+            "permissionDecisionReason": "Convention CortexDB, memo : entrée du crochet illisible, écriture bloquée."}},
             ensure_ascii=False))
         return 0
     try:
