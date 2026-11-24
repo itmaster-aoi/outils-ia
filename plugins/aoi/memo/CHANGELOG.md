@@ -1,5 +1,9 @@
 # Changements de la convention et de memo
 
+## memo dans le plugin aoi 2026.11.24.5 (2026-11-24), convention version 2
+
+- `migrer` : une ligne `renommer` qui garde son identifiant, et dont le texte, les métadonnées et l'auteur sont déjà égaux à la base, compte dans « déjà faits ». Une seconde passe de `migrer --simuler` après une migration réussie donne `Écritures : 0`. Un document qui porte encore une clé retirée est toujours réécrit.
+
 ## memo dans le plugin aoi 2026.11.24.4 (2026-11-24), convention version 2
 
 - `/aoi:memo` lancé sans demande précise pose une seule question, « Que voulez-vous faire avec la mémoire centrale ? », avec 3 choix : écrire un élément, ingérer une mémoire dossier, analyser ou migrer un cerveau. « Corriger un refus » n'est plus proposé.

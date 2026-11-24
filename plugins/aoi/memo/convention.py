@@ -890,11 +890,38 @@ def etat_base(base):
                 "select substr(e.from_node_id, 8), n.content, n.node_type from graph_edges e join graph_nodes n "
                 "on n.id = e.to_node_id where e.from_node_id like 'memory:%' and e.edge_type = 'mentions'"):
             entites.setdefault(mid, []).append({"name": nom, "type": typ or "entity"})
-        meta = {r[0]: lire_meta(r[1]) for r in con.execute("select id, metadata from documents")}
-        meta.update({r[0]: lire_meta(r[1]) for r in con.execute("select id, metadata from messages where role = 'memory'")})
+        meta, contenus, auteurs = {}, {}, {}
+        def col(table, nom):
+            return nom if nom in {r[1] for r in con.execute("pragma table_info(%s)" % table)} else "''"
+        for i, m, c, a in con.execute("select id, metadata, %s, %s from documents"
+                                      % (col("documents", "content"), col("documents", "author"))):
+            meta[i], contenus[i], auteurs[i] = lire_meta(m), c or "", a or ""
+        for i, m, c in con.execute("select id, metadata, %s from messages where role = 'memory'"
+                                   % col("messages", "content")):
+            meta[i], contenus[i] = lire_meta(m), c or ""
     finally:
         con.close()
-    return ids, entites, meta
+    return ids, entites, meta, contenus, auteurs
+
+
+def deja_a_jour(l, genre, meta, ancienne_meta, contenu_base, auteur_base, dossier_table):
+    """Vrai si réécrire la ligne sous le même identifiant ne changerait ni texte, ni métadonnées, ni auteur."""
+    if any(ancienne_meta.get(k) != v for k, v in meta.items()):
+        return False
+    if genre == "document":
+        # knowledge_save remplace les métadonnées : une ancienne clé retirée disparaîtrait.
+        if any(k in CLES_RETIREES for k in ancienne_meta):
+            return False
+        if auteur_base != l["author"]:
+            return False
+    if l.get("contenu"):
+        try:
+            with open(os.path.join(dossier_table, l["contenu"]), encoding="utf-8") as f:
+                if f.read().strip() != contenu_base.strip():
+                    return False
+        except OSError:
+            return False
+    return True
 
 
 def nouvelles_meta(conv, ligne, ancienne, fusionnes):
@@ -916,7 +943,7 @@ def nouvelles_meta(conv, ligne, ancienne, fusionnes):
 
 def planifier(conv, lignes, base, dossier_table):
     """Rend (ecritures, suppressions, deja_faits, problemes). Lecture seule."""
-    ids, entites, meta_docs = etat_base(base)
+    ids, entites, meta_docs, contenus, auteurs = etat_base(base)
     problemes, ecritures, suppressions, deja = [], [], [], []
     cibles = {}
     for l in lignes:
@@ -955,6 +982,10 @@ def planifier(conv, lignes, base, dossier_table):
             a_jour = action == "conforme" and ancienne_meta.get("produit_par") and all(
                 ancienne_meta.get(k) == v for k, v in meta.items() if k in ("nature", "theme", "status", "produit_par"))
             if action == "conforme" and a_jour:
+                continue
+            if action == "renommer" and ancien == nouveau and present_ancien and deja_a_jour(
+                    l, genre, meta, ancienne_meta, contenus.get(ancien, ""), auteurs.get(ancien, ""), dossier_table):
+                deja.append(ancien)
                 continue
             ecritures.append({"ligne": l, "genre": genre, "meta": meta, "contenu": contenu,
                               "entites": entites.get(ancien, [])})
@@ -1852,6 +1883,45 @@ def tests():
             self.assertEqual(pb, [])
             self.assertIn("etat-2", deja)
             self.assertNotIn("etat:outils-cao:projet-a", [e["ligne"]["nouvel_id"] for e in ecr])
+
+        def base_a_jour(self, meta_doc, auteur="jdupont", texte="texte"):
+            """Base où un élément porte déjà son identifiant final, avec texte et auteur."""
+            con = sqlite3.connect(self.base)
+            con.executescript("drop table documents; create table documents(id text, metadata text, content text, author text);"
+                              "drop table messages; create table messages(id text, role text, metadata text, content text);")
+            con.execute("insert into documents values('plan:outils-cao:projet-a', ?, ?, ?)", (json.dumps(meta_doc), texte, auteur))
+            con.execute("insert into messages values('etat:outils-cao:projet-a', 'memory', ?, 'm')", (json.dumps(
+                {"nature": "etat", "theme": "outils-cao", "status": "current", "produit_par": "claude-code",
+                 "date": "2026-10-28", "projet": "projet-a", "importance": "0.9"}),))
+            con.commit()
+            con.close()
+
+        META_PLAN = {"nature": "plan", "theme": "outils-cao", "status": "current", "produit_par": "claude-code",
+                     "projet": "projet-a", "commit": "abc"}
+
+        def table_meme_id(self):
+            return [self.ligne(ancien_id="etat:outils-cao:projet-a", nouvel_id="etat:outils-cao:projet-a"),
+                    self.ligne(type="document", ancien_id="plan:outils-cao:projet-a", nouvel_id="plan:outils-cao:projet-a",
+                               nature="plan", date="", contenu="contenus/x.md")]
+
+        def test_seconde_passe_a_zero(self):
+            self.base_a_jour(self.META_PLAN)
+            ecr, sup, deja, pb = self.plan(self.table_meme_id())
+            self.assertEqual((pb, ecr, sup), ([], [], []))
+            self.assertEqual(sorted(deja), ["etat:outils-cao:projet-a", "plan:outils-cao:projet-a"])
+
+        def test_meme_id_reecrit_si_different(self):
+            cas = [dict(self.META_PLAN, projet="projet-b"),          # métadonnée différente
+                   {k: v for k, v in self.META_PLAN.items() if k != "projet"},   # métadonnée absente
+                   dict(self.META_PLAN, kind="memory")]               # clé retirée encore présente
+            for meta in cas:
+                self.base_a_jour(meta)
+                self.assertEqual([e["ligne"]["nouvel_id"] for e in self.plan(self.table_meme_id())[0]],
+                                 ["plan:outils-cao:projet-a"], meta)
+            self.base_a_jour(self.META_PLAN, auteur="autre")
+            self.assertEqual(len(self.plan(self.table_meme_id())[0]), 1)
+            self.base_a_jour(self.META_PLAN, texte="ancien texte")
+            self.assertEqual(len(self.plan(self.table_meme_id())[0]), 1)
 
         def test_simuler_n_ecrit_rien(self):
             chemin = os.path.join(self.d, "renommage.csv")

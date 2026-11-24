@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-24.5 (plugin 2026.11.24.5)
+
+memo : après une migration réussie, une seconde passe de `convention.py migrer --simuler` donne `Écritures : 0`. Une ligne `renommer` qui garde son identifiant, et dont le texte, les métadonnées et l'auteur sont déjà égaux à la base, compte dans « déjà faits ». Avant, elle était toujours réécrite, sans effet sur les données. Aucun autre changement.
+
 ## 2026-11-24.4 (plugin 2026.11.24.4)
 
 memo : `/aoi:memo` lancé sans demande précise propose 3 choix : écrire un élément, ingérer une mémoire dossier, analyser ou migrer un cerveau. L'agent `aoi:memo-cerveau` devient `aoi:memo-analyse`. `/aoi:memo-importer tout` demande une confirmation avant de lancer la liste, puis montre la liste avant d'ingérer. Aucun autre changement.
