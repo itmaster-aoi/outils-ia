@@ -9,7 +9,7 @@
     {
       "name": "aoi",
       "source": "./plugins/aoi",
-      "description": "Serveurs MCP plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad, plugin:aoi:indesign, plugin:aoi:illustrator, plugin:aoi:photoshop ; skills /aoi:adhd, /aoi:graphify, /aoi:cortexdb, /aoi:d5-lite-rhino, /aoi:convention ; commandes /aoi:remember, /aoi:recall, /aoi:memo-bilan, /aoi:importer-memoire ; agent aoi:convention-cortexdb ; style de sortie aoi:ste ; memo : convention de nommage des cerveaux CortexDB, contrôle des écritures et miroir de la mémoire Claude Code."
+      "description": "Serveurs MCP plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad, plugin:aoi:indesign, plugin:aoi:illustrator, plugin:aoi:photoshop ; skills /aoi:adhd, /aoi:graphify, /aoi:cortexdb, /aoi:d5-lite-rhino, /aoi:memo ; commandes /aoi:remember, /aoi:recall, /aoi:memo-bilan, /aoi:memo-importer ; agent aoi:memo-cerveau ; style de sortie aoi:ste ; memo : convention de nommage des cerveaux CortexDB, contrôle des écritures et miroir de la mémoire Claude Code."
     }
   ],
   "renames": {

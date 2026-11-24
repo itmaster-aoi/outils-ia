@@ -18,7 +18,7 @@ Importe dans le cerveau CortexDB local les fichiers de mémoire Claude Code déj
    - `doublon-probable` : le fait est déjà dans le cerveau sous l'identifiant indiqué ; pas d'import, sauf si l'utilisateur le demande pour ce fichier.
 5. Demande une seule confirmation : « Importer <n> nouveaux et mettre à jour <m> ? ». Sans accord, n'écris rien.
 6. Pour chaque fichier `nouveau` ou `a-mettre-a-jour`, appelle `mcp__plugin_aoi_cortexdb__memory_save` :
-   - `memory_id` : l'identifiant proposé ; remplace `<theme>` (et `<nature>` pour le type `project`) selon la skill `/aoi:convention` ; garde l'identifiant tel quel pour `a-mettre-a-jour` ;
+   - `memory_id` : l'identifiant proposé ; remplace `<theme>` (et `<nature>` pour le type `project`) selon la skill `/aoi:memo` ; garde l'identifiant tel quel pour `a-mettre-a-jour` ;
    - `content` : le `corps`, tel quel ;
    - `user_id` : le login Windows de la sortie ; `scope` : `user` ; `namespace` : `assistant` ;
    - `metadata` : `nature`, `theme`, `status` = `current`, `date` du jour (AAAA-MM-JJ) si la nature est datée, `produit_par` = `claude-code`, et `source` = le chemin complet du fichier, c'est-à-dire la valeur du champ `fichier` de sa ligne JSON (par exemple `C:\Users\<login>\.claude\projects\<projet>\memory\<nom>.md`), jamais le mot « fichier ». Ce chemin permet de reconnaître l'élément au prochain import et au miroir.

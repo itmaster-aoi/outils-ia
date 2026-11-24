@@ -1,5 +1,9 @@
 # Changements de la convention et de memo
 
+## memo dans le plugin aoi 2026.11.24.3 (2026-11-24), convention version 2
+
+- Tous les composants portent le nom memo : skill `/aoi:memo` (au lieu de `/aoi:convention`), commandes `/aoi:memo-bilan` et `/aoi:memo-importer` (au lieu de `/aoi:importer-memoire`), agent `aoi:memo-cerveau` (au lieu de `aoi:convention-cortexdb`).
+
 ## memo dans le plugin aoi 2026.11.24.2 (2026-11-24), convention version 2
 
 - memo n'est plus un plugin séparé : il fait partie du plugin aoi, que `maj.py` met à jour sur les postes. Un plugin séparé n'aurait jamais été mis à jour.

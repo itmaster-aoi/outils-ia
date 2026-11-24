@@ -20,7 +20,7 @@ Le serveur cherche par mots (mode lexical) et par le graphe des entités. Un mot
 
 ## Convention de nommage (composant memo)
 
-Toute écriture suit la convention commune de l'atelier, gardée par le composant memo du plugin aoi. Charge la skill `/aoi:convention` avant le premier enregistrement de la session. Un crochet du plugin aoi refuse une écriture hors convention : lis son message, corrige l'appel et relance-le.
+Toute écriture suit la convention commune de l'atelier, gardée par le composant memo du plugin aoi. Charge la skill `/aoi:memo` avant le premier enregistrement de la session. Un crochet du plugin aoi refuse une écriture hors convention : lis son message, corrige l'appel et relance-le.
 
 En bref :
 - identifiant `<nature>:<theme>:<sujet>`, mots en minuscules joints par des tirets, sans accent, sans date ni numéro de version ;

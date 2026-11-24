@@ -548,7 +548,7 @@ def miroir(entree, base=None):
     if existant:
         cible = "réécris l'élément existant %s (même identifiant, contenu et métadonnées à jour)" % existant
     else:
-        cible = ("memory_id %s:<theme>:%s, avec la nature : %s, et le thème choisi selon la skill /aoi:convention"
+        cible = ("memory_id %s:<theme>:%s, avec la nature : %s, et le thème choisi selon la skill /aoi:memo"
                  % (nature, sujet, consigne))
     texte = (
         "Miroir memo (phase de transition : double écriture). Le fichier de mémoire Claude Code %s vient d'être "
@@ -981,7 +981,7 @@ class ClientMCP:
         threading.Thread(target=self._lire, daemon=True).start()
         self.n = 0
         self.requete("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
-                                    "clientInfo": {"name": "convention-cortexdb", "version": "1"}})
+                                    "clientInfo": {"name": "memo", "version": "1"}})
         self._envoyer({"jsonrpc": "2.0", "method": "notifications/initialized"})
 
     def _lire(self):

@@ -37,8 +37,8 @@ annotated-doc 0.0.4 · annotated-types 0.7.0 · anyio 4.9.0 · attrs 23.1.0 · c
 
 Note : le plugin Rhino (0.4.1.1) et le serveur Python (0.3.2) n'ont pas le même numéro de version. C'est la combinaison testée.
 
-## memo (`plugins/aoi/memo`, avec `skills/convention`, `commands/memo-bilan.md`, `commands/importer-memoire.md`, `agents/convention-cortexdb.md` et deux crochets de `hooks/hooks.json`)
+## memo (`plugins/aoi/memo`, avec `skills/memo`, `commands/memo-bilan.md`, `commands/memo-importer.md`, `agents/memo-cerveau.md` et deux crochets de `hooks/hooks.json`)
 
 | Composant | Source | Version | Licence | Date |
 |---|---|---|---|---|
-| convention, crochets, skill, commandes, agent ; script `memo/convention.py` en bibliothèque standard, lancé avec le Python AOI | développé pour ce catalogue ; forme de la convention reprise de [lfoletti/thalamus](https://github.com/lfoletti/thalamus) (`gateway/convention/`) | plugin aoi 2026.11.24.2, convention version 2 | pas de licence déclarée | 24.11.2026 |
+| convention, crochets, skill, commandes, agent ; script `memo/convention.py` en bibliothèque standard, lancé avec le Python AOI | développé pour ce catalogue ; forme de la convention reprise de [lfoletti/thalamus](https://github.com/lfoletti/thalamus) (`gateway/convention/`) | plugin aoi 2026.11.24.3, convention version 2 | pas de licence déclarée | 24.11.2026 |

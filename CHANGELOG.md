@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-24.3 (plugin 2026.11.24.3)
+
+Tous les composants de memo portent le nom memo : skill `/aoi:memo` (au lieu de `/aoi:convention`), commandes `/aoi:memo-bilan` et `/aoi:memo-importer` (au lieu de `/aoi:importer-memoire`), agent `aoi:memo-cerveau` (au lieu de `aoi:convention-cortexdb`). Aucun autre changement.
+
 ## 2026-11-24.2 (plugin 2026.11.24.2)
 
 memo fait maintenant partie du plugin `aoi`. Le plugin séparé `memo` de l'étiquette `2026-11-24.1`, jamais activé, est retiré du catalogue : `maj.py` met à jour seulement `aoi@aoi`, et un plugin séparé n'aurait jamais été mis à jour sur les postes. Nouveaux noms : skill `/aoi:convention`, commandes `/aoi:memo-bilan` et `/aoi:importer-memoire`, agent `aoi:convention-cortexdb` (premier dossier `agents/` du plugin). Script `plugins/aoi/memo/convention.py`. Deux crochets s'ajoutent au crochet de démarrage dans `hooks/hooks.json` : `PreToolUse` (contrôle des écritures CortexDB) et `PostToolUse` (miroir de la mémoire Claude Code). Rien à ajouter dans `enabledPlugins` : seule l'étiquette du catalogue change dans les réglages gérés. Voir `plugins/aoi/memo/LISEZMOI.md`.

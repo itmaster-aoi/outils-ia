@@ -14,9 +14,9 @@ memo fait partie du plugin aoi (catalogue `itmaster-aoi/outils-ia`). Il utilise 
 | `memo/LISEZMOI.md`, `memo/CHANGELOG.md` | Ce guide et les changements de memo. |
 | `hooks/hooks.json` | Avec le crochet de démarrage d'aoi : le crochet `PreToolUse` qui contrôle les écritures CortexDB, et le crochet `PostToolUse` du miroir de la mémoire Claude Code. |
 | `commands/memo-bilan.md` | La commande `/aoi:memo-bilan` : proposer les faits de la session à retenir. |
-| `commands/importer-memoire.md` | La commande `/aoi:importer-memoire tout` ou `<chemin du projet>` : importer les mémoires Claude Code déjà écrites. |
-| `skills/convention/SKILL.md` | La skill `/aoi:convention` : comment nommer un élément avant de l'écrire. |
-| `agents/convention-cortexdb.md` | L'agent `aoi:convention-cortexdb` : le processus ci-dessous, phase par phase, avec un arrêt à chaque validation. |
+| `commands/memo-importer.md` | La commande `/aoi:memo-importer tout` ou `<chemin du projet>` : importer les mémoires Claude Code déjà écrites. |
+| `skills/memo/SKILL.md` | La skill `/aoi:memo` : comment nommer un élément avant de l'écrire. |
+| `agents/memo-cerveau.md` | L'agent `aoi:memo-cerveau` : le processus ci-dessous, phase par phase, avec un arrêt à chaque validation. |
 
 Les rapports d'analyse sont des données de l'utilisateur. Ils ne sont jamais écrits dans le plugin : ils vont dans `%MEMO_RAPPORTS%` si la variable existe, sinon dans `%USERPROFILE%\Documents\memo\rapports\<cerveau>-<date>\`.
 
@@ -66,7 +66,7 @@ Sur demande, `/aoi:memo-bilan` propose en plus 1 à 5 faits de la session ; rien
 
 ### Importer les mémoires déjà écrites
 
-`/aoi:importer-memoire tout` (tous les projets) ou `/aoi:importer-memoire <chemin du projet>` (un projet ; le chemin du dossier `memory` est aussi accepté) :
+`/aoi:memo-importer tout` (tous les projets) ou `/aoi:memo-importer <chemin du projet>` (un projet ; le chemin du dossier `memory` est aussi accepté) :
 
 1. La commande liste, en lecture seule, les fichiers de mémoire (`convention.py memoires`), avec l'identifiant proposé et l'état : `nouveau`, `a-mettre-a-jour`, `deja-importe` ou `doublon-probable`.
 2. Un fichier est un doublon probable quand son texte est déjà dans le cerveau : ressemblance de Jaccard ou inclusion des trigrammes de mots au moins égale au seuil `near` (0,8). Il n'est pas importé, sauf demande de la personne.
@@ -76,7 +76,7 @@ Le passage vers un cerveau partagé du bureau viendra avec le serveur thalamus (
 
 ## Processus : analyser un cerveau et obtenir un livrable à jour
 
-Le livrable d'un cerveau est sa table de renommage relue et validée, `<rapports>\<cerveau>-<date>\renommage.csv`, faite avec la dernière version de la convention. L'agent `aoi:convention-cortexdb` applique ce processus.
+Le livrable d'un cerveau est sa table de renommage relue et validée, `<rapports>\<cerveau>-<date>\renommage.csv`, faite avec la dernière version de la convention. L'agent `aoi:memo-cerveau` applique ce processus.
 
 1. **Analyser le cerveau avec la convention actuelle.** La base doit être sur C: (copie si besoin). L'analyse lit la base en lecture seule et dure quelques secondes.
 

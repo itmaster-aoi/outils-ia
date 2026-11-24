@@ -20,17 +20,17 @@ plugins/aoi/                      le plugin
     illustrator/                    Illustrator 2026 : serveur Python et panneau CEP signé
     photoshop/                      Photoshop 2027 : serveur Python et plugin UXP
     cortexdb/                       mémoire durable locale (SQLite)
-  commands/                       /aoi:remember et /aoi:recall (cortexdb), /aoi:memo-bilan et /aoi:importer-memoire (memo)
+  commands/                       /aoi:remember et /aoi:recall (cortexdb), /aoi:memo-bilan et /aoi:memo-importer (memo)
   controle/                       contrôle des imports Python (liste blanche) et Python embarqué
   lanceur/                        lanceur des serveurs publiés à part
   hooks/hooks.json                démarrage (maj.py) ; memo : contrôle des écritures CortexDB, miroir de la mémoire Claude Code
   memo/                           convention de nommage des cerveaux CortexDB : convention.yaml, script convention.py
   agents/
-    convention-cortexdb.md        agent aoi:convention-cortexdb (analyse d'un cerveau, migration préparée)
+    memo-cerveau.md               agent aoi:memo-cerveau (analyse d'un cerveau, migration préparée)
   skills/
     adhd/                         idéation en parallèle
-    convention/                   convention de nommage des cerveaux CortexDB (memo)
     cortexdb/                     mémoire durable de l'utilisateur
+    memo/                         /aoi:memo : convention de nommage des cerveaux CortexDB
     d5-lite-rhino/                pilotage de D5 Lite dans Rhino 8
     graphify/                     graphe de connaissances d'un dossier
     regen/scripts/                mise à jour du plugin et des archives (maj.py)

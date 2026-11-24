@@ -1,6 +1,6 @@
 ---
-name: convention
-description: Convention de nommage commune des cerveaux CortexDB de l'atelier oï (composant memo du plugin aoi). Utiliser avant toute écriture dans CortexDB (memory_save, knowledge_save, ingest_document, knowledge_update), quand un crochet refuse une écriture « Convention CortexDB », ou quand l'utilisateur demande quel identifiant, quelle nature ou quel thème donner à une note. Pour analyser ou migrer un cerveau entier, utiliser l'agent aoi:convention-cortexdb.
+name: memo
+description: Convention de nommage commune des cerveaux CortexDB de l'atelier oï (composant memo du plugin aoi). Utiliser avant toute écriture dans CortexDB (memory_save, knowledge_save, ingest_document, knowledge_update), quand un crochet refuse une écriture « Convention CortexDB », ou quand l'utilisateur demande quel identifiant, quelle nature ou quel thème donner à une note. Pour analyser ou migrer un cerveau entier, utiliser l'agent aoi:memo-cerveau.
 ---
 
 # Convention CortexDB de l'atelier
@@ -28,5 +28,5 @@ Lis le message : il dit ce qui manque. Corrige l'appel et relance-le. Ne contour
 
 ## Ce qui n'est pas permis
 
-- Modifier `convention.yaml` du plugin installé : il est remplacé à chaque mise à jour. Une nouvelle nature ou un nouveau thème passe par l'agent convention-cortexdb (proposition, validation de l'utilisateur, puis l'IT de l'atelier).
-- Lancer la migration réelle d'un cerveau : c'est un geste de l'utilisateur, Claude Code fermé. L'agent convention-cortexdb lui donne la commande exacte.
+- Modifier `convention.yaml` du plugin installé : il est remplacé à chaque mise à jour. Une nouvelle nature ou un nouveau thème passe par l'agent aoi:memo-cerveau (proposition, validation de l'utilisateur, puis l'IT de l'atelier).
+- Lancer la migration réelle d'un cerveau : c'est un geste de l'utilisateur, Claude Code fermé. L'agent aoi:memo-cerveau lui donne la commande exacte.
