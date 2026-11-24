@@ -1,5 +1,11 @@
 # Journal des changements
 
+## 2026-11-24.1 (plugin aoi 2026.11.24.1, plugin memo 2026.11.24.8)
+
+Nouveau plugin `memo` dans le catalogue : la convention de nommage commune des cerveaux CortexDB de l'atelier. Identifiant `<nature>:<theme>:<sujet>`, métadonnées `nature`, `theme`, `status`, `date` pour une nature datée et `produit_par`, auteur = login Windows normalisé. Un crochet `PreToolUse` refuse une écriture CortexDB hors convention et donne la correction. Un crochet `PostToolUse` recopie chaque fichier de la mémoire Claude Code dans le cerveau local (phase de transition, double écriture). Skill `/memo:convention`, commandes `/memo:bilan` et `/memo:importer-memoire`, agent `memo:convention-cortexdb` (analyse d'un cerveau, table de renommage, migration préparée ; la migration finale reste un geste de l'utilisateur). Script `plugins/memo/convention/convention.py` en bibliothèque standard, lancé avec le Python AOI. Le plugin s'active par `"memo@aoi": true` dans les réglages gérés. Voir `plugins/memo/LISEZMOI.md` et `plugins/memo/CHANGELOG.md`.
+
+Plugin `aoi` : skill `cortexdb` version 3. Les identifiants et les métadonnées suivent la convention du plugin `memo` ; la migration d'un cerveau par `convention.py migrer`, lancée par l'utilisateur, est la seule exception à la règle « pas de `cortexdb-mcp.exe` en ligne de commande ».
+
 ## 2026-11-17.2 (plugin 2026.11.17.2)
 
 Serveur MCP `photoshop` : Claude pilote Adobe Photoshop par un plugin UXP. Le serveur a 4 outils (`status`, `snapshot`, `batch`, `execute_script`) et 27 commandes de lot, en pixels. Un lot forme une seule étape d'historique. Il tourne avec le Python AOI, sans `-I -S` et sans dossier `libs/`, comme les serveurs `indesign` et `illustrator`. La mise à jour pose le plugin UXP « Claude MCP Photoshop » par l'installateur d'Adobe, si Photoshop est installé sur le compte. Nouvelle fiche `mcp/photoshop/addin.json`, forme `uxp` ; `maj.py` ne change pas. Le mode développeur de Photoshop n'est pas nécessaire. Le panneau se connecte seulement après un clic sur « Connecter ». `execute_script` exécute du JavaScript UXP ; il reste fermé tant que la case du panneau n'est pas cochée. Origine : `lfoletti/photoshop-mcp` `v0.1.0`, licence MIT. Vérifié avec Photoshop 28.0. Voir `mcp/photoshop/README.md` et `VERSIONS.md`.

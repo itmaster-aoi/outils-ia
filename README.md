@@ -1,6 +1,6 @@
 # outils-ia
 
-Dépôt de travail : un catalogue de plugins pour Claude Code. Il contient le plugin `aoi`, avec des serveurs MCP (Model Context Protocol) pour des logiciels de CAO et de rendu, des skills et un style de sortie.
+Dépôt de travail : un catalogue de plugins pour Claude Code. Il contient le plugin `aoi`, avec des serveurs MCP (Model Context Protocol) pour des logiciels de CAO et de rendu, des skills et un style de sortie, et le plugin `memo`, la convention de nommage des cerveaux CortexDB.
 
 Le contenu change souvent et n'a pas de garantie. Les étiquettes datées (`2026-11-16.3`) marquent des états cohérents du dépôt.
 
@@ -31,6 +31,13 @@ plugins/aoi/                      le plugin
     regen/scripts/                mise à jour du plugin et des archives (maj.py)
   output-styles/
     ste.md                        style de sortie aoi:ste : rédaction technique simplifiée (ASD-STE100)
+plugins/memo/                     convention de nommage des cerveaux CortexDB
+  .claude-plugin/plugin.json
+  hooks/hooks.json                contrôle des écritures CortexDB, miroir de la mémoire Claude Code
+  convention/                     convention.yaml, script convention.py (bibliothèque standard)
+  skills/convention/              /memo:convention
+  commands/                       /memo:bilan et /memo:importer-memoire
+  agents/                         memo:convention-cortexdb
 tests/                            tests des scripts du plugin
 VERSIONS.md                       versions des composants, sources et empreintes
 CHANGELOG.md                      journal des changements
@@ -47,4 +54,5 @@ Les licences des projets d'origine sont conservées dans chaque dossier. Voir `V
 ```
 claude plugin validate .
 claude plugin validate ./plugins/aoi
+claude plugin validate ./plugins/memo
 ```

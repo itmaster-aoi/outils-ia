@@ -3,8 +3,9 @@ name: cortexdb
 description: Mémoire durable de l'utilisateur dans CortexDB (serveur plugin:aoi:cortexdb, base locale). Utiliser quand l'utilisateur demande de retenir, mémoriser ou noter un fait, une préférence ou une décision, de se souvenir ou de retrouver ce qui a été dit dans une session précédente, de faire le bilan d'une session à mémoriser, ou tape /aoi:remember ou /aoi:recall. Ne pas utiliser pour la mémoire des fichiers de Claude Code (MEMORY.md) ni pour chercher dans le code.
 ---
 
-<!-- Skill de ce dépôt, version 2 du 27.10.2026. Le serveur et les commandes viennent de
-     liliang-cn/cortexdb v2.139.1 : voir plugins/aoi/mcp/cortexdb/README.md et VERSION-AOI.txt. -->
+<!-- Skill de ce dépôt, version 3 du 24.11.2026 : identifiants et métadonnées selon la convention
+     du plugin memo. Le serveur et les commandes viennent de liliang-cn/cortexdb v2.139.1 :
+     voir plugins/aoi/mcp/cortexdb/README.md et VERSION-AOI.txt. -->
 
 # CortexDB : mémoire durable
 
@@ -16,6 +17,17 @@ Le serveur `plugin:aoi:cortexdb` n'appelle aucun modèle : ni service d'embeddin
 - à la demande, tu fais le bilan d'une session.
 
 Le serveur cherche par mots (mode lexical) et par le graphe des entités. Un mot absent du fait enregistré ne le trouve pas, sauf par une entité commune.
+
+## Convention de nommage (plugin memo)
+
+Toute écriture suit la convention commune de l'atelier, gardée par le plugin memo. Charge la skill `/memo:convention` avant le premier enregistrement de la session. Un crochet du plugin memo refuse une écriture hors convention : lis son message, corrige l'appel et relance-le.
+
+En bref :
+- identifiant `<nature>:<theme>:<sujet>`, mots en minuscules joints par des tirets, sans accent, sans date ni numéro de version ;
+- métadonnées `nature`, `theme`, `status` (`current` ou `replaced`), `date` (AAAA-MM-JJ) pour une nature datée, `produit_par` (`claude-code` pour un texte que tu écris) ;
+- auteur : `user_id` (mémoire) ou `author` (document) = le login Windows de la personne (`%USERNAME%`), normalisé (minuscules, sans accent, « . », « _ » et espace remplacés par « - »).
+
+Les listes de natures et de thèmes sont dans `convention/convention.yaml` du plugin memo. Ne les recopie pas de mémoire.
 
 ## Quand mémoriser
 
@@ -36,13 +48,14 @@ Ne mémorise jamais :
 1. Cherche les faits proches avec `memory_search` (voir « Retrouver », étapes 1 et 2).
 2. Si un fait trouvé dit la même chose avec une autre valeur, note son identifiant. Un fait sur le même sujet, sans contradiction, ne compte pas.
 3. Appelle `memory_save` :
-   - `memory_id` : stable et descriptif, par exemple `pref-unites-cotes` ;
+   - `memory_id` : selon la convention, par exemple `preference:travail-assistant:unites-cotes` ;
    - `content` : une phrase, un fait. Nomme les entités en toutes lettres (projet, logiciel, personne par son rôle) ;
-   - `scope=user` et `namespace=assistant`, sauf si l'utilisateur précise autre chose ;
+   - `metadata` : `nature`, `theme`, `status`, `date` si la nature est datée, `produit_par`, et `projet` si le fait touche un projet ;
+   - `scope=user`, `user_id` = le login de la personne, et `namespace=assistant`, sauf si l'utilisateur précise autre chose ;
    - `supersedes` : les identifiants notés à l'étape 2. Le fait remplacé reste stocké, mais il n'est plus rappelé.
 4. Confirme en une ligne ce qui est enregistré et ce qui est remplacé.
 
-Si le fait est une connaissance de référence et pas une préférence, utilise `knowledge_save`.
+Si le fait est une connaissance de référence et pas une préférence, utilise `knowledge_save`, avec les mêmes règles (`knowledge_id`, `metadata`, `author`).
 
 ## Retrouver
 
@@ -68,5 +81,5 @@ Fais un bilan seulement si l'utilisateur le demande.
 ## Limites
 
 - Ne configure pas de modèle externe : les variables `CORTEXDB_EMBED_*`, `CORTEXDB_LLM_*`, `CORTEXDB_RERANK_*` et `OPENAI_*` restent vides. Les outils qui exigent un modèle côté serveur (par exemple `import_agent_memory` avec les transcriptions de sessions) restent inactifs. Fais ce travail toi-même avec la procédure « Bilan d'une session ».
-- N'appelle pas le binaire `cortexdb-mcp.exe` en ligne de commande. Utilise les outils MCP.
+- N'appelle pas le binaire `cortexdb-mcp.exe` en ligne de commande. Utilise les outils MCP. Seule exception : la migration d'un cerveau par le script du plugin memo (`convention.py migrer`), que l'utilisateur lance lui-même, Claude Code fermé.
 - Le serveur partagé `cortexdb-grpc` n'est pas utilisé.

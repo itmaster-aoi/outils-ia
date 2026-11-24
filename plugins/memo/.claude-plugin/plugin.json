@@ -1,0 +1,9 @@
+{
+  "name": "memo",
+  "version": "2026.11.24.8",
+  "description": "Convention de nommage commune des cerveaux CortexDB de l'atelier : contrôle des écritures, analyse d'un cerveau, table de renommage et migration préparée pour l'utilisateur.",
+  "author": {
+    "name": "itmaster-aoi",
+    "url": "https://github.com/itmaster-aoi"
+  }
+}

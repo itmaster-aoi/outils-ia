@@ -10,6 +10,11 @@
       "name": "aoi",
       "source": "./plugins/aoi",
       "description": "Serveurs MCP plugin:aoi:rhino, plugin:aoi:revit, plugin:aoi:keyshot, plugin:aoi:cortexdb, plugin:aoi:autocad, plugin:aoi:indesign, plugin:aoi:illustrator, plugin:aoi:photoshop ; skills /aoi:adhd, /aoi:graphify, /aoi:cortexdb, /aoi:d5-lite-rhino ; commandes /aoi:remember, /aoi:recall ; style de sortie aoi:ste."
+    },
+    {
+      "name": "memo",
+      "source": "./plugins/memo",
+      "description": "Convention de nommage commune des cerveaux CortexDB : crochet de contrôle des écritures, miroir de la mémoire Claude Code, skill /memo:convention, commandes /memo:bilan et /memo:importer-memoire, agent memo:convention-cortexdb (analyse d'un cerveau, table de renommage, migration préparée pour l'utilisateur)."
     }
   ],
   "renames": {

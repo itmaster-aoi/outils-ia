@@ -1,0 +1,70 @@
+# Convention de nommage des cerveaux CortexDB de l'atelier oï (plugin memo).
+# Le même bloc « convention: » sert dans le rights.yaml de chaque cerveau du serveur thalamus.
+#
+# Forme d'un identifiant : <nature>:<theme>:<sujet>
+#   - mots en minuscules, chiffres et tirets, sans accent ni espace, pas un nombre seul ;
+#   - le sujet dit de quoi parle le document, sans date ni numéro de version
+#     (une nouvelle version réécrit le même identifiant, ou remplace l'ancien : status replaced).
+# Métadonnées obligatoires : nature, theme, status (current | replaced), produit_par.
+# Métadonnées obligatoires pour une nature datée : date (AAAA-MM-JJ).
+# Métadonnées recommandées : projet (numéro ou nom court du projet), source (chemin ou adresse),
+#   replaces / distinct_from (identifiant d'un autre document).
+# Le projet n'est pas un thème : un thème regroupe un domaine durable de l'atelier,
+#   un projet passe et se retrouve par la métadonnée « projet ».
+# Les mémoires (memory_save) suivent la même forme que les documents.
+# Une modification de ce fichier suit LISEZMOI.md (version, CHANGELOG.md, tests).
+
+version: 2
+
+# Auteur (hors du bloc convention : sur le serveur, le gateway thalamus pose l'auteur lui-même).
+#   - author (document) ou user_id (mémoire) = login Windows de la personne (%USERNAME%), normalisé :
+#     minuscules, sans accent, « . », « _ » et espace remplacés par « - » (Jean.Dupont -> jean-dupont).
+#     Le même login sert à la clé thalamus th/<login>/<cerveau>.
+#   - Sur un poste, le crochet exige le login Windows de la session.
+#   - métadonnée produit_par = l'agent qui a écrit le texte, un de la liste ci-dessous.
+producteurs:
+  - claude-code       # texte écrit par Claude Code (session principale)
+  - agent-relecture   # texte écrit par un agent tiers de relecture
+  - humain            # texte écrit par la personne elle-même
+
+convention:
+  # Liste fermée. Une nature dit ce qu'est le document, pas de quoi il parle.
+  natures:
+    - decision        # choix arrêté par une personne, avec sa raison (ex. decision:postes:choix-du-navigateur)
+    - fait            # constat vérifié, mesure, cause trouvée (ex. fait:outils-cao:temps-de-trace-pdf)
+    - piege           # erreur à éviter et sa parade (ex. piege:postes:variable-d-environnement-a-ne-pas-modifier)
+    - preference      # façon de travailler voulue par une personne ou par l'IT (ex. preference:travail-assistant:unites-des-cotes)
+    - etat            # état d'un projet à une date ; un seul état courant par sujet (ex. etat:outils-cao:<projet>)
+    - plan            # plan, architecture, feuille de route (ex. plan:outils-cao:<projet>)
+    - methode         # façon de faire, avec ou sans suite d'étapes fixe (ex. methode:mise-en-page:export-pdf-impression)
+    - relecture       # relecture adverse ou revue, avec ses failles (ex. relecture:developpement:<projet>-phase1)
+    - resultats       # résultats de tests ou d'essais (ex. resultats:outils-cao:<projet>-essais)
+    - reference       # documentation de référence, index, renvoi (ex. reference:outils-ia:index-des-sources)
+    - rappel          # action à faire avant une échéance (ex. rappel:developpement:renouveler-un-jeton)
+    - compte-rendu    # compte rendu de séance ou de session
+
+  # Natures qui portent leur jour dans la métadonnée date.
+  dated:
+    - decision
+    - fait
+    - etat
+    - relecture
+    - resultats
+    - rappel
+    - compte-rendu
+
+  # Thèmes de départ. La liste grandit : un curateur déclare un thème par un document theme:<sujet>.
+  themes:
+    - outils-cao        # serveurs MCP et scripts pour AutoCAD, Rhino, Revit, KeyShot, InDesign ; échanges entre logiciels
+    - postes            # installation et mise à jour des postes, environnement Python, pièges du poste
+    - outils-ia         # plugin aoi, Claude Code, CortexDB, thalamus, catalogue et distribution
+    - developpement     # pratiques de code : tests, relectures, Git, GitHub, publication
+    - travail-assistant # préférences sur la façon dont l'assistant répond et travaille
+    - projets           # connaissance tirée des projets (le numéro du projet va dans la métadonnée projet)
+    - mise-en-page      # gabarits, cartouches, InDesign, Illustrator, charte graphique
+    - materiaux         # matériaux, fournisseurs, fiches techniques
+    - administration    # organisation interne, règles de l'atelier
+
+  unsorted: a-trier   # thème d'attente d'un document dont le thème n'est pas encore déclaré
+  near: 0.8           # ressemblance à partir de laquelle un document est une copie presque identique
+  emerge: 5           # nombre de documents qui font d'un thème proposé un candidat

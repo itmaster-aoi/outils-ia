@@ -1,0 +1,52 @@
+{
+  "_lisezmoi": "Indices utilisés par « convention.py analyser » pour proposer une nature et un thème à un élément qui ne suit pas encore la convention. Ce fichier ne fait pas partie de la convention : il aide seulement la proposition. Les clés sont en minuscules, sans accent.",
+  "prefixes_nature": {
+    "decision": "decision",
+    "fait": "fait",
+    "cause": "fait",
+    "constat": "fait",
+    "mesure": "fait",
+    "piege": "piege",
+    "pref": "preference",
+    "preference": "preference",
+    "etat": "etat",
+    "plan": "plan",
+    "methode": "methode",
+    "procedure": "methode",
+    "mode-operatoire": "methode",
+    "revue": "relecture",
+    "relecture": "relecture",
+    "resultats": "resultats",
+    "rappel": "rappel",
+    "renvoi": "reference",
+    "reference": "reference",
+    "index": "reference",
+    "compte-rendu": "compte-rendu",
+    "cr": "compte-rendu",
+    "pv": "compte-rendu"
+  },
+  "mots_nature": {
+    "relecture": ["revues/", "relecture", "revue"],
+    "resultats": ["resultats", "feuille-resultats"],
+    "plan": ["plan.md", "plan :", "feuille de route", "architecture"],
+    "reference": ["lisezmoi", "readme", "index des"],
+    "piege": ["piege", "enseignements"],
+    "etat": ["-etat", "etat du projet"],
+    "methode": ["methode", "mode operatoire", "procedure"],
+    "decision": ["decision"],
+    "preference": ["preference", "bonne pratique"],
+    "rappel": ["rappel", "echeance"],
+    "compte-rendu": ["compte rendu", "seance", "reunion"]
+  },
+  "mots_theme": {
+    "outils-cao": ["autocad", "rhino", "revit", "keyshot", "indesign", "illustrator", "photoshop", "cartouche", "dwg", "grasshopper", "d5"],
+    "postes": ["poste", "installer", "dotnet", "path", "powershell", "git bash", "python aoi", "environnement python"],
+    "outils-ia": ["plugin aoi", "outils-ia", "claude code", "cortexdb", "thalamus", "marketplace", "/aoi:"],
+    "developpement": ["tests amont", "tests aval", "comportement utilisateur", "relecture adversariale", "github", "commit", "codage"],
+    "travail-assistant": ["reponses de l'assistant", "commande", "chemins absolus"],
+    "projets": ["projet n", "client", "concours", "phase sia"],
+    "mise-en-page": ["gabarit", "mise en page", "charte"],
+    "materiaux": ["materiau", "fournisseur", "fiche technique"],
+    "administration": ["administration", "rh", "facturation", "regle de l'atelier"]
+  }
+}

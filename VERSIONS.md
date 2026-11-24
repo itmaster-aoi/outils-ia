@@ -36,3 +36,9 @@ Versions des composants du plugin `aoi`, avec leur source, leur empreinte et leu
 annotated-doc 0.0.4 · annotated-types 0.7.0 · anyio 4.9.0 · attrs 23.1.0 · certifi 2025.1.31 · click 8.1.7 · colorama 0.4.6 · h11 0.14.0 · httpcore 1.0.2 · httpx 0.28.1 · httpx-sse 0.4.3 · idna 3.10 · jsonschema 4.23.0 · jsonschema-specifications 2023.7.1 · markdown-it-py 2.2.0 · mcp 1.28.1 · mdurl 0.1.0 · pydantic 2.13.4 · pydantic-core 2.46.4 · pydantic-settings 2.14.2 · pygments 2.20.0 · pyjwt 2.13.0 · python-dotenv 1.2.2 · python-multipart 0.0.22 · pywin32 312 · referencing 0.30.2 · rich 13.9.4 · rpds-py 0.10.6 · shellingham 1.5.4 · sniffio 1.3.1 · sse-starlette 3.4.5 · starlette 0.50.0 · typer 0.26.8 · typing-extensions 4.14.1 · typing-inspection 0.4.2 · uvicorn 0.54.0
 
 Note : le plugin Rhino (0.4.1.1) et le serveur Python (0.3.2) n'ont pas le même numéro de version. C'est la combinaison testée.
+
+## Plugin `memo` (`plugins/memo`)
+
+| Composant | Source | Version | Licence | Date |
+|---|---|---|---|---|
+| convention, crochets, skill, commandes, agent ; script `convention/convention.py` en bibliothèque standard, lancé avec le Python AOI | développé pour ce catalogue ; forme de la convention reprise de [lfoletti/thalamus](https://github.com/lfoletti/thalamus) (`gateway/convention/`) | 2026.11.24.8, convention version 2 | pas de licence déclarée | 24.11.2026 |
