@@ -38,7 +38,7 @@ def poste():
     t = Path(tempfile.mkdtemp(prefix="aoi-test-"))
     local, home = t / "local", t / "home"
     aoi = local / "aoi"
-    for nom, version in (("cortexdb-server", "2.139.1"), ("revit-server", "2026-10-12")):
+    for nom, version in (("cortexdb-server", "2.170.0"), ("revit-server", "2026-10-12")):
         d = aoi / f"{nom}-{version}"
         d.mkdir(parents=True)
         (d / "aoi-version.txt").write_text(version, encoding="utf-8")
@@ -143,12 +143,12 @@ def test_lanceur():
         lignes = r.stdout.splitlines()
         verifier("lanceur, ancienne organisation : serveur de la racine, pas de CORTEXDB_PATH",
                  lignes[:1] == ["None"] and len(lignes) > 1
-                 and lignes[1] == str(aoi / "cortexdb-server-2.139.1" / "cortexdb-mcp.exe"), r.stdout + r.stderr)
-        shutil.copytree(aoi / "cortexdb-server-2.139.1", aoi / "serveurs" / "cortexdb-server-2.139.1")
+                 and lignes[1] == str(aoi / "cortexdb-server-2.170.0" / "cortexdb-mcp.exe"), r.stdout + r.stderr)
+        shutil.copytree(aoi / "cortexdb-server-2.170.0", aoi / "serveurs" / "cortexdb-server-2.170.0")
         r = lancer_serveur(env)
         lignes = r.stdout.splitlines()
         verifier("lanceur : serveurs\\ d'abord, base cortexdb inchangée (pas de CORTEXDB_PATH)",
-                 lignes[:1] == ["None"] and len(lignes) > 1 and "\\serveurs\\cortexdb-server-2.139.1\\" in lignes[1],
+                 lignes[:1] == ["None"] and len(lignes) > 1 and "\\serveurs\\cortexdb-server-2.170.0\\" in lignes[1],
                  r.stdout + r.stderr)
         test_orphelin(env, aoi)
     finally:
@@ -601,7 +601,7 @@ def test_etat_a_jour():
     t, aoi, env = poste()
     try:
         (aoi / "serveurs").mkdir()
-        for d in ("cortexdb-server-2.139.1", REVIT):
+        for d in ("cortexdb-server-2.170.0", REVIT):
             (aoi / d).rename(aoi / "serveurs" / d)
         r = maj(env, "--verifier-dossiers")
         verifier("--verifier-dossiers, tout dans serveurs\\ : code 0", r.returncode == 0, r.stdout + r.stderr)

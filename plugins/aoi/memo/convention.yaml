@@ -12,9 +12,16 @@
 # Le projet n'est pas un thème : un thème regroupe un domaine durable de l'atelier,
 #   un projet passe et se retrouve par la métadonnée « projet ».
 # Les mémoires (memory_save) suivent la même forme que les documents.
+# Les mémoires vont toutes dans un seul compartiment du serveur : scope=user, user_id=<login>,
+#   namespace=assistant (memory:user:<login>:assistant). Une recherche de mémoire donne les mêmes trois filtres :
+#   le serveur cherche dans un seul compartiment, et sans filtre il cherche dans memory:global:default.
 # Une modification de ce fichier suit LISEZMOI.md (version, CHANGELOG.md, tests).
 
-version: 2
+version: 3
+
+# Compartiment des mémoires (voir l'en-tête). Le projet va dans la métadonnée projet, jamais dans le namespace.
+memoire_scope: user
+memoire_namespace: assistant
 
 # Auteur (hors du bloc convention : sur le serveur, le gateway thalamus pose l'auteur lui-même).
 #   - author (document) ou user_id (mémoire) = login Windows de la personne (%USERNAME%), normalisé :

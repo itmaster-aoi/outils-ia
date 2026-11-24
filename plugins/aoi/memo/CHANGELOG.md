@@ -1,5 +1,12 @@
 # Changements de la convention et de memo
 
+## memo dans le plugin aoi 2026.11.24.6 (2026-11-24), convention version 3
+
+- Compartiment unique des mémoires : `scope=user`, `user_id` = login Windows, `namespace=assistant` (`memoire_scope` et `memoire_namespace` dans `convention.yaml`). Le projet va dans la métadonnée `projet`, jamais dans le namespace.
+- Crochet `garde` : refuse `memory_save` hors de ce compartiment, et `memory_search`, `knowledge_memory_recall`, `knowledge_memory_build_context_pack` sans les 3 filtres (au premier niveau ou dans `plan.filters`). Une recherche avec `disable_memory` reste libre.
+- `analyser` : une mémoire d'un autre compartiment reçoit l'action `renommer` avec le même identifiant ; son ancien namespace devient la métadonnée `projet` si elle n'en a pas.
+- `migrer` : écrit chaque mémoire dans le compartiment de la convention, puis contrôle le compartiment à la relecture. Le serveur met à jour la ligne de même identifiant : la mémoire change de compartiment, sans doublon.
+
 ## memo dans le plugin aoi 2026.11.24.5 (2026-11-24), convention version 2
 
 - `migrer` : une ligne `renommer` qui garde son identifiant, et dont le texte, les métadonnées et l'auteur sont déjà égaux à la base, compte dans « déjà faits ». Une seconde passe de `migrer --simuler` après une migration réussie donne `Écritures : 0`. Un document qui porte encore une clé retirée est toujours réécrit.

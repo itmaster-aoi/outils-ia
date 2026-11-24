@@ -1,11 +1,11 @@
 # cortexdb
 
-Mémoire d'agent et graphe de connaissances dans un seul fichier SQLite. Projet d'origine : [liliang-cn/cortexdb](https://github.com/liliang-cn/cortexdb), repris par le fork [itmaster-aoi/cortexdb](https://github.com/itmaster-aoi/cortexdb), étiquette `v2.139.1` (commit `a808c12`). Voir `VERSION-AOI.txt`.
+Mémoire d'agent et graphe de connaissances dans un seul fichier SQLite. Projet d'origine : [liliang-cn/cortexdb](https://github.com/liliang-cn/cortexdb), étiquette `v2.170.0` (commit `a1d839f`) ; fork de référence [itmaster-aoi/cortexdb](https://github.com/itmaster-aoi/cortexdb), resté à `v2.170.0`. Voir `VERSION-AOI.txt`.
 
 | Élément | Origine |
 |---|---|
-| serveur `plugin:aoi:cortexdb` | binaire `cortexdb-mcp-windows-amd64.exe` publié par l'auteur pour `v2.139.1`, renommé `cortexdb-mcp.exe`, livré par l'archive `cortexdb-server-2.139.1` (fiche `plugins/aoi/cortexdb-server-aoi.json`) et installé dans `%LOCALAPPDATA%\aoi\cortexdb-server-2.139.1` |
-| `/aoi:remember`, `/aoi:recall` | `commands/remember.md` et `commands/recall.md` du plugin d'origine, repris tels quels |
+| serveur `plugin:aoi:cortexdb` | binaire `cortexdb-mcp-windows-amd64.exe` publié par l'auteur pour `v2.170.0`, renommé `cortexdb-mcp.exe`, livré par l'archive `cortexdb-server-2.170.0` (fiche `plugins/aoi/cortexdb-server-aoi.json`) et installé dans `%LOCALAPPDATA%\aoi\cortexdb-server-2.170.0` |
+| `/aoi:remember`, `/aoi:recall` | `commands/remember.md` et `commands/recall.md` du plugin d'origine, avec une phrase sur le compartiment des mémoires de la convention |
 | skill `/aoi:cortexdb` | écrite pour ce plugin (`skills/cortexdb/SKILL.md`) |
 | `LICENSE` | licence MIT du projet d'origine |
 

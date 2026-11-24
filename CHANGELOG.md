@@ -1,5 +1,11 @@
 # Journal des changements
 
+## 2026-11-24.6 (plugin 2026.11.24.6)
+
+Serveur MCP `cortexdb` 2.170.0 (avant : 2.139.1). Binaire `cortexdb-mcp-windows-amd64.exe` de `liliang-cn/cortexdb` `v2.170.0`, empreinte conforme au `.sha256` publié, livré par l'archive `cortexdb-server-2.170.0`. Les commandes `/aoi:recall` et `/aoi:remember` sont reprises de la même version, avec une phrase sur le compartiment des mémoires. Voir `VERSIONS.md`.
+
+memo, convention version 3 : toutes les mémoires vont dans un seul compartiment, `scope=user`, `user_id` = login Windows, `namespace=assistant`. Le serveur cherche une mémoire dans un seul compartiment, et une recherche sans filtre lit `memory:global:default` : elle ne trouvait donc rien. Le crochet `PreToolUse` refuse maintenant `memory_save`, `memory_search`, `knowledge_memory_recall` et `knowledge_memory_build_context_pack` sans ces 3 filtres, et donne les valeurs. `convention.py analyser` propose de déplacer une mémoire d'un autre compartiment (action `renommer`, même identifiant), et `migrer` la déplace. La skill `cortexdb` (version 4) et la skill `memo` donnent la règle. La version 2.170.0 du serveur ne change pas ce comportement : le correctif est dans le plugin.
+
 ## 2026-11-24.5 (plugin 2026.11.24.5)
 
 memo : après une migration réussie, une seconde passe de `convention.py migrer --simuler` donne `Écritures : 0`. Une ligne `renommer` qui garde son identifiant, et dont le texte, les métadonnées et l'auteur sont déjà égaux à la base, compte dans « déjà faits ». Avant, elle était toujours réécrite, sans effet sur les données. Aucun autre changement.

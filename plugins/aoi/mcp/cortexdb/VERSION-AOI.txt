@@ -1,12 +1,13 @@
-Origine      : https://github.com/itmaster-aoi/cortexdb (fork de https://github.com/liliang-cn/cortexdb)
-Étiquette    : v2.139.1
-Commit       : a808c1296002043eea5f5c3e7d550530ce1a5755
-Version      : 2.139.1
-Importé le   : 27.10.2026
+Origine      : https://github.com/liliang-cn/cortexdb (fork de référence https://github.com/itmaster-aoi/cortexdb, resté à v2.139.1)
+Étiquette    : v2.170.0
+Commit       : a1d839f1ca6c26d7664506439597b7e0e6a48b36
+Version      : 2.170.0
+Importé le   : 24.11.2026
 Repris       : plugins/cortexdb/commands/remember.md, plugins/cortexdb/commands/recall.md, LICENSE
-Adaptations  : aucune dans les fichiers repris. Générés : README.md, ce fichier.
+Adaptations  : recall.md et remember.md : une phrase sur le compartiment des mémoires de la convention de l'atelier
+               (scope=user, user_id = login Windows, namespace=assistant). Générés : README.md, ce fichier.
 Hors import  : serveur (archive cortexdb-server), skills/cortexdb (écrite pour ce plugin).
 SHA-256 (chemins relatifs à plugins/aoi) :
-  fa5c4ce25b7cdcfe6a92385cbcb3f8a6cefcb2857c8683672304d0393a583c09  commands/recall.md
-  7b6a59f98ed2a2863a3bca9476f71c585ee424edafb63ed2b7401b848b761d31  commands/remember.md
+  a828cc8ece0611a0938b5d31890b480699a24da15c0d126aeee8fe0654c9b29b  commands/recall.md
+  926333e3dcc6fe910810d2ed5b10e489115d9c4f26ccaedb076df03d6816337f  commands/remember.md
   428bc42987dc6ecfb04543ef362f5801f95717df78e36346c76cd8da7382fa16  mcp/cortexdb/LICENSE

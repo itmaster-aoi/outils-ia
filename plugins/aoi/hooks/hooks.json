@@ -14,7 +14,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__plugin_aoi_cortexdb__(knowledge_save|ingest_document|memory_save|knowledge_update)",
+        "matcher": "mcp__plugin_aoi_cortexdb__(knowledge_save|ingest_document|memory_save|knowledge_update|memory_search|knowledge_memory_recall|knowledge_memory_build_context_pack)",
         "hooks": [
           {
             "type": "command",

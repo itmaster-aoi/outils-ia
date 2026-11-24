@@ -125,7 +125,7 @@ Le livrable d'un cerveau est sa table de renommage relue et validée, `<rapports
 
    Pour revenir en arrière : fermer Claude Code, puis copier la sauvegarde sur `%USERPROFILE%\.cortexdb\cortexdb.db`.
 
-   Ce que la migration garde : contenu, titre, source, métadonnées utiles, namespace, portée, importance, liens des mémoires vers les entités du graphe. Ce qu'elle retire : les métadonnées que la convention remplace (`categorie`, `superseded_by`…) et les clés internes (`_chunk_size`…). Une base autre que la base par défaut (`--base`) sert aux essais sur une copie.
+   Toute mémoire va dans le compartiment de la convention (`scope=user`, `user_id=<login>`, `namespace=assistant`) : une mémoire d'un autre compartiment reçoit l'action `renommer` avec le même identifiant, et la migration la déplace. Ce que la migration garde : contenu, titre, source, métadonnées utiles, importance, liens des mémoires vers les entités du graphe. Ce qu'elle retire : les métadonnées que la convention remplace (`categorie`, `superseded_by`…) et les clés internes (`_chunk_size`…). Une base autre que la base par défaut (`--base`) sert aux essais sur une copie.
 
 8. **Propager la convention** : copier le bloc `convention:` dans le `rights.yaml` de chaque cerveau du serveur thalamus. Le plugin aoi porte la même version de memo sur tous les postes.
 

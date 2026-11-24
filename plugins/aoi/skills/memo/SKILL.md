@@ -30,7 +30,8 @@ Ne propose pas « corriger un refus » : un refus du crochet se corrige au momen
    - `date` au format AAAA-MM-JJ pour une nature datée ;
    - `produit_par` : `claude-code` pour un texte que tu écris, `agent-relecture` pour une relecture par un agent tiers, `humain` pour un texte de la personne.
 6. Auteur : `author` (document) ou `user_id` (mémoire) = le login Windows de la personne (`%USERNAME%`), normalisé : minuscules, sans accent, « . », « _ » et espace remplacés par « - » (`Jean.Dupont` devient `jean-dupont`). Lis-le dans l'environnement, ne le demande pas. Jamais le nom d'un agent ni d'une session. Le crochet refuse tout autre auteur et donne la valeur attendue.
-7. Thème absent de la liste : `theme` = le thème d'attente de la convention, `theme_proposed` = le thème voulu, et l'identifiant `<nature>:<theme voulu>:<sujet>`. Ne crée pas de thème toi-même.
+7. Mémoire : toujours `scope=user`, `user_id=<login>` et `namespace=assistant`, à l'écriture comme à la recherche (`memory_search`, `knowledge_memory_recall`). Le serveur cherche dans un seul compartiment : sans ces filtres, il ne trouve pas la mémoire. Le projet va dans la métadonnée `projet`, jamais dans le `namespace`.
+8. Thème absent de la liste : `theme` = le thème d'attente de la convention, `theme_proposed` = le thème voulu, et l'identifiant `<nature>:<theme voulu>:<sujet>`. Ne crée pas de thème toi-même.
 
 ## Quand le crochet refuse
 

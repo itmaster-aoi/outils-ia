@@ -65,6 +65,9 @@ OUTILS = {
     "memory_save": "memory_id",
     "knowledge_update": "knowledge_id",
 }
+# Recherches de mémoires : le serveur cherche dans un seul compartiment (scope, user_id, namespace).
+# Sans ces filtres, il cherche dans memory:global:default, où la convention ne range aucune mémoire.
+RECHERCHES = ("memory_search", "knowledge_memory_recall", "knowledge_memory_build_context_pack")
 
 
 # ---------------------------------------------------------------- convention
@@ -72,7 +75,7 @@ OUTILS = {
 def lire_convention(chemin=CONVENTION):
     """Lit convention.yaml (sous-ensemble du YAML : listes de mots et valeurs simples)."""
     conv = {"natures": [], "dated": [], "themes": [], "producteurs": [], "unsorted": "unsorted",
-            "near": 0.8, "emerge": 5, "version": 0}
+            "near": 0.8, "emerge": 5, "version": 0, "memoire_scope": "user", "memoire_namespace": "assistant"}
     liste = None
     with open(chemin, encoding="utf-8") as f:
         for brute in f:
@@ -91,7 +94,7 @@ def lire_convention(chemin=CONVENTION):
             liste = None
             if cle in ("natures", "dated", "themes", "producteurs") and not valeur:
                 liste = cle
-            elif cle in ("unsorted",):
+            elif cle in ("unsorted", "memoire_scope", "memoire_namespace"):
                 conv[cle] = valeur
             elif cle in ("near",):
                 conv[cle] = float(valeur)
@@ -317,19 +320,56 @@ def controler(conv, ident, meta, existe_deja=False, declares=(), seulement_meta=
 
 # ---------------------------------------------------------------- garde (crochet)
 
-def nom_outil(tool_name):
-    for court in OUTILS:
+def nom_outil(tool_name, noms=OUTILS):
+    for court in noms:
         if tool_name == court or tool_name.endswith("__" + court):
             return court
     return None
 
 
+def compartiment(conv, login):
+    """Compartiment des mémoires selon la convention : (scope, user_id, namespace) et son identifiant serveur."""
+    return conv["memoire_scope"], login, conv["memoire_namespace"], \
+        "memory:%s:%s:%s" % (conv["memoire_scope"], login, conv["memoire_namespace"])
+
+
+def controler_compartiment(conv, args, recherche):
+    """Refus si l'appel ne vise pas le compartiment de la convention. Pour une recherche, les filtres
+    peuvent être au premier niveau ou dans plan.filters."""
+    login = login_windows()
+    scope, user_id, namespace, _ = compartiment(conv, login or "<login>")
+    filtres = dict(((args.get("plan") or {}).get("filters") or {})) if recherche else {}
+    filtres.update({k: args[k] for k in ("scope", "user_id", "namespace") if args.get(k)})
+    erreurs = []
+    if filtres.get("scope") != scope:
+        erreurs.append("scope=%s obligatoire" % scope)
+    if filtres.get("namespace") != namespace:
+        erreurs.append("namespace=%s obligatoire" % namespace)
+    if recherche and (not filtres.get("user_id") or (login and filtres.get("user_id") != login)):
+        erreurs.append("user_id=%s obligatoire" % user_id)
+    if erreurs:
+        motif = ("sans ces filtres, le serveur cherche dans un autre compartiment et ne trouve pas les mémoires"
+                 if recherche else "toute mémoire va dans ce compartiment, le projet va dans la métadonnée projet")
+        raise Refus("%s (%s)" % (" ; ".join(erreurs), motif))
+
+
 def garde(entree, conv=None, base=None):
     """Rend (refus: bool, message) pour un appel d'outil de Claude Code."""
-    court = nom_outil(entree.get("tool_name", ""))
+    tool_name = entree.get("tool_name", "")
+    args = entree.get("tool_input") or {}
+    recherche = nom_outil(tool_name, RECHERCHES)
+    if recherche:
+        if args.get("disable_memory"):
+            return False, ""
+        try:
+            controler_compartiment(conv or lire_convention(), args, True)
+        except Refus as r:
+            return True, ("Convention CortexDB de l'atelier, memo (%s) : %s. Relance la même recherche avec ces filtres. "
+                          "Voir %s." % (recherche, r, CONVENTION))
+        return False, ""
+    court = nom_outil(tool_name)
     if court is None:
         return False, ""
-    args = entree.get("tool_input") or {}
     ident = str(args.get(OUTILS[court], ""))
     meta = args.get("metadata") or {}
     if court == "knowledge_update" and not args.get("metadata"):
@@ -357,6 +397,11 @@ def garde(entree, conv=None, base=None):
             controler_auteur(conv, args.get(champ), meta_txt, champ, exiger_login=True)
     except Refus as r:
         erreurs.append(str(r))
+    if memoire:
+        try:
+            controler_compartiment(conv, args, False)
+        except Refus as r:
+            erreurs.append(str(r))
     if erreurs:
         parties = [p for e in erreurs for p in e.split(" ; ")]
         return True, ("Convention CortexDB de l'atelier, memo (%s) : %d erreur(s) à corriger ensemble : %s. Voir %s."
@@ -705,14 +750,15 @@ def analyser(base, nom, conv=None, ind=None, sortie=None, alias=None, auteur_def
     try:
         docs = con.execute("select id, coalesce(title,''), coalesce(content,''), coalesce(metadata,'{}'), coalesce(created_at,''), "
                            "coalesce(author,'') from documents").fetchall()
-        mems = con.execute("select m.id, '', m.content, coalesce(m.metadata,'{}'), coalesce(m.created_at,''), coalesce(s.user_id,'') "
-                           "from messages m left join sessions s on s.id = m.session_id where m.role = 'memory'").fetchall()
+        mems = con.execute("select m.id, '', m.content, coalesce(m.metadata,'{}'), coalesce(m.created_at,''), coalesce(s.user_id,''), "
+                           "m.session_id from messages m left join sessions s on s.id = m.session_id where m.role = 'memory'").fetchall()
     finally:
         con.close()
+    docs = [d + ("",) for d in docs]
     declares = [d[0][len(PREFIXE_THEME):] for d in docs if d[0].startswith(PREFIXE_THEME)]
     lignes, inconnus = [], {}
     for genre, rangs in (("document", docs), ("memoire", mems)):
-        for ident, titre, texte, meta_txt, cree, ancien_auteur in rangs:
+        for ident, titre, texte, meta_txt, cree, ancien_auteur, seau in rangs:
             try:
                 meta = json.loads(meta_txt) if meta_txt else {}
             except ValueError:
@@ -726,13 +772,17 @@ def analyser(base, nom, conv=None, ind=None, sortie=None, alias=None, auteur_def
                 else auteur_defaut
             note_auteur = "" if auteur else "auteur inconnu : donner --auteur-defaut"
             commun = {"author": auteur, "ancien_author": ancien_auteur, "produit_par": producteur}
+            attendu = compartiment(conv, auteur)[3] if memoire and auteur else ""
+            note_seau = ("compartiment %s : à déplacer vers %s" % (seau, attendu)) if attendu and seau != attendu else ""
+            projet_seau = meta.get("namespace", "") if note_seau and meta.get("namespace") != conv["memoire_namespace"] else ""
             try:
                 controler(conv, ident, meta, declares=declares)
-                lignes.append(dict(commun, type=genre, ancien_id=ident, action="conforme", nouvel_id=ident,
+                lignes.append(dict(commun, type=genre, ancien_id=ident, action="renommer" if note_seau else "conforme",
+                                   nouvel_id=ident,
                                    nature=meta.get("nature", ""), theme=meta.get("theme", ""),
                                    status=meta.get("status", ""), date=meta.get("date", ""),
-                                   projet=meta.get("projet", ""), confiance="",
-                                   remarque=" ; ".join(x for x in (note_auteur, note_prod) if x)))
+                                   projet=meta.get("projet", projet_seau), confiance="",
+                                   remarque=" ; ".join(x for x in (note_seau, note_auteur, note_prod) if x)))
                 continue
             except Refus as r:
                 motif = str(r)
@@ -740,8 +790,8 @@ def analyser(base, nom, conv=None, ind=None, sortie=None, alias=None, auteur_def
             if nature is None:
                 tete = re.split(r"[-_:/. ]+", sans_accent(ident))[0]
                 inconnus.setdefault(tete, []).append(ident)
-            if note_auteur or note_prod:
-                motif = " ; ".join(x for x in (raison or motif, note_auteur, note_prod) if x)
+            if note_auteur or note_prod or note_seau:
+                motif = " ; ".join(x for x in (raison or motif, note_seau, note_auteur, note_prod) if x)
                 raison = ""
             lignes.append({
                 **commun,
@@ -750,7 +800,7 @@ def analyser(base, nom, conv=None, ind=None, sortie=None, alias=None, auteur_def
                 "nouvel_id": "" if nature is None else "%s:%s:%s" % (nature, theme, sujet),
                 "nature": nature or "", "theme": theme,
                 "status": "replaced" if remplace else "current",
-                "date": date_de(meta, cree), "projet": meta.get("projet", meta.get("namespace", "")),
+                "date": date_de(meta, cree), "projet": meta.get("projet", projet_seau),
                 "confiance": confiance,
                 "remarque": ("remplacé par " + meta["superseded_by"]) if remplace else (raison or motif)})
     regrouper_series(lignes)
@@ -896,17 +946,21 @@ def etat_base(base):
         for i, m, c, a in con.execute("select id, metadata, %s, %s from documents"
                                       % (col("documents", "content"), col("documents", "author"))):
             meta[i], contenus[i], auteurs[i] = lire_meta(m), c or "", a or ""
-        for i, m, c in con.execute("select id, metadata, %s from messages where role = 'memory'"
-                                   % col("messages", "content")):
-            meta[i], contenus[i] = lire_meta(m), c or ""
+        seaux = {}
+        for i, m, c, s in con.execute("select id, metadata, %s, %s from messages where role = 'memory'"
+                                      % (col("messages", "content"), col("messages", "session_id"))):
+            meta[i], contenus[i], seaux[i] = lire_meta(m), c or "", s or ""
     finally:
         con.close()
-    return ids, entites, meta, contenus, auteurs
+    return ids, entites, meta, contenus, auteurs, seaux
 
 
-def deja_a_jour(l, genre, meta, ancienne_meta, contenu_base, auteur_base, dossier_table):
-    """Vrai si réécrire la ligne sous le même identifiant ne changerait ni texte, ni métadonnées, ni auteur."""
+def deja_a_jour(l, genre, meta, ancienne_meta, contenu_base, auteur_base, dossier_table, seau_base="", seau_attendu=""):
+    """Vrai si réécrire la ligne sous le même identifiant ne changerait ni texte, ni métadonnées, ni auteur,
+    ni compartiment (mémoire)."""
     if any(ancienne_meta.get(k) != v for k, v in meta.items()):
+        return False
+    if genre == "memoire" and seau_attendu and seau_base and seau_base != seau_attendu:
         return False
     if genre == "document":
         # knowledge_save remplace les métadonnées : une ancienne clé retirée disparaîtrait.
@@ -943,7 +997,7 @@ def nouvelles_meta(conv, ligne, ancienne, fusionnes):
 
 def planifier(conv, lignes, base, dossier_table):
     """Rend (ecritures, suppressions, deja_faits, problemes). Lecture seule."""
-    ids, entites, meta_docs, contenus, auteurs = etat_base(base)
+    ids, entites, meta_docs, contenus, auteurs, seaux = etat_base(base)
     problemes, ecritures, suppressions, deja = [], [], [], []
     cibles = {}
     for l in lignes:
@@ -979,12 +1033,15 @@ def planifier(conv, lignes, base, dossier_table):
                 deja.append(ancien)
                 continue
             ancienne_meta = meta_docs.get(ancien, {})
-            a_jour = action == "conforme" and ancienne_meta.get("produit_par") and all(
+            seau_attendu = compartiment(conv, l["author"])[3] if genre == "memoire" and l["author"] else ""
+            bon_seau = not seau_attendu or seaux.get(ancien, "") in ("", seau_attendu)  # "" : base sans compartiment lu
+            a_jour = action == "conforme" and bon_seau and ancienne_meta.get("produit_par") and all(
                 ancienne_meta.get(k) == v for k, v in meta.items() if k in ("nature", "theme", "status", "produit_par"))
             if action == "conforme" and a_jour:
                 continue
             if action == "renommer" and ancien == nouveau and present_ancien and deja_a_jour(
-                    l, genre, meta, ancienne_meta, contenus.get(ancien, ""), auteurs.get(ancien, ""), dossier_table):
+                    l, genre, meta, ancienne_meta, contenus.get(ancien, ""), auteurs.get(ancien, ""), dossier_table,
+                    seaux.get(ancien, ""), seau_attendu):
                 deja.append(ancien)
                 continue
             ecritures.append({"ligne": l, "genre": genre, "meta": meta, "contenu": contenu,
@@ -1085,7 +1142,7 @@ def sauvegarder(base, dossier):
     return cible
 
 
-def ecrire_element(client, e, dossier_table):
+def ecrire_element(client, e, dossier_table, conv=None):
     l = e["ligne"]
     if e["genre"] == "memoire":
         ancien = client.outil("memory_get", {"memory_id": l["ancien_id"]}).get("memory") or \
@@ -1103,8 +1160,12 @@ def ecrire_element(client, e, dossier_table):
         anc_meta = ancien.get("metadata") or {}
         meta = dict(e["meta"])
         meta.update({k: str(v) for k, v in anc_meta.items() if not k.startswith("_") and k not in CLES_RETIREES and k not in meta})
+        conv = conv or lire_convention()
+        scope, _, namespace, seau = compartiment(conv, l["author"])
+        # Même identifiant, autre compartiment : le serveur met à jour la ligne (ON CONFLICT(id) DO UPDATE
+        # SET session_id), la mémoire change donc de compartiment sans doublon.
         args = {"memory_id": l["nouvel_id"], "content": contenu, "metadata": meta, "user_id": l["author"],
-                "scope": ancien.get("scope") or "user", "namespace": ancien.get("namespace") or "assistant"}
+                "scope": scope, "namespace": namespace}
         importance = ancien.get("importance", anc_meta.get("importance"))
         if isinstance(importance, (int, float)) and importance:
             args["importance"] = importance
@@ -1112,6 +1173,9 @@ def ecrire_element(client, e, dossier_table):
             args["entities"] = e["entites"]
         client.outil("memory_save", args)
         verif = client.outil("memory_get", {"memory_id": l["nouvel_id"]}).get("memory") or {}
+        if verif.get("session_id", seau) != seau:
+            raise ErreurMigration("%s : relu après écriture, compartiment %s au lieu de %s"
+                                  % (l["nouvel_id"], verif.get("session_id"), seau))
     else:
         args = {"knowledge_id": l["nouvel_id"], "content": contenu, "metadata": e["meta"], "author": l["author"]}
         for k in ("title", "source_url"):
@@ -1177,7 +1241,7 @@ def migrer(table, base, exe, simuler, conv=None, controle_processus=True, sortie
                                   % (len(vues), nb_memoires, base))
         with open(chemin_journal, "a", encoding="utf-8") as j:
             for i, e in enumerate(ecritures, 1):
-                ancien = ecrire_element(client, e, dossier_table)
+                ancien = ecrire_element(client, e, dossier_table, conv)
                 j.write(json.dumps({"etape": "ecrire", "ancien_id": e["ligne"]["ancien_id"], "nouvel_id": e["ligne"]["nouvel_id"],
                                     "genre": e["genre"], "ancien": ancien}, ensure_ascii=False) + "\n")
                 j.flush()
@@ -1331,9 +1395,37 @@ def tests():
                                                           "metadata": dict(self.META, produit_par="gpt")})[0])
 
         def test_memoire_user_id(self):
-            args = {"memory_id": "reference:outils-ia:x", "content": "x", "metadata": self.META}
+            args = {"memory_id": "reference:outils-ia:x", "content": "x", "metadata": self.META,
+                    "scope": "user", "namespace": "assistant"}
             self.assertTrue(self.appel("memory_save", args)[0])
             self.assertFalse(self.appel("memory_save", dict(args, user_id="jdupont"))[0])
+
+        def test_memoire_compartiment(self):
+            args = {"memory_id": "reference:outils-ia:x", "content": "x", "metadata": self.META, "user_id": "jdupont"}
+            refus, msg = self.appel("memory_save", args)
+            self.assertTrue(refus)
+            self.assertIn("scope=user", msg)
+            self.assertIn("namespace=assistant", msg)
+            self.assertTrue(self.appel("memory_save", dict(args, scope="user", namespace="projet-a"))[0])
+            self.assertFalse(self.appel("memory_save", dict(args, scope="user", namespace="assistant"))[0])
+
+        def test_recherche_compartiment(self):
+            for outil in ("memory_search", "knowledge_memory_recall", "knowledge_memory_build_context_pack"):
+                refus, msg = self.appel(outil, {"query": "x"})
+                self.assertTrue(refus, outil)
+                for attendu in ("scope=user", "user_id=jdupont", "namespace=assistant"):
+                    self.assertIn(attendu, msg)
+                bons = {"query": "x", "scope": "user", "user_id": "jdupont", "namespace": "assistant"}
+                self.assertFalse(self.appel(outil, bons)[0], outil)
+                self.assertTrue(self.appel(outil, dict(bons, user_id="autre"))[0], outil)
+                self.assertTrue(self.appel(outil, dict(bons, namespace="projet-a"))[0], outil)
+            # filtres dans le plan
+            plan = {"query": "x", "plan": {"filters": {"scope": "user", "user_id": "jdupont", "namespace": "assistant"}}}
+            self.assertFalse(self.appel("memory_search", plan)[0])
+            # recherche sans les mémoires : libre
+            self.assertFalse(self.appel("knowledge_memory_recall", {"query": "x", "disable_memory": True})[0])
+            # recherche de documents : libre
+            self.assertFalse(self.appel("knowledge_search", {"query": "x"})[0])
 
         def test_update_produit_par(self):
             self.assertTrue(self.appel("knowledge_update", {"knowledge_id": "x", "metadata": dict(self.META, produit_par="")})[0])
@@ -1676,9 +1768,9 @@ def tests():
         def test_toutes_les_erreurs_ensemble(self):
             refus, msg = garde({"tool_name": "memory_save", "tool_input": {"memory_id": "note-libre", "content": "x"}}, conv, base="")
             self.assertTrue(refus)
-            for attendu in ("status", "nature", "theme", "identifiant", "user_id", "produit_par"):
+            for attendu in ("status", "nature", "theme", "identifiant", "user_id", "produit_par", "scope=user", "namespace=assistant"):
                 self.assertIn(attendu, msg)
-            self.assertIn("6 erreur(s)", msg)
+            self.assertIn("8 erreur(s)", msg)
 
         def test_lire(self):
             d = tempfile.mkdtemp(prefix="memo-essai-")
@@ -1884,15 +1976,15 @@ def tests():
             self.assertIn("etat-2", deja)
             self.assertNotIn("etat:outils-cao:projet-a", [e["ligne"]["nouvel_id"] for e in ecr])
 
-        def base_a_jour(self, meta_doc, auteur="jdupont", texte="texte"):
+        def base_a_jour(self, meta_doc, auteur="jdupont", texte="texte", seau="memory:user:jdupont:assistant"):
             """Base où un élément porte déjà son identifiant final, avec texte et auteur."""
             con = sqlite3.connect(self.base)
             con.executescript("drop table documents; create table documents(id text, metadata text, content text, author text);"
-                              "drop table messages; create table messages(id text, role text, metadata text, content text);")
+                              "drop table messages; create table messages(id text, role text, metadata text, content text, session_id text);")
             con.execute("insert into documents values('plan:outils-cao:projet-a', ?, ?, ?)", (json.dumps(meta_doc), texte, auteur))
-            con.execute("insert into messages values('etat:outils-cao:projet-a', 'memory', ?, 'm')", (json.dumps(
+            con.execute("insert into messages values('etat:outils-cao:projet-a', 'memory', ?, 'm', ?)", (json.dumps(
                 {"nature": "etat", "theme": "outils-cao", "status": "current", "produit_par": "claude-code",
-                 "date": "2026-10-28", "projet": "projet-a", "importance": "0.9"}),))
+                 "date": "2026-10-28", "projet": "projet-a", "importance": "0.9"}), seau))
             con.commit()
             con.close()
 
@@ -1921,6 +2013,15 @@ def tests():
             self.base_a_jour(self.META_PLAN, auteur="autre")
             self.assertEqual(len(self.plan(self.table_meme_id())[0]), 1)
             self.base_a_jour(self.META_PLAN, texte="ancien texte")
+            self.assertEqual(len(self.plan(self.table_meme_id())[0]), 1)
+
+        def test_memoire_hors_compartiment_deplacee(self):
+            self.base_a_jour(self.META_PLAN, seau="memory:user:jdupont:projet-a")
+            ecr, sup, deja, pb = self.plan(self.table_meme_id())
+            self.assertEqual(pb, [])
+            self.assertEqual([e["ligne"]["nouvel_id"] for e in ecr], ["etat:outils-cao:projet-a"])
+            self.assertEqual(sup, [])  # même identifiant : déplacée par memory_save, rien à supprimer
+            self.base_a_jour(self.META_PLAN, seau="memory:global:default")
             self.assertEqual(len(self.plan(self.table_meme_id())[0]), 1)
 
         def test_simuler_n_ecrit_rien(self):
@@ -2016,7 +2117,8 @@ def main(argv):
         outil = reste[reste.index("--outil") + 1] if "--outil" in reste else "knowledge_save"
         auteur = reste[reste.index("--auteur") + 1] if "--auteur" in reste else ""
         champ = "user_id" if outil == "memory_save" else "author"
-        refus, msg = garde({"tool_name": outil, "tool_input": {OUTILS[outil]: ident, "metadata": meta, champ: auteur}})
+        entree = {OUTILS[outil]: ident, "metadata": meta, champ: auteur, "scope": "user", "namespace": "assistant"}
+        refus, msg = garde({"tool_name": outil, "tool_input": entree})
         print(msg if refus else "conforme")
         return 1 if refus else 0
     if cmd == "analyser":
