@@ -66,10 +66,6 @@
       "type": "http",
       "url": "http://127.0.0.1:1997/mcp",
       "timeout": 600000
-    },
-    "governance": {
-      "type": "http",
-      "url": "https://th.governance.news/mcp"
     }
   }
 }

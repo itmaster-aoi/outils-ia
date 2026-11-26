@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-26.2 (plugin 2026.11.26.2)
+
+Le serveur MCP `governance` est retiré de `plugins/aoi/.mcp.json` et de `VERSIONS.md`. La passerelle `th.governance.news` demande une clé : `/mcp` répond `401` (`a key issued by the gateway is required`), et le cerveau `kg-governance` est servi seulement par `/mcp`. Claude Code tentait alors une inscription OAuth, que la passerelle refuse (`unknown brain "/register"`). Aucun autre changement.
+
 ## 2026-11-26.1 (plugin 2026.11.26.1)
 
 Nouveau serveur MCP `governance` dans `plugins/aoi/.mcp.json` : serveur distant, type `http`, adresse `https://th.governance.news/mcp`, sans jeton. Ce service est externe à l'atelier : les données que Claude lui envoie quittent le poste. Le plugin ne contient aucun code pour ce serveur. Voir `VERSIONS.md`.
