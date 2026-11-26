@@ -1,9 +1,9 @@
 ---
 name: cortexdb
-description: Mémoire durable de l'utilisateur dans CortexDB (serveur plugin:aoi:cortexdb, base locale). Utiliser quand l'utilisateur demande de retenir, mémoriser ou noter un fait, une préférence ou une décision, de se souvenir ou de retrouver ce qui a été dit dans une session précédente, de faire le bilan d'une session à mémoriser, ou tape /aoi:remember ou /aoi:recall. Ne pas utiliser pour la mémoire des fichiers de Claude Code (MEMORY.md) ni pour chercher dans le code.
+description: Mémoire durable de l'utilisateur dans CortexDB (serveur plugin:aoi:cortexdb, base locale). Utiliser quand l'utilisateur demande de retenir, mémoriser ou noter un fait, une préférence ou une décision, de se souvenir ou de retrouver ce qui a été dit dans une session précédente, de faire le bilan d'une session à mémoriser, ou tape /aoi:remember ou /aoi:recall. Utiliser aussi avant de répondre à une question sur les règles, les décisions, les conventions, les procédures ou la stratégie de l'atelier ou de ses projets (« notre politique », « comment est défini… »), et quand le crochet « Rappel memo » le demande. Ne pas utiliser pour la mémoire des fichiers de Claude Code (MEMORY.md) ni pour chercher dans le code.
 ---
 
-<!-- Skill de ce dépôt, version 4 du 24.11.2026 : identifiants, métadonnées et compartiment des mémoires
+<!-- Skill de ce dépôt, version 5 du 26.11.2026 (version 4 du 24.11.2026) : identifiants, métadonnées et compartiment des mémoires
      selon la convention du composant memo (plugin aoi). Le serveur et les commandes viennent de liliang-cn/cortexdb v2.170.0 :
      voir plugins/aoi/mcp/cortexdb/README.md et VERSION-AOI.txt. -->
 
@@ -77,6 +77,19 @@ Si le fait est une connaissance de référence et pas une préférence, utilise 
 5. Si rien n'est trouvé, dis-le.
 
 Un souvenir peut être dépassé. Vérifie dans le fichier ou le projet avant de donner un chiffre ou un chemin rappelé.
+
+## Chercher avant de répondre
+
+Le cerveau garde des règles, des décisions et des références que le dépôt ouvert ne contient pas. Un document du cerveau peut désigner un dossier source ailleurs sur le poste.
+
+Si la question porte sur une règle, une décision, une convention, une procédure ou la stratégie de l'atelier, fais la procédure « Retrouver » avant de répondre. Fais-la aussi quand le crochet « Rappel memo » le demande. Fais-la même si le dépôt semble suffire.
+
+1. Appelle `knowledge_search` (documents) avec le plan de recherche.
+2. Appelle `memory_search` avec le même plan et les 3 filtres du compartiment.
+3. Si un document cite un fichier source (métadonnée `source`), lis ce fichier. Il est la référence.
+4. Dans la réponse, cite les identifiants trouvés, ou dis que la recherche ne trouve rien.
+
+Le crochet `rappel` du composant memo se désactive avec `MEMO_RAPPEL=0`.
 
 ## Bilan d'une session
 

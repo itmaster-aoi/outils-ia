@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-26.4 (plugin 2026.11.26.4)
+
+memo : nouveau crochet `UserPromptSubmit`, `convention.py rappel`. Pour une question (`?`) ou un message qui contient un mot comme « notre », « règle », « décision », « stratégie », « politique », « convention », « sécurité », « procédure » ou « pourquoi », il demande à Claude de chercher dans CortexDB avant de répondre (`knowledge_search`, puis `memory_search` avec les 3 filtres du compartiment). Il ne fait rien pour une commande `/…`. Le texte du message n'est pas recopié. Une erreur ne bloque jamais le message. `MEMO_RAPPEL=0` désactive le crochet. Raison : le 26.11.2026, une question sur la stratégie de sécurité a reçu une réponse tirée du dépôt seul, alors que la référence était dans le cerveau. Skill `cortexdb` version 5 : description élargie et section « Chercher avant de répondre ».
+
 ## 2026-11-26.2 (plugin 2026.11.26.2)
 
 Le serveur MCP `governance` est retiré de `plugins/aoi/.mcp.json` et de `VERSIONS.md`. La passerelle `th.governance.news` demande une clé : `/mcp` répond `401` (`a key issued by the gateway is required`), et le cerveau `kg-governance` est servi seulement par `/mcp`. Claude Code tentait alors une inscription OAuth, que la passerelle refuse (`unknown brain "/register"`). Aucun autre changement.

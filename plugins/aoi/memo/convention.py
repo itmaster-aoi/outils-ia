@@ -11,6 +11,9 @@ Sous-commandes :
   miroir                     crochet PostToolUse : après l'écriture d'un fichier de la mémoire
                              Claude Code, demande à Claude de l'écrire aussi dans le cerveau.
                              MEMO_MIROIR=0 le désactive.
+  rappel                     crochet UserPromptSubmit : pour une question ou un message qui parle
+                             des règles, décisions ou conventions, demande à Claude de chercher
+                             dans CortexDB avant de répondre. MEMO_RAPPEL=0 le désactive.
   verifier ID [--meta JSON] [--outil knowledge_save]
                              contrôle un identifiant et ses métadonnées, sans rien écrire.
   analyser BASE [--nom NOM]  lit un cerveau (fichier cortexdb.db sur C:) en lecture seule
@@ -610,6 +613,40 @@ def commande_miroir():
     try:
         r = miroir(json.loads(sys.stdin.buffer.read().decode("utf-8-sig")))
     except Exception:  # le miroir ne doit jamais gêner une écriture de fichier
+        return 0
+    if r:
+        print(json.dumps(r, ensure_ascii=False))
+    return 0
+
+
+MOTS_RAPPEL = re.compile(r"\b(notre|nos|regles?|decisions?|strategies?|politiques?|conventions?|securite"
+                         r"|procedures?|pourquoi)\b")
+
+
+def rappel(entree):
+    """Crochet UserPromptSubmit : rappel de chercher dans CortexDB avant de répondre. Rend la sortie, ou None.
+    Le texte du message n'est jamais recopié dans la sortie."""
+    if os.environ.get("MEMO_RAPPEL", "1") == "0":
+        return None
+    message = str(entree.get("prompt") or "").strip()
+    if not message or message.startswith("/"):
+        return None
+    if "?" not in message and not MOTS_RAPPEL.search(sans_accent(message)):
+        return None
+    login = login_windows() or "<login Windows normalisé>"
+    texte = (
+        "Rappel memo : avant de répondre, cherche dans le cerveau CortexDB local. Appelle "
+        "mcp__plugin_aoi_cortexdb__knowledge_search (documents) et mcp__plugin_aoi_cortexdb__memory_search "
+        "avec scope=user, user_id=%s et namespace=assistant. Cite l'identifiant de ce que tu trouves, ou dis "
+        "que la recherche ne trouve rien. Ignore ce rappel si le message est une consigne de code sans "
+        "question sur l'atelier." % login)
+    return {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": texte}}
+
+
+def commande_rappel():
+    try:
+        r = rappel(json.loads(sys.stdin.buffer.read().decode("utf-8-sig")))
+    except Exception:  # le rappel ne doit jamais bloquer un message
         return 0
     if r:
         print(json.dumps(r, ensure_ascii=False))
@@ -2047,8 +2084,81 @@ def tests():
             with self.assertRaises(ErreurMigration):
                 migrer(chemin, self.base, os.path.join(self.d, "absent.exe"), False, conv, sortie=lambda m: None)
 
+    class TestsRappel(unittest.TestCase):
+        QUESTION = "comment est définie notre stratégie sécurité?"
+
+        def setUp(self):
+            self.ancien = os.environ.pop("MEMO_RAPPEL", None)
+
+        def tearDown(self):
+            os.environ.pop("MEMO_RAPPEL", None)
+            if self.ancien is not None:
+                os.environ["MEMO_RAPPEL"] = self.ancien
+
+        def texte(self, prompt):
+            r = rappel({"hook_event_name": "UserPromptSubmit", "prompt": prompt})
+            return r and r["hookSpecificOutput"]["additionalContext"]
+
+        def test_question_donne_rappel(self):
+            r = rappel({"hook_event_name": "UserPromptSubmit", "prompt": self.QUESTION})
+            self.assertEqual(r["hookSpecificOutput"]["hookEventName"], "UserPromptSubmit")
+            t = r["hookSpecificOutput"]["additionalContext"]
+            for attendu in ("knowledge_search", "memory_search", "scope=user", "namespace=assistant",
+                            "user_id=%s" % (login_windows() or "<login Windows normalisé>")):
+                self.assertIn(attendu, t)
+
+        def test_point_d_interrogation_seul(self):
+            self.assertTrue(self.texte("ça marche ?"))
+
+        def test_mot_cle_sans_accent_ni_question(self):
+            self.assertTrue(self.texte("Rappelle-moi la REGLE des tests"))
+            self.assertTrue(self.texte("explique la décision prise"))
+
+        def test_consigne_simple_sans_rappel(self):
+            self.assertIsNone(self.texte("corrige la faute ligne 3"))
+
+        def test_mot_cle_dans_un_mot_ignore(self):
+            self.assertIsNone(self.texte("renomme la variable nosql"))
+
+        def test_commande_sans_rappel(self):
+            self.assertIsNone(self.texte("/aoi:recall notre règle ?"))
+
+        def test_vide_sans_rappel(self):
+            self.assertIsNone(self.texte(""))
+            self.assertIsNone(rappel({}))
+
+        def test_desactive(self):
+            os.environ["MEMO_RAPPEL"] = "0"
+            self.assertIsNone(self.texte(self.QUESTION))
+
+        def test_message_absent_de_la_sortie(self):
+            t = self.texte("quelle est notre règle pour le dossier zx9-secret-qk ?")
+            self.assertTrue(t)
+            self.assertNotIn("zx9-secret-qk", t)
+
+        def _lancer(self, octets, env=None):
+            return subprocess.run([sys.executable, os.path.abspath(__file__), "rappel"], input=octets,
+                                  capture_output=True, timeout=30, env=env)
+
+        def test_bout_en_bout(self):
+            r = self._lancer(json.dumps({"hook_event_name": "UserPromptSubmit", "session_id": "x",
+                                         "prompt": self.QUESTION}, ensure_ascii=False).encode("utf-8"))
+            self.assertEqual(r.returncode, 0)
+            sortie = json.loads(r.stdout.decode("utf-8"))
+            self.assertIn("knowledge_search", sortie["hookSpecificOutput"]["additionalContext"])
+
+        def test_bout_en_bout_json_invalide(self):
+            r = self._lancer(b"{pas du json")
+            self.assertEqual(r.returncode, 0)
+            self.assertEqual(r.stdout.strip(), b"")
+
+        def test_bout_en_bout_sans_rappel(self):
+            r = self._lancer(json.dumps({"prompt": "corrige la faute ligne 3"}).encode("utf-8"))
+            self.assertEqual(r.returncode, 0)
+            self.assertEqual(r.stdout.strip(), b"")
+
     suite = unittest.TestSuite()
-    for cas in (TestsConvention, TestsGarde, TestsAnalyse, TestsMigration):
+    for cas in (TestsConvention, TestsGarde, TestsAnalyse, TestsMigration, TestsRappel):
         suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(cas))
     r = unittest.TextTestRunner(verbosity=1).run(suite)
     return 0 if r.wasSuccessful() else 1
@@ -2088,6 +2198,8 @@ def main(argv):
         return commande_garde()
     if cmd == "miroir":
         return commande_miroir()
+    if cmd == "rappel":
+        return commande_rappel()
     if cmd == "memoires":
         cible = " ".join(a for a in reste if a != "--json").strip().strip('"') or "tout"
         try:

@@ -1,5 +1,10 @@
 # Changements de la convention et de memo
 
+## memo dans le plugin aoi 2026.11.26.4 (2026-11-26), convention version 3
+
+- Nouvelle sous-commande `rappel`, crochet `UserPromptSubmit` : pour une question ou un message qui contient un mot de `MOTS_RAPPEL`, elle ajoute au contexte la consigne de chercher dans CortexDB (`knowledge_search`, `memory_search` avec `scope=user`, `user_id=<login>`, `namespace=assistant`) avant de répondre. Aucun rappel pour un message vide ou une commande `/…`. Le texte du message n'apparaît jamais dans la sortie. Toute erreur donne une sortie vide et le code 0. `MEMO_RAPPEL=0` la désactive.
+- 12 tests ajoutés (`TestsRappel`), dont 3 tests de bout en bout par un sous-processus. Les tests ont échoué avant le code (5 rouges). 2 mutations ont été faites : retirer le test du `?` et retirer le test du `/`. Chaque mutation fait échouer un test.
+
 ## memo dans le plugin aoi 2026.11.24.6 (2026-11-24), convention version 3
 
 - Compartiment unique des mémoires : `scope=user`, `user_id` = login Windows, `namespace=assistant` (`memoire_scope` et `memoire_namespace` dans `convention.yaml`). Le projet va dans la métadonnée `projet`, jamais dans le namespace.

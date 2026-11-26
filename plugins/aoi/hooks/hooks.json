@@ -12,6 +12,17 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${LOCALAPPDATA}/aoi/python/python.exe\" \"${CLAUDE_PLUGIN_ROOT}/memo/convention.py\" rappel",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "mcp__plugin_aoi_cortexdb__(knowledge_save|ingest_document|memory_save|knowledge_update|memory_search|knowledge_memory_recall|knowledge_memory_build_context_pack)",
