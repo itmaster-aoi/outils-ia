@@ -36,6 +36,13 @@ networkx        # pip : networkx, dépendance de graphify que la skill importe a
 mcp
 pydantic
 
+# Conversion GGUF du modèle d'embeddings (llama.cpp convert_hf_to_gguf.py)
+torch           # pip : torch (version CPU suffisante)
+transformers    # pip : transformers
+safetensors     # pip : safetensors
+gguf            # pip : gguf, ou dossier gguf-py du dépôt llama.cpp
+sentencepiece   # pip : sentencepiece
+
 # PyWin32
 pywintypes      # pip : pywin32, types de base
 pythoncom       # pip : pywin32, COM
