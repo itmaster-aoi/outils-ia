@@ -1,5 +1,9 @@
 # Journal des changements
 
+## 2026-11-26.1 (plugin 2026.11.26.1)
+
+Nouveau serveur MCP `governance` dans `plugins/aoi/.mcp.json` : serveur distant, type `http`, adresse `https://th.governance.news/mcp`, sans jeton. Ce service est externe à l'atelier : les données que Claude lui envoie quittent le poste. Le plugin ne contient aucun code pour ce serveur. Voir `VERSIONS.md`.
+
 ## 2026-11-24.6 (plugin 2026.11.24.6)
 
 Serveur MCP `cortexdb` 2.170.0 (avant : 2.139.1). Binaire `cortexdb-mcp-windows-amd64.exe` de `liliang-cn/cortexdb` `v2.170.0`, empreinte conforme au `.sha256` publié, livré par l'archive `cortexdb-server-2.170.0`. Les commandes `/aoi:recall` et `/aoi:remember` sont reprises de la même version, avec une phrase sur le compartiment des mémoires. Voir `VERSIONS.md`.
